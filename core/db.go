@@ -30,6 +30,7 @@ func GetDatabaseConnection() *mongo.Database {
 	return databaseConnection
 }
 
-func CheckDatabaseHealth(db *mongo.Database) error {
-	return db.Client().Ping(context.TODO(), nil)
+func CheckDatabaseHealth() error {
+	log.Println("Checking database health")
+	return GetDatabaseConnection().Client().Ping(context.TODO(), nil)
 }
