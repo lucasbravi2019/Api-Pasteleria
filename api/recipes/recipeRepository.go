@@ -82,17 +82,21 @@ func (r *recipeRepository) UpdateRecipe(oid primitive.ObjectID, recipe Recipe) s
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	result, err := r.db.UpdateByID(ctx, oid, recipe)
+	filter := bson.M{"_id": oid}
+
+	recipe.ID = oid
+
+	result, err := r.db.ReplaceOne(ctx, filter, recipe)
 
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
 	if result.ModifiedCount < 1 {
-		log.Fatal("No pudo actualizarse el registro")
+		log.Println("No se actualizó el registro")
 	}
 
-	return result.UpsertedID.(primitive.ObjectID).Hex()
+	return oid.Hex()
 }
 
 func (r *recipeRepository) DeleteRecipe(oid primitive.ObjectID) string {

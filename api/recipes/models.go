@@ -3,8 +3,8 @@ package recipes
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type Recipe struct {
-	ID          primitive.ObjectID `bson:"_id" json:"id,omitempty"`
-	Name        string             `bson:"recipeName" json:"recipeName,omitempty"`
+	ID          primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	Name        string             `bson:"name" json:"name,omitempty"`
 	Ingredients []Ingredient       `bson:"ingredients" json:"ingredients,omitempty"`
 	Price       float32            `bson:"price" json:"price,omitempty"`
 }

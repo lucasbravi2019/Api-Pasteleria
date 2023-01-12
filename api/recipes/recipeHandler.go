@@ -1,6 +1,8 @@
 package recipes
 
 import (
+	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -35,15 +37,21 @@ func (h *recipeHandler) GetRecipe(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *recipeHandler) CreateRecipe(w http.ResponseWriter, r *http.Request) {
+	var recipe Recipe
+	decodeBody(r, &recipe)
 
+	core.EncodeJsonResponse(w, http.StatusCreated, h.service.CreateRecipe(recipe))
 }
 
 func (h *recipeHandler) UpdateRecipe(w http.ResponseWriter, r *http.Request) {
+	var recipe Recipe
+	decodeBody(r, &recipe)
 
+	core.EncodeJsonResponse(w, http.StatusOK, h.service.UpdateRecipe(core.ConvertHexToObjectId(mux.Vars(r)["id"]), recipe))
 }
 
 func (h *recipeHandler) DeleteRecipe(w http.ResponseWriter, r *http.Request) {
-
+	core.EncodeJsonResponse(w, http.StatusOK, h.service.DeleteRecipe(core.ConvertHexToObjectId(mux.Vars(r)["id"])))
 }
 
 func (h *recipeHandler) GetRecipeRoutes() core.Routes {
@@ -73,5 +81,12 @@ func (h *recipeHandler) GetRecipeRoutes() core.Routes {
 			HandlerFunc: h.DeleteRecipe,
 			Method:      "DELETE",
 		},
+	}
+}
+
+func decodeBody(r *http.Request, storeVar *Recipe) {
+	err := json.NewDecoder(r.Body).Decode(&storeVar)
+	if err != nil {
+		log.Fatal(err.Error())
 	}
 }

@@ -8,5 +8,7 @@ import (
 func EncodeJsonResponse(w http.ResponseWriter, statusCode int, body interface{}) {
 	w.Header().Add("Content-type", "application/json")
 	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(body)
+	if body != nil {
+		json.NewEncoder(w).Encode(body)
+	}
 }
