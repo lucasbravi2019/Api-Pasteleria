@@ -17,7 +17,7 @@ type recipeRepository struct {
 type RecipeRepository interface {
 	FindAllRecipes() []Recipe
 	FindRecipeByOID(oid primitive.ObjectID) Recipe
-	CreateRecipe(recipe Recipe) string
+	CreateRecipe(recipe RecipeName) string
 	UpdateRecipe(oid primitive.ObjectID, recipe Recipe) string
 	DeleteRecipe(oid primitive.ObjectID) string
 }
@@ -60,7 +60,7 @@ func (r *recipeRepository) FindRecipeByOID(oid primitive.ObjectID) Recipe {
 	return recipe
 }
 
-func (r *recipeRepository) CreateRecipe(recipe Recipe) string {
+func (r *recipeRepository) CreateRecipe(recipe RecipeName) string {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
