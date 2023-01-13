@@ -21,13 +21,14 @@ type RecipeHandler interface {
 	CreateRecipe(w http.ResponseWriter, r *http.Request)
 	UpdateRecipe(w http.ResponseWriter, r *http.Request)
 	DeleteRecipe(w http.ResponseWriter, r *http.Request)
+	AddIngredientToRecipe(w http.ResponseWriter, r *http.Request)
 	GetRecipeRoutes() core.Routes
 }
 
 func (h *recipeHandler) GetAllRecipes(w http.ResponseWriter, r *http.Request) {
 	recipes := h.service.GetAllRecipes()
 
-	core.EncodeJsonResponse(w, http.StatusCreated, recipes)
+	core.EncodeJsonResponse(w, http.StatusOK, recipes)
 }
 
 func (h *recipeHandler) GetRecipe(w http.ResponseWriter, r *http.Request) {
@@ -37,10 +38,10 @@ func (h *recipeHandler) GetRecipe(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *recipeHandler) CreateRecipe(w http.ResponseWriter, r *http.Request) {
-	var recipe Recipe
-	decodeBody(r, &recipe)
+	var recipeName RecipeName
+	decodeBody(r, &recipeName)
 
-	core.EncodeJsonResponse(w, http.StatusCreated, h.service.CreateRecipe(recipe))
+	core.EncodeJsonResponse(w, http.StatusCreated, h.service.CreateRecipe(recipeName))
 }
 
 func (h *recipeHandler) UpdateRecipe(w http.ResponseWriter, r *http.Request) {
@@ -52,6 +53,14 @@ func (h *recipeHandler) UpdateRecipe(w http.ResponseWriter, r *http.Request) {
 
 func (h *recipeHandler) DeleteRecipe(w http.ResponseWriter, r *http.Request) {
 	core.EncodeJsonResponse(w, http.StatusOK, h.service.DeleteRecipe(core.ConvertHexToObjectId(mux.Vars(r)["id"])))
+}
+
+func (h *recipeHandler) AddIngredientToRecipe(w http.ResponseWriter, r *http.Request) {
+	var ingredientDetails IngredientDetails
+	decodeBody(r, &ingredientDetails)
+
+	core.EncodeJsonResponse(w, http.StatusOK, h.service.AddIngredientToRecipe(core.ConvertHexToObjectId(mux.Vars(r)["recipeId"]),
+		core.ConvertHexToObjectId(mux.Vars(r)["ingredientId"]), ingredientDetails))
 }
 
 func (h *recipeHandler) GetRecipeRoutes() core.Routes {
@@ -81,10 +90,15 @@ func (h *recipeHandler) GetRecipeRoutes() core.Routes {
 			HandlerFunc: h.DeleteRecipe,
 			Method:      "DELETE",
 		},
+		core.Route{
+			Path:        "/recipes/{recipeId}/ingredient/{ingredientId}",
+			HandlerFunc: h.AddIngredientToRecipe,
+			Method:      "PUT",
+		},
 	}
 }
 
-func decodeBody(r *http.Request, storeVar *Recipe) {
+func decodeBody(r *http.Request, storeVar interface{}) {
 	err := json.NewDecoder(r.Body).Decode(&storeVar)
 	if err != nil {
 		log.Fatal(err.Error())
