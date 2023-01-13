@@ -1,17 +1,28 @@
 package recipes
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
+import (
+	"github.com/lucasbravi2019/pasteleria/api/ingredients"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type Recipe struct {
 	ID          primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
 	Name        string             `bson:"name" json:"name,omitempty"`
-	Ingredients []Ingredient       `bson:"ingredients" json:"ingredients,omitempty"`
+	Ingredients []RecipeIngredient `bson:"ingredients" json:"ingredients,omitempty"`
 	Price       float32            `bson:"price" json:"price,omitempty"`
 }
 
-type Ingredient struct {
-	ID     primitive.ObjectID `bson:"_id" json:"id,omitempty"`
-	Name   string             `bson:"name" json:"name,omitempty"`
-	Metric string             `bson:"metric" json:"metric,omitempty"`
-	Price  float32            `bson:"price" json:"price,omitempty"`
+type RecipeIngredient struct {
+	Ingredient ingredients.Ingredient `bson:"ingredient" json:"ingredient,omitempty"`
+	Price      float32                `bson:"price" json:"price,omitempty"`
+	Quantity   int                    `bson:"quantity" json:"quantity,omitempty"`
+}
+
+type IngredientDetails struct {
+	Metric   string `json:"metric,omitempty"`
+	Quantity int    `json:"quantity,omitempty"`
+}
+
+type RecipeName struct {
+	Name string `json:"name"`
 }
