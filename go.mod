@@ -8,7 +8,9 @@ require (
 )
 
 require (
+	github.com/felixge/httpsnoop v1.0.1 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
+	github.com/gorilla/handlers v1.5.1 // indirect
 	github.com/klauspost/compress v1.15.14 // indirect
 	github.com/montanaflynn/stats v0.7.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
