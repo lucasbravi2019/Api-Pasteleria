@@ -1,8 +1,10 @@
 package config
 
 import (
+	"log"
 	"net/http"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/lucasbravi2019/pasteleria/api/ingredients"
 	"github.com/lucasbravi2019/pasteleria/api/recipes"
@@ -30,5 +32,10 @@ func StartApi() {
 	RegisterRoutes(recipes.GetRecipeHandlerInstance().GetRecipeRoutes())
 	RegisterRoutes(ingredients.GetIngredientHandlerInstance().GetIngredientRoutes())
 
-	http.ListenAndServe("localhost:8080", GetRouter())
+	credentials := handlers.AllowCredentials()
+	methods := handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE"})
+	ttl := handlers.MaxAge(3600)
+	origins := handlers.AllowedOrigins([]string{"*"})
+
+	log.Fatal(http.ListenAndServe(":8080", handlers.CORS(credentials, methods, ttl, origins)(GetRouter())))
 }
