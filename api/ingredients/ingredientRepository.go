@@ -2,6 +2,7 @@ package ingredients
 
 import (
 	"context"
+	"errors"
 	"log"
 	"time"
 
@@ -16,10 +17,10 @@ type ingredientRepository struct {
 
 type IngredientRepository interface {
 	GetAllIngredients() []Ingredient
-	FindIngredientByOID(oid primitive.ObjectID) Ingredient
-	CreateIngredient(ingredient Ingredient) string
-	UpdateIngredient(oid primitive.ObjectID, ingredient Ingredient) string
-	DeleteIngredient(oid primitive.ObjectID) string
+	FindIngredientByOID(oid primitive.ObjectID) (Ingredient, error)
+	CreateIngredient(ingredient Ingredient) (string, error)
+	UpdateIngredient(oid primitive.ObjectID, ingredient Ingredient) (string, error)
+	DeleteIngredient(oid primitive.ObjectID) error
 }
 
 var ingredientRepositoryInstance *ingredientRepository
@@ -31,7 +32,7 @@ func (r *ingredientRepository) GetAllIngredients() []Ingredient {
 	results, err := r.db.Find(ctx, bson.D{})
 
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Println(err.Error())
 	}
 
 	var ingredients []Ingredient
@@ -39,13 +40,17 @@ func (r *ingredientRepository) GetAllIngredients() []Ingredient {
 	err = results.All(ctx, &ingredients)
 
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Println(err.Error())
+	}
+
+	if len(ingredients) < 1 {
+		return []Ingredient{}
 	}
 
 	return ingredients
 }
 
-func (r *ingredientRepository) FindIngredientByOID(oid primitive.ObjectID) Ingredient {
+func (r *ingredientRepository) FindIngredientByOID(oid primitive.ObjectID) (Ingredient, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -54,7 +59,8 @@ func (r *ingredientRepository) FindIngredientByOID(oid primitive.ObjectID) Ingre
 	result := r.db.FindOne(ctx, filter)
 
 	if result.Err() != nil {
-		log.Fatal(result.Err())
+		log.Println(result.Err())
+		return Ingredient{}, errors.New("no se pudo encontrar el ingrediente")
 	}
 
 	var ingredient Ingredient
@@ -62,26 +68,28 @@ func (r *ingredientRepository) FindIngredientByOID(oid primitive.ObjectID) Ingre
 	err := result.Decode(&ingredient)
 
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Println(err.Error())
+		return Ingredient{}, errors.New("no se pudo decodificar la respuesta")
 	}
 
-	return ingredient
+	return ingredient, nil
 }
 
-func (r *ingredientRepository) CreateIngredient(ingredient Ingredient) string {
+func (r *ingredientRepository) CreateIngredient(ingredient Ingredient) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	result, err := r.db.InsertOne(ctx, ingredient)
+	oid, err := r.db.InsertOne(ctx, ingredient)
 
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Println(err.Error())
+		return "", errors.New("no pudo crearse el ingrediente")
 	}
 
-	return result.InsertedID.(primitive.ObjectID).Hex()
+	return oid.InsertedID.(primitive.ObjectID).Hex(), nil
 }
 
-func (r *ingredientRepository) UpdateIngredient(oid primitive.ObjectID, ingredient Ingredient) string {
+func (r *ingredientRepository) UpdateIngredient(oid primitive.ObjectID, ingredient Ingredient) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -89,17 +97,19 @@ func (r *ingredientRepository) UpdateIngredient(oid primitive.ObjectID, ingredie
 	result, err := r.db.ReplaceOne(ctx, filter, ingredient)
 
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Println(err.Error())
+		return "", errors.New("no pudo actualizarse el ingrediente")
 	}
 
 	if result.ModifiedCount < 1 {
-		log.Println("El registro no fue actualizado")
+		log.Println("El ingrediente no fue actualizado")
+		return "", errors.New("no pudo actualizarse el ingrediente")
 	}
 
-	return "Se actualizo el ingrediente " + oid.Hex() + " correctamente"
+	return result.UpsertedID.(primitive.ObjectID).Hex(), nil
 }
 
-func (r *ingredientRepository) DeleteIngredient(oid primitive.ObjectID) string {
+func (r *ingredientRepository) DeleteIngredient(oid primitive.ObjectID) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -108,12 +118,14 @@ func (r *ingredientRepository) DeleteIngredient(oid primitive.ObjectID) string {
 	result, err := r.db.DeleteOne(ctx, filter)
 
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Println(err.Error())
+		return errors.New("no pudo borrarse el ingrediente")
 	}
 
 	if result.DeletedCount < 1 {
-		log.Fatal("No pudo borrarse el registro")
+		log.Println("No pudo borrarse el ingrediente")
+		return errors.New("no pudo borrarse el ingrediente")
 	}
 
-	return "Se borro el ingrediente " + oid.Hex() + " correctamente"
+	return nil
 }
