@@ -59,14 +59,15 @@ func (s *recipeService) AddIngredientToRecipe(recipeOid primitive.ObjectID, ingr
 		return errors.New("no se encontró el ingrediente"), http.StatusNotFound, Recipe{}
 	}
 
-	if ingredient.Metric != ingredientDetails.Metric {
-		log.Println("La unidad de medida no coincide")
-		return errors.New("la unidad de medida no coincide"), http.StatusBadRequest, Recipe{}
+	err = validate(ingredient, ingredientDetails)
+
+	if err != nil {
+		return err, http.StatusBadRequest, Recipe{}
 	}
 
 	var recipeIngredient RecipeIngredient = RecipeIngredient{
 		Ingredient: ingredient,
-		Price:      ingredient.Price * float32(ingredientDetails.Quantity),
+		Price:      float32(ingredientDetails.Quantity) / float32(ingredient.Quantity) * ingredient.Price,
 		Quantity:   ingredientDetails.Quantity,
 	}
 
@@ -86,4 +87,17 @@ func (s *recipeService) AddIngredientToRecipe(recipeOid primitive.ObjectID, ingr
 	}
 
 	return nil, http.StatusOK, recipe
+}
+
+func validate(ingredient ingredients.Ingredient, ingredientDetails IngredientDetails) error {
+	if ingredient.Metric != ingredientDetails.Metric {
+		log.Println("La unidad de medida no coincide")
+		return errors.New("la unidad de medida no coincide")
+	}
+
+	if ingredientDetails.Quantity == 0 {
+		log.Println("La cantidad del ingrediente no puede ser 0")
+		return errors.New("la cantidad del ingrediente no puede ser 0")
+	}
+	return nil
 }
