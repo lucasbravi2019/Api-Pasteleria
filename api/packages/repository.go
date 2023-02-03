@@ -113,7 +113,7 @@ func (r *repository) DeletePackage(oid *primitive.ObjectID) (int, *Package) {
 
 	err := result.Decode(&packageDeleted)
 
-	if err == nil {
+	if err != nil {
 		log.Println("No pudo borrarse el paquete")
 		return http.StatusInternalServerError, nil
 	}
