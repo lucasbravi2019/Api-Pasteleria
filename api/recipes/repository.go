@@ -108,15 +108,12 @@ func (r *recipeRepository) UpdateRecipe(oid *primitive.ObjectID, recipe *Recipe)
 		return http.StatusBadRequest, nil
 	}
 
-	uid := result.UpsertedID
-
-	if uid == nil {
-		log.Println("No se actualizó el registro")
-		return http.StatusInternalServerError, nil
+	if result.ModifiedCount < 1 {
+		log.Println("No se actualizó la receta")
 	}
 
 	var recipeUpdated *Recipe = &Recipe{
-		ID:          uid.(primitive.ObjectID),
+		ID:          *oid,
 		Name:        recipe.Name,
 		Ingredients: recipe.Ingredients,
 		Price:       recipe.Price,
