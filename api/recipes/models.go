@@ -13,7 +13,7 @@ type Recipe struct {
 }
 
 type RecipeIngredient struct {
-	ID         primitive.ObjectID     `bson:"id" json:"id,omitempty"`
+	ID         primitive.ObjectID     `bson:"_id" json:"id,omitempty"`
 	Ingredient ingredients.Ingredient `bson:"ingredient" json:"ingredient,omitempty"`
 	Price      float32                `bson:"price" json:"price,omitempty"`
 	Quantity   int                    `bson:"quantity" json:"quantity,omitempty"`
