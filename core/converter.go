@@ -7,8 +7,6 @@ import (
 )
 
 func ConvertHexToObjectId(id string) *primitive.ObjectID {
-	log.Println("ID: " + id)
-
 	oid, err := primitive.ObjectIDFromHex(id)
 
 	if err != nil {
