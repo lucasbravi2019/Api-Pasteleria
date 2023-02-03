@@ -2,6 +2,7 @@ package recipes
 
 import (
 	"context"
+	"errors"
 	"log"
 	"time"
 
@@ -15,35 +16,41 @@ type recipeRepository struct {
 }
 
 type RecipeRepository interface {
-	FindAllRecipes() []Recipe
-	FindRecipeByOID(oid primitive.ObjectID) Recipe
-	CreateRecipe(recipe RecipeName) string
-	UpdateRecipe(oid primitive.ObjectID, recipe Recipe) string
-	DeleteRecipe(oid primitive.ObjectID) string
+	FindAllRecipes() ([]Recipe, error)
+	FindRecipeByOID(oid primitive.ObjectID) (Recipe, error)
+	CreateRecipe(recipe RecipeName) (string, error)
+	UpdateRecipe(oid primitive.ObjectID, recipe Recipe) (string, error)
+	DeleteRecipe(oid primitive.ObjectID) error
 }
 
 var recipeRepositoryInstance *recipeRepository
 
-func (r *recipeRepository) FindAllRecipes() []Recipe {
+func (r *recipeRepository) FindAllRecipes() ([]Recipe, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	result, err := r.db.Find(ctx, bson.D{})
 
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Println(err.Error())
+		return nil, errors.New("no pudieron encontrarse registros")
 	}
 
 	var recipes []Recipe
 	err = result.All(ctx, &recipes)
 
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Println(err.Error())
+		return nil, errors.New("no pudieron encontrarse registros")
 	}
 
-	return recipes
+	if len(recipes) < 1 {
+		return []Recipe{}, nil
+	}
+
+	return recipes, nil
 }
 
-func (r *recipeRepository) FindRecipeByOID(oid primitive.ObjectID) Recipe {
+func (r *recipeRepository) FindRecipeByOID(oid primitive.ObjectID) (Recipe, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	filter := bson.D{primitive.E{Key: "_id", Value: oid}}
@@ -54,31 +61,34 @@ func (r *recipeRepository) FindRecipeByOID(oid primitive.ObjectID) Recipe {
 	err := result.Decode(&recipe)
 
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Println(err.Error())
+		return Recipe{}, err
 	}
 
-	return recipe
+	return recipe, nil
 }
 
-func (r *recipeRepository) CreateRecipe(recipe RecipeName) string {
+func (r *recipeRepository) CreateRecipe(recipe RecipeName) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	result, err := r.db.InsertOne(ctx, recipe)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Println(err.Error())
+		return "", errors.New("no pudo crearse la receta")
 	}
 
 	oid := result.InsertedID
 
-	if oid == "" {
-		log.Fatal("No pudo insertarse en la base de datos")
+	if oid == nil {
+		log.Println("No pudo insertarse en la base de datos")
+		return "", errors.New("no pudo crearse la receta")
 	}
 
-	return oid.(primitive.ObjectID).Hex()
+	return oid.(primitive.ObjectID).Hex(), nil
 }
 
-func (r *recipeRepository) UpdateRecipe(oid primitive.ObjectID, recipe Recipe) string {
+func (r *recipeRepository) UpdateRecipe(oid primitive.ObjectID, recipe Recipe) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -89,17 +99,19 @@ func (r *recipeRepository) UpdateRecipe(oid primitive.ObjectID, recipe Recipe) s
 	result, err := r.db.ReplaceOne(ctx, filter, recipe)
 
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Println(err.Error())
+		return "", errors.New("no pudo actualizarse la receta")
 	}
 
 	if result.ModifiedCount < 1 {
 		log.Println("No se actualizó el registro")
+		return "", errors.New("no pudo actualizarse la receta")
 	}
 
-	return oid.Hex()
+	return oid.String(), nil
 }
 
-func (r *recipeRepository) DeleteRecipe(oid primitive.ObjectID) string {
+func (r *recipeRepository) DeleteRecipe(oid primitive.ObjectID) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -108,12 +120,14 @@ func (r *recipeRepository) DeleteRecipe(oid primitive.ObjectID) string {
 	result, err := r.db.DeleteOne(ctx, filter)
 
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Println(err.Error())
+		return errors.New("no pudo borrarse receta")
 	}
 
 	if result.DeletedCount < 1 {
-		log.Fatal("No pudo borrarse el registro")
+		log.Println("No pudo borrarse el registro")
+		return errors.New("no pudo borrarse receta")
 	}
 
-	return "La receta " + oid.Hex() + " pudo borrarse con exito"
+	return nil
 }

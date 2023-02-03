@@ -7,9 +7,9 @@ import (
 
 type Recipe struct {
 	ID          primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
-	Name        string             `bson:"name" json:"name,omitempty"`
-	Ingredients []RecipeIngredient `bson:"ingredients" json:"ingredients,omitempty"`
-	Price       float32            `bson:"price" json:"price,omitempty"`
+	Name        string             `bson:"name" json:"name,omitempty" validate:"required"`
+	Ingredients []RecipeIngredient `bson:"ingredients" json:"ingredients,omitempty" validate:"required"`
+	Price       float32            `bson:"price" json:"price,omitempty" validate:"required"`
 }
 
 type RecipeIngredient struct {
@@ -24,5 +24,5 @@ type IngredientDetails struct {
 }
 
 type RecipeName struct {
-	Name string `json:"name"`
+	Name string `json:"name" validate:"required"`
 }

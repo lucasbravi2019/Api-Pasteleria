@@ -26,41 +26,124 @@ type RecipeHandler interface {
 }
 
 func (h *recipeHandler) GetAllRecipes(w http.ResponseWriter, r *http.Request) {
-	recipes := h.service.GetAllRecipes()
+	recipes, err := h.service.GetAllRecipes()
 
-	core.EncodeJsonResponse(w, http.StatusOK, recipes)
+	if err != nil {
+		core.EncodeJsonResponse(w, http.StatusInternalServerError, nil)
+	} else {
+		core.EncodeJsonResponse(w, http.StatusOK, recipes)
+	}
 }
 
 func (h *recipeHandler) GetRecipe(w http.ResponseWriter, r *http.Request) {
-	recipe := h.service.GetRecipe(core.ConvertHexToObjectId(mux.Vars(r)["id"]))
+	oid, err := core.ConvertHexToObjectId(mux.Vars(r)["id"])
 
-	core.EncodeJsonResponse(w, http.StatusOK, recipe)
+	if err != nil {
+		core.EncodeJsonResponse(w, http.StatusBadRequest, nil)
+		return
+	}
+
+	recipe, err := h.service.GetRecipe(oid)
+
+	if err != nil {
+		core.EncodeJsonResponse(w, http.StatusInternalServerError, nil)
+	} else {
+		core.EncodeJsonResponse(w, http.StatusOK, recipe)
+	}
 }
 
 func (h *recipeHandler) CreateRecipe(w http.ResponseWriter, r *http.Request) {
 	var recipeName RecipeName
-	decodeBody(r, &recipeName)
+	errExists := decodeBody(r, &recipeName)
 
-	core.EncodeJsonResponse(w, http.StatusCreated, h.service.CreateRecipe(recipeName))
+	if errExists {
+		core.EncodeJsonResponse(w, http.StatusBadRequest, nil)
+		return
+	}
+
+	oid, err := h.service.CreateRecipe(recipeName)
+
+	if err != nil {
+		log.Println(err)
+		core.EncodeJsonResponse(w, http.StatusInternalServerError, nil)
+	} else {
+		log.Println(oid)
+		core.EncodeJsonResponse(w, http.StatusCreated, oid)
+	}
 }
 
 func (h *recipeHandler) UpdateRecipe(w http.ResponseWriter, r *http.Request) {
 	var recipe Recipe
-	decodeBody(r, &recipe)
+	errExists := decodeBody(r, &recipe)
 
-	core.EncodeJsonResponse(w, http.StatusOK, h.service.UpdateRecipe(core.ConvertHexToObjectId(mux.Vars(r)["id"]), recipe))
+	if errExists {
+		core.EncodeJsonResponse(w, http.StatusBadRequest, nil)
+		return
+	}
+
+	oid, err := core.ConvertHexToObjectId(mux.Vars(r)["id"])
+
+	if err != nil {
+		core.EncodeJsonResponse(w, http.StatusBadRequest, nil)
+		return
+	}
+
+	id, err := h.service.UpdateRecipe(oid, recipe)
+
+	if err != nil {
+		core.EncodeJsonResponse(w, http.StatusInternalServerError, nil)
+	} else {
+		core.EncodeJsonResponse(w, http.StatusOK, id)
+	}
 }
 
 func (h *recipeHandler) DeleteRecipe(w http.ResponseWriter, r *http.Request) {
-	core.EncodeJsonResponse(w, http.StatusOK, h.service.DeleteRecipe(core.ConvertHexToObjectId(mux.Vars(r)["id"])))
+	oid, err := core.ConvertHexToObjectId(mux.Vars(r)["id"])
+
+	if err != nil {
+		core.EncodeJsonResponse(w, http.StatusBadRequest, nil)
+		return
+	}
+
+	err = h.service.DeleteRecipe(oid)
+
+	if err != nil {
+		core.EncodeJsonResponse(w, http.StatusInternalServerError, nil)
+	} else {
+		core.EncodeJsonResponse(w, http.StatusNoContent, nil)
+	}
 }
 
 func (h *recipeHandler) AddIngredientToRecipe(w http.ResponseWriter, r *http.Request) {
 	var ingredientDetails IngredientDetails
-	decodeBody(r, &ingredientDetails)
+	errExists := decodeBody(r, &ingredientDetails)
 
-	core.EncodeJsonResponse(w, http.StatusOK, h.service.AddIngredientToRecipe(core.ConvertHexToObjectId(mux.Vars(r)["recipeId"]),
-		core.ConvertHexToObjectId(mux.Vars(r)["ingredientId"]), ingredientDetails))
+	if errExists {
+		core.EncodeJsonResponse(w, http.StatusBadRequest, nil)
+		return
+	}
+
+	recipeId, err := core.ConvertHexToObjectId(mux.Vars(r)["recipeId"])
+
+	if err != nil {
+		core.EncodeJsonResponse(w, http.StatusBadRequest, nil)
+		return
+	}
+
+	ingredientId, err := core.ConvertHexToObjectId(mux.Vars(r)["ingredientId"])
+
+	if err != nil {
+		core.EncodeJsonResponse(w, http.StatusBadRequest, nil)
+		return
+	}
+
+	err, statusCode, recipe := h.service.AddIngredientToRecipe(recipeId, ingredientId, ingredientDetails)
+
+	if err != nil {
+		core.EncodeJsonResponse(w, statusCode, nil)
+	} else {
+		core.EncodeJsonResponse(w, http.StatusOK, recipe)
+	}
 }
 
 func (h *recipeHandler) GetRecipeRoutes() core.Routes {
@@ -98,9 +181,16 @@ func (h *recipeHandler) GetRecipeRoutes() core.Routes {
 	}
 }
 
-func decodeBody(r *http.Request, storeVar interface{}) {
+func decodeBody(r *http.Request, storeVar interface{}) bool {
 	err := json.NewDecoder(r.Body).Decode(&storeVar)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Println(err.Error())
+		return true
 	}
+
+	if core.Validate(storeVar) {
+		return true
+	}
+
+	return false
 }

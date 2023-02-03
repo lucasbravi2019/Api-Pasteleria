@@ -1,7 +1,9 @@
 package recipes
 
 import (
+	"errors"
 	"log"
+	"net/http"
 
 	"github.com/lucasbravi2019/pasteleria/api/ingredients"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -13,45 +15,53 @@ type recipeService struct {
 }
 
 type RecipeService interface {
-	GetAllRecipes() []Recipe
-	GetRecipe(oid primitive.ObjectID) Recipe
-	CreateRecipe(recipe RecipeName) string
-	UpdateRecipe(oid primitive.ObjectID, recipe Recipe) string
-	DeleteRecipe(oid primitive.ObjectID) string
-	AddIngredientToRecipe(recipeOid primitive.ObjectID, ingredientOid primitive.ObjectID, ingredientDetails IngredientDetails) string
+	GetAllRecipes() ([]Recipe, error)
+	GetRecipe(oid primitive.ObjectID) (Recipe, error)
+	CreateRecipe(recipe RecipeName) (string, error)
+	UpdateRecipe(oid primitive.ObjectID, recipe Recipe) (string, error)
+	DeleteRecipe(oid primitive.ObjectID) error
+	AddIngredientToRecipe(recipeOid primitive.ObjectID, ingredientOid primitive.ObjectID, ingredientDetails IngredientDetails) (error, int, Recipe)
 }
 
 var recipeServiceInstance *recipeService
 
-func (s *recipeService) GetAllRecipes() []Recipe {
+func (s *recipeService) GetAllRecipes() ([]Recipe, error) {
 	return s.recipeRepository.FindAllRecipes()
 }
 
-func (s *recipeService) GetRecipe(oid primitive.ObjectID) Recipe {
+func (s *recipeService) GetRecipe(oid primitive.ObjectID) (Recipe, error) {
 	return s.recipeRepository.FindRecipeByOID(oid)
 }
 
-func (s *recipeService) CreateRecipe(recipe RecipeName) string {
+func (s *recipeService) CreateRecipe(recipe RecipeName) (string, error) {
 	return s.recipeRepository.CreateRecipe(recipe)
 }
 
-func (s *recipeService) UpdateRecipe(oid primitive.ObjectID, recipe Recipe) string {
+func (s *recipeService) UpdateRecipe(oid primitive.ObjectID, recipe Recipe) (string, error) {
 	return s.recipeRepository.UpdateRecipe(oid, recipe)
 }
 
-func (s *recipeService) DeleteRecipe(oid primitive.ObjectID) string {
+func (s *recipeService) DeleteRecipe(oid primitive.ObjectID) error {
 	return s.recipeRepository.DeleteRecipe(oid)
 }
 
 func (s *recipeService) AddIngredientToRecipe(recipeOid primitive.ObjectID, ingredientOid primitive.ObjectID,
-	ingredientDetails IngredientDetails) string {
-	recipe := s.recipeRepository.FindRecipeByOID(recipeOid)
+	ingredientDetails IngredientDetails) (error, int, Recipe) {
+	recipe, err := s.recipeRepository.FindRecipeByOID(recipeOid)
 
-	ingredient := s.ingredientRepository.FindIngredientByOID(ingredientOid)
+	if err != nil {
+		return err, http.StatusNotFound, Recipe{}
+	}
+
+	ingredient, err := s.ingredientRepository.FindIngredientByOID(ingredientOid)
+
+	if err != nil {
+		return errors.New("no se encontró el ingrediente"), http.StatusNotFound, Recipe{}
+	}
 
 	if ingredient.Metric != ingredientDetails.Metric {
 		log.Println("La unidad de medida no coincide")
-		return "La unidad de medida no coincide"
+		return errors.New("la unidad de medida no coincide"), http.StatusBadRequest, Recipe{}
 	}
 
 	var recipeIngredient RecipeIngredient = RecipeIngredient{
@@ -69,5 +79,11 @@ func (s *recipeService) AddIngredientToRecipe(recipeOid primitive.ObjectID, ingr
 		return result
 	}()
 
-	return s.recipeRepository.UpdateRecipe(recipeOid, recipe)
+	_, err = s.recipeRepository.UpdateRecipe(recipeOid, recipe)
+
+	if err != nil {
+		return err, http.StatusInternalServerError, Recipe{}
+	}
+
+	return nil, http.StatusOK, recipe
 }
