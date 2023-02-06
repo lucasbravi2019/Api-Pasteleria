@@ -43,22 +43,22 @@ func (h *handler) DeletePackage(w http.ResponseWriter, r *http.Request) {
 func (h *handler) GetPackageRoutes() core.Routes {
 	return core.Routes{
 		core.Route{
-			Path:        "/package",
+			Path:        "/packages",
 			HandlerFunc: h.GetPackages,
 			Method:      "GET",
 		},
 		core.Route{
-			Path:        "/package",
+			Path:        "/packages",
 			HandlerFunc: h.CreatePackage,
 			Method:      "POST",
 		},
 		core.Route{
-			Path:        "/package/{id}",
+			Path:        "/packages/{id}",
 			HandlerFunc: h.UpdatePackage,
 			Method:      "PUT",
 		},
 		core.Route{
-			Path:        "/package/{id}",
+			Path:        "/packages/{id}",
 			HandlerFunc: h.DeletePackage,
 			Method:      "DELETE",
 		},
