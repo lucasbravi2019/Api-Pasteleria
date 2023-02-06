@@ -2,28 +2,29 @@ package ingredients
 
 import "github.com/lucasbravi2019/pasteleria/core"
 
-func GetIngredientHandlerInstance() *ingredientHandler {
+func GetIngredientHandlerInstance() *handler {
 	if ingredientHandlerInstance == nil {
-		ingredientHandlerInstance = &ingredientHandler{
-			ingredientService: GetIngredientServiceInstance(),
+		ingredientHandlerInstance = &handler{
+			service: GetIngredientServiceInstance(),
 		}
 	}
 	return ingredientHandlerInstance
 }
 
-func GetIngredientServiceInstance() *ingredientService {
+func GetIngredientServiceInstance() *service {
 	if ingredientServiceInstance == nil {
-		ingredientServiceInstance = &ingredientService{
+		ingredientServiceInstance = &service{
 			repository: GetIngredientRepositoryInstance(),
 		}
 	}
 	return ingredientServiceInstance
 }
 
-func GetIngredientRepositoryInstance() *ingredientRepository {
+func GetIngredientRepositoryInstance() *repository {
 	if ingredientRepositoryInstance == nil {
-		ingredientRepositoryInstance = &ingredientRepository{
-			db: core.GetDatabaseConnection().Collection("ingredients"),
+		ingredientRepositoryInstance = &repository{
+			ingredientCollection: core.GetDatabaseConnection().Collection("ingredients"),
+			packageCollection:    core.GetDatabaseConnection().Collection("packages"),
 		}
 	}
 	return ingredientRepositoryInstance

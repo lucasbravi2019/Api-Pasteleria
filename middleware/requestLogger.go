@@ -8,11 +8,7 @@ import (
 	"net/http"
 )
 
-type JsonRequest struct {
-	Data json.RawMessage
-}
-
-func RequestLogMiddleware(fn func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
+func RequestLoggerMiddleware(fn func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var jsonRequest *json.RawMessage = &json.RawMessage{}
 

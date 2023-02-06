@@ -7,7 +7,7 @@ import (
 	"github.com/lucasbravi2019/pasteleria/core"
 )
 
-type ingredientService struct {
+type service struct {
 	repository IngredientRepository
 }
 
@@ -16,15 +16,16 @@ type IngredientService interface {
 	CreateIngredient(r *http.Request) (int, *Ingredient)
 	UpdateIngredient(r *http.Request) (int, *Ingredient)
 	DeleteIngredient(r *http.Request) (int, *Ingredient)
+	AddPackageToIngredient(r *http.Request) (int, *Ingredient)
 }
 
-var ingredientServiceInstance *ingredientService
+var ingredientServiceInstance *service
 
-func (s *ingredientService) GetAllIngredients() (int, []Ingredient) {
+func (s *service) GetAllIngredients() (int, []Ingredient) {
 	return s.repository.GetAllIngredients()
 }
 
-func (s *ingredientService) CreateIngredient(r *http.Request) (int, *Ingredient) {
+func (s *service) CreateIngredient(r *http.Request) (int, *Ingredient) {
 	var ingredient *Ingredient = &Ingredient{}
 
 	invalidBody := core.DecodeBody(r, ingredient)
@@ -36,7 +37,7 @@ func (s *ingredientService) CreateIngredient(r *http.Request) (int, *Ingredient)
 	return s.repository.CreateIngredient(ingredient)
 }
 
-func (s *ingredientService) UpdateIngredient(r *http.Request) (int, *Ingredient) {
+func (s *service) UpdateIngredient(r *http.Request) (int, *Ingredient) {
 	oid := core.ConvertHexToObjectId(mux.Vars(r)["id"])
 
 	if oid == nil {
@@ -54,7 +55,7 @@ func (s *ingredientService) UpdateIngredient(r *http.Request) (int, *Ingredient)
 	return s.repository.UpdateIngredient(oid, ingredient)
 }
 
-func (s *ingredientService) DeleteIngredient(r *http.Request) (int, *Ingredient) {
+func (s *service) DeleteIngredient(r *http.Request) (int, *Ingredient) {
 	oid := core.ConvertHexToObjectId(mux.Vars(r)["id"])
 
 	if oid == nil {
@@ -62,4 +63,21 @@ func (s *ingredientService) DeleteIngredient(r *http.Request) (int, *Ingredient)
 	}
 
 	return s.repository.DeleteIngredient(oid)
+}
+
+func (s *service) AddPackageToIngredient(r *http.Request) (int, *Ingredient) {
+	ingredientOid := mux.Vars(r)["ingredientId"]
+	packageOid := mux.Vars(r)["packageId"]
+
+	var ingredientPackagePrice *IngredientPackagePrice = &IngredientPackagePrice{}
+
+	core.DecodeBody(r, ingredientPackagePrice)
+
+	var ingredientPackageDto *IngredientPackageDTO = &IngredientPackageDTO{
+		IngredientOid: *core.ConvertHexToObjectId(ingredientOid),
+		PackageOid:    *core.ConvertHexToObjectId(packageOid),
+		Price:         ingredientPackagePrice.Price,
+	}
+
+	return s.repository.AddPackageToIngredient(*ingredientPackageDto)
 }
