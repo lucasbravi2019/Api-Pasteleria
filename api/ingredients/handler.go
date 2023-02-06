@@ -6,8 +6,8 @@ import (
 	"github.com/lucasbravi2019/pasteleria/core"
 )
 
-type ingredientHandler struct {
-	ingredientService IngredientService
+type handler struct {
+	service IngredientService
 }
 
 type IngredientHandler interface {
@@ -15,32 +15,38 @@ type IngredientHandler interface {
 	CreateIngredient(w http.ResponseWriter, r *http.Request)
 	UpdateIngredient(w http.ResponseWriter, r *http.Request)
 	DeleteIngredient(w http.ResponseWriter, r *http.Request)
+	AddPackageToIngredient(w http.ResponseWriter, r *http.Request)
 	GetIngredientRoutes() core.Routes
 }
 
-var ingredientHandlerInstance *ingredientHandler
+var ingredientHandlerInstance *handler
 
-func (h *ingredientHandler) GetAllIngredients(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.ingredientService.GetAllIngredients()
+func (h *handler) GetAllIngredients(w http.ResponseWriter, r *http.Request) {
+	statusCode, body := h.service.GetAllIngredients()
 	core.EncodeJsonResponse(w, statusCode, body)
 }
 
-func (h *ingredientHandler) CreateIngredient(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.ingredientService.CreateIngredient(r)
+func (h *handler) CreateIngredient(w http.ResponseWriter, r *http.Request) {
+	statusCode, body := h.service.CreateIngredient(r)
 	core.EncodeJsonResponse(w, statusCode, body)
 }
 
-func (h *ingredientHandler) UpdateIngredient(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.ingredientService.UpdateIngredient(r)
+func (h *handler) UpdateIngredient(w http.ResponseWriter, r *http.Request) {
+	statusCode, body := h.service.UpdateIngredient(r)
 	core.EncodeJsonResponse(w, statusCode, body)
 }
 
-func (h *ingredientHandler) DeleteIngredient(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.ingredientService.DeleteIngredient(r)
+func (h *handler) DeleteIngredient(w http.ResponseWriter, r *http.Request) {
+	statusCode, body := h.service.DeleteIngredient(r)
 	core.EncodeJsonResponse(w, statusCode, body)
 }
 
-func (h *ingredientHandler) GetIngredientRoutes() core.Routes {
+func (h *handler) AddPackageToIngredient(w http.ResponseWriter, r *http.Request) {
+	statusCode, body := h.service.AddPackageToIngredient(r)
+	core.EncodeJsonResponse(w, statusCode, body)
+}
+
+func (h *handler) GetIngredientRoutes() core.Routes {
 	return core.Routes{
 		core.Route{
 			Path:        "/ingredients",
@@ -61,6 +67,11 @@ func (h *ingredientHandler) GetIngredientRoutes() core.Routes {
 			Path:        "/ingredients/{id}",
 			HandlerFunc: h.DeleteIngredient,
 			Method:      "DELETE",
+		},
+		core.Route{
+			Path:        "/ingredients/{ingredientId}/packages/{packageId}",
+			HandlerFunc: h.AddPackageToIngredient,
+			Method:      "PUT",
 		},
 	}
 }

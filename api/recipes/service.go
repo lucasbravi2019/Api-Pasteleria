@@ -2,12 +2,14 @@ package recipes
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	"github.com/lucasbravi2019/pasteleria/api/ingredients"
 	"github.com/lucasbravi2019/pasteleria/core"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type recipeService struct {
@@ -119,10 +121,14 @@ func (s *recipeService) AddIngredientToRecipe(r *http.Request) (int, *Recipe) {
 		return http.StatusBadRequest, nil
 	}
 
+	ingredientPackage := getIngredientPackage(ingredientDetails.Metric, ingredient.Packages)
+
 	var recipeIngredient *RecipeIngredient = &RecipeIngredient{
-		Ingredient: *ingredient,
-		Price:      float32(ingredientDetails.Quantity) / float32(ingredient.Quantity) * ingredient.Price,
-		Quantity:   ingredientDetails.Quantity,
+		ID:       primitive.NewObjectID(),
+		Name:     ingredient.Name,
+		Package:  *ingredientPackage,
+		Price:    float32(ingredientDetails.Quantity) / float32(ingredientPackage.Package.Quantity) * ingredientPackage.Price,
+		Quantity: ingredientDetails.Quantity,
 	}
 
 	recipe.Ingredients = append(recipe.Ingredients, *recipeIngredient)
@@ -144,7 +150,7 @@ func (s *recipeService) AddIngredientToRecipe(r *http.Request) (int, *Recipe) {
 }
 
 func validate(ingredient *ingredients.Ingredient, ingredientDetails *IngredientDetails) error {
-	if ingredient.Metric != ingredientDetails.Metric {
+	if !ingredientMetricMatches(ingredientDetails.Metric, ingredient.Packages) {
 		log.Println("La unidad de medida no coincide")
 		return errors.New("la unidad de medida no coincide")
 	}
@@ -152,6 +158,24 @@ func validate(ingredient *ingredients.Ingredient, ingredientDetails *IngredientD
 	if ingredientDetails.Quantity == 0 {
 		log.Println("La cantidad del ingrediente no puede ser 0")
 		return errors.New("la cantidad del ingrediente no puede ser 0")
+	}
+	return nil
+}
+
+func ingredientMetricMatches(metric string, packages []ingredients.IngredientPackage) bool {
+	for _, pack := range packages {
+		if fmt.Sprintf("%g %s", pack.Package.Quantity, pack.Package.Metric) == metric {
+			return true
+		}
+	}
+	return false
+}
+
+func getIngredientPackage(metric string, packages []ingredients.IngredientPackage) *ingredients.IngredientPackage {
+	for _, pack := range packages {
+		if fmt.Sprintf("%g %s", pack.Package.Quantity, pack.Package.Metric) == metric {
+			return &pack
+		}
 	}
 	return nil
 }

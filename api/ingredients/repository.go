@@ -4,15 +4,18 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
+	"github.com/lucasbravi2019/pasteleria/api/packages"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type ingredientRepository struct {
-	db *mongo.Collection
+type repository struct {
+	ingredientCollection *mongo.Collection
+	packageCollection    *mongo.Collection
 }
 
 type IngredientRepository interface {
@@ -21,15 +24,16 @@ type IngredientRepository interface {
 	CreateIngredient(ingredient *Ingredient) (int, *Ingredient)
 	UpdateIngredient(oid *primitive.ObjectID, ingredient *Ingredient) (int, *Ingredient)
 	DeleteIngredient(oid *primitive.ObjectID) (int, *Ingredient)
+	AddPackageToIngredient(dto IngredientPackageDTO) (int, *Ingredient)
 }
 
-var ingredientRepositoryInstance *ingredientRepository
+var ingredientRepositoryInstance *repository
 
-func (r *ingredientRepository) GetAllIngredients() (int, []Ingredient) {
+func (r *repository) GetAllIngredients() (int, []Ingredient) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	results, err := r.db.Find(ctx, bson.D{})
+	results, err := r.ingredientCollection.Find(ctx, bson.D{})
 
 	if err != nil {
 		log.Println(err.Error())
@@ -50,13 +54,13 @@ func (r *ingredientRepository) GetAllIngredients() (int, []Ingredient) {
 	return http.StatusOK, ingredients
 }
 
-func (r *ingredientRepository) FindIngredientByOID(oid *primitive.ObjectID) (int, *Ingredient) {
+func (r *repository) FindIngredientByOID(oid *primitive.ObjectID) (int, *Ingredient) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	filter := bson.M{"_id": oid}
 
-	result := r.db.FindOne(ctx, filter)
+	result := r.ingredientCollection.FindOne(ctx, filter)
 
 	if result.Err() != nil {
 		log.Println(result.Err())
@@ -75,40 +79,71 @@ func (r *ingredientRepository) FindIngredientByOID(oid *primitive.ObjectID) (int
 	return http.StatusOK, ingredient
 }
 
-func (r *ingredientRepository) CreateIngredient(ingredient *Ingredient) (int, *Ingredient) {
+func (r *repository) CreateIngredient(ingredient *Ingredient) (int, *Ingredient) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	result, err := r.db.InsertOne(ctx, *ingredient)
+	project := bson.D{
+		{Key: "$project", Value: bson.D{
+			{Key: "name", Value: bson.D{
+				{Key: "$toLower", Value: "$name"},
+			}},
+		}},
+	}
+
+	match := bson.D{
+		{Key: "$match", Value: bson.D{
+			{Key: "name", Value: strings.ToLower(ingredient.Name)},
+		}},
+	}
+
+	cursor, err := r.ingredientCollection.Aggregate(ctx, mongo.Pipeline{project, match})
+
+	if err != nil {
+		log.Println(err.Error())
+		return http.StatusInternalServerError, nil
+	}
+
+	var ingredientsDuplicated *[]Ingredient = &[]Ingredient{}
+
+	err = cursor.All(ctx, ingredientsDuplicated)
 
 	if err != nil {
 		log.Println(err.Error())
 		return http.StatusBadRequest, nil
 	}
 
-	oid := result.InsertedID
+	if len(*ingredientsDuplicated) > 0 {
+		return http.StatusBadRequest, nil
+	}
+
+	insertResult, err := r.ingredientCollection.InsertOne(ctx, *ingredient)
+
+	if err != nil {
+		log.Println(err.Error())
+		return http.StatusBadRequest, nil
+	}
+
+	oid := insertResult.InsertedID
 
 	if oid == nil {
 		return http.StatusInternalServerError, nil
 	}
 
 	var ingredientCreated *Ingredient = &Ingredient{
-		ID:       oid.(primitive.ObjectID),
-		Name:     ingredient.Name,
-		Metric:   ingredient.Metric,
-		Quantity: ingredient.Quantity,
-		Price:    ingredient.Price,
+		ID:   oid.(primitive.ObjectID),
+		Name: ingredient.Name,
 	}
 
 	return http.StatusCreated, ingredientCreated
 }
 
-func (r *ingredientRepository) UpdateIngredient(oid *primitive.ObjectID, ingredient *Ingredient) (int, *Ingredient) {
+func (r *repository) UpdateIngredient(oid *primitive.ObjectID, ingredient *Ingredient) (int, *Ingredient) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	filter := bson.M{"_id": oid}
-	result, err := r.db.ReplaceOne(ctx, filter, ingredient)
+	result, err := r.ingredientCollection.ReplaceOne(ctx, filter, ingredient)
 
 	if err != nil {
 		log.Println(err.Error())
@@ -124,21 +159,19 @@ func (r *ingredientRepository) UpdateIngredient(oid *primitive.ObjectID, ingredi
 	var ingredientUpdated *Ingredient = &Ingredient{
 		ID:       uid.(primitive.ObjectID),
 		Name:     ingredient.Name,
-		Metric:   ingredient.Metric,
-		Quantity: ingredient.Quantity,
-		Price:    ingredient.Price,
+		Packages: ingredient.Packages,
 	}
 
 	return http.StatusOK, ingredientUpdated
 }
 
-func (r *ingredientRepository) DeleteIngredient(oid *primitive.ObjectID) (int, *Ingredient) {
+func (r *repository) DeleteIngredient(oid *primitive.ObjectID) (int, *Ingredient) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	filter := bson.M{"_id": oid}
 
-	result := r.db.FindOneAndDelete(ctx, filter)
+	result := r.ingredientCollection.FindOneAndDelete(ctx, filter)
 
 	var ingredientDeleted *Ingredient = &Ingredient{}
 
@@ -149,4 +182,73 @@ func (r *ingredientRepository) DeleteIngredient(oid *primitive.ObjectID) (int, *
 	}
 
 	return http.StatusOK, ingredientDeleted
+}
+
+func (r *repository) AddPackageToIngredient(dto IngredientPackageDTO) (int, *Ingredient) {
+	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
+	defer cancel()
+
+	ingredientFilter := bson.M{"_id": dto.IngredientOid}
+
+	result := r.ingredientCollection.FindOne(ctx, ingredientFilter)
+
+	var ingredientFound *Ingredient = &Ingredient{}
+
+	err := result.Decode(ingredientFound)
+
+	if err != nil {
+		log.Println("Ingredient not found")
+		log.Println(err.Error())
+		return http.StatusNotFound, nil
+	}
+
+	packageFilter := bson.M{"_id": dto.PackageOid}
+
+	result = r.packageCollection.FindOne(ctx, packageFilter)
+
+	var packageFound *packages.Package = &packages.Package{}
+
+	err = result.Decode(packageFound)
+
+	if err != nil {
+		log.Println("Package not found")
+		log.Println(err.Error())
+		return http.StatusNotFound, nil
+	}
+
+	var ingredientPackage *IngredientPackage = &IngredientPackage{
+		Package: *packageFound,
+		Price:   dto.Price,
+	}
+
+	var anotherPackageExists bool = false
+
+	for i := 0; i < len(ingredientFound.Packages); i++ {
+		if ingredientFound.Packages[i].Package.ID == ingredientPackage.Package.ID {
+			ingredientFound.Packages[i] = *ingredientPackage
+			anotherPackageExists = true
+			break
+		}
+	}
+
+	if !anotherPackageExists {
+		ingredientFound.Packages = append(ingredientFound.Packages, *ingredientPackage)
+	}
+
+	document := bson.M{"$set": bson.M{
+		"packages": ingredientFound.Packages,
+	}}
+
+	updateResult, err := r.ingredientCollection.UpdateByID(ctx, dto.IngredientOid, document)
+
+	if err != nil {
+		log.Println(err.Error())
+		return http.StatusInternalServerError, nil
+	}
+
+	if updateResult.ModifiedCount < 1 {
+		log.Println("El ingrediente no fue actualizado")
+	}
+
+	return http.StatusOK, ingredientFound
 }

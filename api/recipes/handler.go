@@ -80,7 +80,7 @@ func (h *recipeHandler) GetRecipeRoutes() core.Routes {
 			Method:      "DELETE",
 		},
 		core.Route{
-			Path:        "/recipes/{recipeId}/ingredient/{ingredientId}",
+			Path:        "/recipes/{recipeId}/ingredients/{ingredientId}",
 			HandlerFunc: h.AddIngredientToRecipe,
 			Method:      "PUT",
 		},
