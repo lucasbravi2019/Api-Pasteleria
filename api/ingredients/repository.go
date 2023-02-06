@@ -16,6 +16,7 @@ import (
 type repository struct {
 	ingredientCollection *mongo.Collection
 	packageCollection    *mongo.Collection
+	recipeCollection     *mongo.Collection
 }
 
 type IngredientRepository interface {
@@ -25,6 +26,7 @@ type IngredientRepository interface {
 	UpdateIngredient(oid *primitive.ObjectID, ingredient *Ingredient) (int, *Ingredient)
 	DeleteIngredient(oid *primitive.ObjectID) (int, *Ingredient)
 	AddPackageToIngredient(dto IngredientPackageDTO) (int, *Ingredient)
+	ChangeIngredientPrice(*primitive.ObjectID, *IngredientPackagePrice) (int, *[]Ingredient)
 }
 
 var ingredientRepositoryInstance *repository
@@ -251,4 +253,51 @@ func (r *repository) AddPackageToIngredient(dto IngredientPackageDTO) (int, *Ing
 	}
 
 	return http.StatusOK, ingredientFound
+}
+
+func (r *repository) ChangeIngredientPrice(ingredientPackageOid *primitive.ObjectID, ingredientPackagePrice *IngredientPackagePrice) (int, *[]Ingredient) {
+	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
+	defer cancel()
+
+	filter := bson.M{"packages.package._id": ingredientPackageOid}
+
+	cursor, err := r.ingredientCollection.Find(ctx, filter)
+
+	if err != nil {
+		log.Println(err.Error())
+		return http.StatusBadRequest, nil
+	}
+
+	var ingredients []Ingredient
+
+	err = cursor.All(ctx, &ingredients)
+
+	if err != nil {
+		log.Println(err.Error())
+		return http.StatusBadRequest, nil
+	}
+
+	for i := 0; i < len(ingredients); i++ {
+		for j := 0; j < len(ingredients[i].Packages); j++ {
+			envase := ingredients[i].Packages[j]
+			if envase.Package.ID == *ingredientPackageOid {
+				ingredients[i].Packages[j].Price = ingredientPackagePrice.Price
+				document := bson.M{"$set": bson.M{
+					"packages": ingredients[i].Packages,
+				}}
+				updateResult, err := r.ingredientCollection.UpdateByID(ctx, ingredients[i].ID, document)
+
+				if err != nil {
+					log.Println(err.Error())
+					return http.StatusInternalServerError, nil
+				}
+
+				if updateResult.MatchedCount == 0 {
+					return http.StatusNotFound, nil
+				}
+			}
+		}
+	}
+
+	return http.StatusOK, &ingredients
 }
