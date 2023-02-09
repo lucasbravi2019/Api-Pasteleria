@@ -64,14 +64,11 @@ func (r *repository) CreatePackage(body *Package) (int, *Package) {
 		return http.StatusBadRequest, nil
 	}
 
-	insertedId := result.InsertedID
-
-	if insertedId == nil {
+	if result.InsertedID == nil {
 		return http.StatusInternalServerError, nil
 	}
 
-	oid := result.InsertedID.(primitive.ObjectID)
-	body.ID = oid
+	body.ID = result.InsertedID.(primitive.ObjectID)
 
 	return http.StatusCreated, body
 }
@@ -81,22 +78,11 @@ func (r *repository) UpdatePackage(oid *primitive.ObjectID, body *Package) (int,
 
 	defer cancel()
 
-	document := bson.M{"$set": bson.M{
-		"metric":   body.Metric,
-		"quantity": body.Quantity,
-	}}
-	result, err := r.db.UpdateByID(ctx, *oid, document)
+	err := r.db.FindOneAndUpdate(ctx, GetPackageById(*oid), UpdatePackageById(*body)).Decode(body)
 
 	if err != nil {
 		log.Println(err.Error())
 		return http.StatusBadRequest, nil
-	}
-
-	body.ID = *oid
-
-	if result.ModifiedCount < 1 {
-		log.Println("El paquete no fue actualizado")
-		return http.StatusOK, body
 	}
 
 	return http.StatusOK, body
@@ -107,11 +93,9 @@ func (r *repository) DeletePackage(oid *primitive.ObjectID) (int, *Package) {
 
 	defer cancel()
 
-	result := r.db.FindOneAndDelete(ctx, bson.M{"_id": oid})
-
 	var packageDeleted *Package = &Package{}
 
-	err := result.Decode(&packageDeleted)
+	err := r.db.FindOneAndDelete(ctx, GetPackageById(*oid)).Decode(packageDeleted)
 
 	if err != nil {
 		log.Println("No pudo borrarse el paquete")

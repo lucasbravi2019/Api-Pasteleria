@@ -53,19 +53,17 @@ func (r *recipeRepository) FindAllRecipes() (int, []Recipe) {
 func (r *recipeRepository) FindRecipeByOID(oid *primitive.ObjectID) (int, *Recipe) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-	filter := bson.D{primitive.E{Key: "_id", Value: oid}}
-	result := r.db.FindOne(ctx, filter)
 
-	var recipe Recipe
+	var recipe *Recipe = &Recipe{}
 
-	err := result.Decode(&recipe)
+	err := r.db.FindOne(ctx, GetRecipeById(*oid)).Decode(recipe)
 
 	if err != nil {
 		log.Println(err.Error())
 		return http.StatusNotFound, nil
 	}
 
-	return http.StatusOK, &recipe
+	return http.StatusOK, recipe
 }
 
 func (r *recipeRepository) CreateRecipe(recipe *RecipeName) (int, *Recipe) {
@@ -97,50 +95,29 @@ func (r *recipeRepository) UpdateRecipe(oid *primitive.ObjectID, recipe *Recipe)
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	filter := bson.M{"_id": oid}
-
 	recipe.ID = *oid
 
-	result, err := r.db.ReplaceOne(ctx, filter, recipe)
+	err := r.db.FindOneAndUpdate(ctx, GetRecipeById(*oid), UpdateRecipe(*recipe)).Decode(recipe)
 
 	if err != nil {
 		log.Println(err.Error())
 		return http.StatusBadRequest, nil
 	}
 
-	if result.ModifiedCount < 1 {
-		log.Println("No se actualizó la receta")
-	}
-
-	var recipeUpdated *Recipe = &Recipe{
-		ID:          *oid,
-		Name:        recipe.Name,
-		Ingredients: recipe.Ingredients,
-		Price:       recipe.Price,
-	}
-
-	return http.StatusOK, recipeUpdated
+	return http.StatusOK, recipe
 }
 
 func (r *recipeRepository) DeleteRecipe(oid *primitive.ObjectID) (int, *Recipe) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	filter := bson.D{primitive.E{Key: "_id", Value: oid}}
-
-	result := r.db.FindOneAndDelete(ctx, filter)
-
 	var recipeDeleted *Recipe = &Recipe{}
 
-	err := result.Decode(recipeDeleted)
+	err := r.db.FindOneAndDelete(ctx, GetRecipeById(*oid)).Decode(recipeDeleted)
 
 	if err != nil {
 		log.Println(err.Error())
 		return http.StatusNotFound, nil
-	}
-
-	if recipeDeleted.ID.IsZero() {
-		return http.StatusInternalServerError, nil
 	}
 
 	return http.StatusOK, recipeDeleted

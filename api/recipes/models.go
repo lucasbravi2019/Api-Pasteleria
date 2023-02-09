@@ -9,20 +9,18 @@ type Recipe struct {
 	ID          primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
 	Name        string             `bson:"name" json:"name,omitempty" validate:"required"`
 	Ingredients []RecipeIngredient `bson:"ingredients" json:"ingredients,omitempty" validate:"required"`
-	Price       float32            `bson:"price" json:"price,omitempty" validate:"required"`
+	Price       float64            `bson:"price" json:"price,omitempty" validate:"required"`
 }
 
 type RecipeIngredient struct {
-	ID       primitive.ObjectID            `bson:"_id" json:"id,omitempty"`
-	Name     string                        `bson:"name" json:"name" validate:"required"`
-	Package  ingredients.IngredientPackage `bson:"package" json:"package" validate:"required"`
-	Price    float32                       `bson:"price" json:"price,omitempty"`
-	Quantity int                           `bson:"quantity" json:"quantity,omitempty"`
+	ID                primitive.ObjectID            `bson:"_id" json:"id,omitempty"`
+	Name              string                        `bson:"name" json:"name" validate:"required"`
+	IngredientPackage ingredients.IngredientPackage `bson:"ingredientPackage" json:"ingredientPackage" validate:"required"`
 }
 
 type IngredientDetails struct {
-	Metric   string `json:"metric,omitempty"`
-	Quantity int    `json:"quantity,omitempty"`
+	Metric   string  `json:"metric,omitempty"`
+	Quantity float32 `json:"quantity,omitempty"`
 }
 
 type RecipeName struct {
