@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/lucasbravi2019/pasteleria/api/packages"
 	"github.com/lucasbravi2019/pasteleria/core"
 )
 
@@ -17,7 +18,7 @@ type IngredientService interface {
 	UpdateIngredient(r *http.Request) (int, *Ingredient)
 	DeleteIngredient(r *http.Request) (int, *Ingredient)
 	AddPackageToIngredient(r *http.Request) (int, *Ingredient)
-	ChangeIngredientPrice(r *http.Request) (int, *[]Ingredient)
+	ChangeIngredientPrice(r *http.Request) (int, *Ingredient)
 }
 
 var ingredientServiceInstance *service
@@ -34,6 +35,8 @@ func (s *service) CreateIngredient(r *http.Request) (int, *Ingredient) {
 	if invalidBody {
 		return http.StatusBadRequest, nil
 	}
+
+	ingredient.Packages = []packages.Package{}
 
 	return s.repository.CreateIngredient(ingredient)
 }
@@ -83,7 +86,7 @@ func (s *service) AddPackageToIngredient(r *http.Request) (int, *Ingredient) {
 	return s.repository.AddPackageToIngredient(*ingredientPackageDto)
 }
 
-func (s *service) ChangeIngredientPrice(r *http.Request) (int, *[]Ingredient) {
+func (s *service) ChangeIngredientPrice(r *http.Request) (int, *Ingredient) {
 	ingredientPackageId := mux.Vars(r)["id"]
 	ingredientPackageOid := core.ConvertHexToObjectId(ingredientPackageId)
 
