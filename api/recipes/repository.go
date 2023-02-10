@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -16,57 +15,62 @@ type recipeRepository struct {
 }
 
 type RecipeRepository interface {
-	FindAllRecipes() (int, []Recipe)
-	FindRecipeByOID(oid *primitive.ObjectID) (int, *Recipe)
-	CreateRecipe(recipe *RecipeName) (int, *Recipe)
-	UpdateRecipe(oid *primitive.ObjectID, recipe *Recipe) (int, *Recipe)
-	DeleteRecipe(oid *primitive.ObjectID) (int, *Recipe)
+	FindAllRecipes() (int, *[]RecipeDTO)
+	FindRecipeByOID(oid *primitive.ObjectID) (int, *RecipeDTO)
+	CreateRecipe(recipe *RecipeNameDTO) (int, *RecipeDTO)
+	UpdateRecipeName(oid *primitive.ObjectID, recipeName *RecipeNameDTO) (int, *RecipeDTO)
+	AddIngredientToRecipe(oid *primitive.ObjectID, recipe *RecipeIngredient) (int, *RecipeDTO)
+	DeleteRecipe(oid *primitive.ObjectID) (int, *RecipeDTO)
 }
 
 var recipeRepositoryInstance *recipeRepository
 
-func (r *recipeRepository) FindAllRecipes() (int, []Recipe) {
+func (r *recipeRepository) FindAllRecipes() (int, *[]RecipeDTO) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-	result, err := r.db.Find(ctx, bson.D{})
+
+	cursor, err := r.db.Aggregate(ctx, GetAggregateAllRecipe())
 
 	if err != nil {
 		log.Println(err.Error())
 		return http.StatusInternalServerError, nil
 	}
 
-	var recipes []Recipe
-	err = result.All(ctx, &recipes)
+	var recipes *[]RecipeDTO = &[]RecipeDTO{}
+	err = cursor.All(ctx, recipes)
 
 	if err != nil {
 		log.Println(err.Error())
 		return http.StatusNotFound, nil
-	}
-
-	if len(recipes) < 1 {
-		return http.StatusOK, []Recipe{}
 	}
 
 	return http.StatusOK, recipes
 }
 
-func (r *recipeRepository) FindRecipeByOID(oid *primitive.ObjectID) (int, *Recipe) {
+func (r *recipeRepository) FindRecipeByOID(oid *primitive.ObjectID) (int, *RecipeDTO) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	var recipe *Recipe = &Recipe{}
+	var recipe []RecipeDTO = []RecipeDTO{}
 
-	err := r.db.FindOne(ctx, GetRecipeById(*oid)).Decode(recipe)
+	cursor, err := r.db.Aggregate(ctx, GetAggregateRecipeById(*oid))
 
 	if err != nil {
 		log.Println(err.Error())
 		return http.StatusNotFound, nil
 	}
 
-	return http.StatusOK, recipe
+	err = cursor.All(ctx, &recipe)
+
+	if err != nil {
+		log.Println(err.Error())
+		return http.StatusInternalServerError, nil
+	}
+
+	return http.StatusOK, &recipe[0]
 }
 
-func (r *recipeRepository) CreateRecipe(recipe *RecipeName) (int, *Recipe) {
+func (r *recipeRepository) CreateRecipe(recipe *RecipeNameDTO) (int, *RecipeDTO) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -84,7 +88,7 @@ func (r *recipeRepository) CreateRecipe(recipe *RecipeName) (int, *Recipe) {
 		return http.StatusInternalServerError, nil
 	}
 
-	var recipeCreated *Recipe = &Recipe{
+	var recipeCreated *RecipeDTO = &RecipeDTO{
 		ID:   oid.(primitive.ObjectID),
 		Name: recipe.Name,
 	}
@@ -92,34 +96,92 @@ func (r *recipeRepository) CreateRecipe(recipe *RecipeName) (int, *Recipe) {
 	return http.StatusCreated, recipeCreated
 }
 
-func (r *recipeRepository) UpdateRecipe(oid *primitive.ObjectID, recipe *Recipe) (int, *Recipe) {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+func (r *recipeRepository) UpdateRecipeName(oid *primitive.ObjectID, recipeName *RecipeNameDTO) (int, *RecipeDTO) {
+	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
 	defer cancel()
 
-	recipe.ID = *oid
-
-	err := r.db.FindOneAndUpdate(ctx, GetRecipeById(*oid), UpdateRecipe(*recipe)).Decode(recipe)
+	_, err := r.db.UpdateOne(ctx, GetRecipeById(*oid), UpdateRecipeName(*recipeName))
 
 	if err != nil {
 		log.Println(err.Error())
 		return http.StatusBadRequest, nil
 	}
 
+	var recipe *RecipeDTO = &RecipeDTO{}
+
+	cursor, err := r.db.Aggregate(ctx, GetAggregateRecipeById(*oid))
+
+	if err != nil {
+		log.Println(err.Error())
+		return http.StatusInternalServerError, nil
+	}
+
+	err = cursor.Decode(recipe)
+
+	if err != nil {
+		log.Println(err.Error())
+		return http.StatusInternalServerError, nil
+	}
+
 	return http.StatusOK, recipe
 }
 
-func (r *recipeRepository) DeleteRecipe(oid *primitive.ObjectID) (int, *Recipe) {
+func (r *recipeRepository) AddIngredientToRecipe(oid *primitive.ObjectID, recipe *RecipeIngredient) (int, *RecipeDTO) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	var recipeDeleted *Recipe = &Recipe{}
+	_, err := r.db.UpdateOne(ctx, GetRecipeById(*oid), AddIngredientToRecipe(*recipe))
 
-	err := r.db.FindOneAndDelete(ctx, GetRecipeById(*oid)).Decode(recipeDeleted)
+	if err != nil {
+		log.Println(err.Error())
+		return http.StatusBadRequest, nil
+	}
+
+	var dto *RecipeDTO = &RecipeDTO{}
+
+	cursor, err := r.db.Aggregate(ctx, GetAggregateRecipeById(*oid))
+
+	if err != nil {
+		log.Println(err.Error())
+		return http.StatusInternalServerError, nil
+	}
+
+	err = cursor.Decode(dto)
+
+	if err != nil {
+		log.Println(err.Error())
+		return http.StatusInternalServerError, nil
+	}
+
+	return http.StatusOK, dto
+}
+
+func (r *recipeRepository) DeleteRecipe(oid *primitive.ObjectID) (int, *RecipeDTO) {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	_, err := r.db.DeleteOne(ctx, GetRecipeById(*oid))
 
 	if err != nil {
 		log.Println(err.Error())
 		return http.StatusNotFound, nil
 	}
 
-	return http.StatusOK, recipeDeleted
+	var dto *RecipeDTO = &RecipeDTO{}
+
+	cursor, err := r.db.Aggregate(ctx, GetAggregateRecipeById(*oid))
+
+	if err != nil {
+		log.Println(err.Error())
+		return http.StatusInternalServerError, nil
+	}
+
+	err = cursor.Decode(dto)
+
+	if err != nil {
+		log.Println(err.Error())
+		return http.StatusInternalServerError, nil
+	}
+
+	return http.StatusOK, dto
 }

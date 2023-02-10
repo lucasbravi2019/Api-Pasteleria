@@ -10,7 +10,6 @@ import (
 	"github.com/lucasbravi2019/pasteleria/api/ingredients"
 	"github.com/lucasbravi2019/pasteleria/api/packages"
 	"github.com/lucasbravi2019/pasteleria/core"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type recipeService struct {
@@ -19,21 +18,21 @@ type recipeService struct {
 }
 
 type RecipeService interface {
-	GetAllRecipes() (int, []Recipe)
-	GetRecipe(r *http.Request) (int, *Recipe)
-	CreateRecipe(r *http.Request) (int, *Recipe)
-	UpdateRecipe(r *http.Request) (int, *Recipe)
-	DeleteRecipe(r *http.Request) (int, *Recipe)
-	AddIngredientToRecipe(r *http.Request) (int, *Recipe)
+	GetAllRecipes() (int, *[]RecipeDTO)
+	GetRecipe(r *http.Request) (int, *RecipeDTO)
+	CreateRecipe(r *http.Request) (int, *RecipeDTO)
+	UpdateRecipeName(r *http.Request) (int, *RecipeDTO)
+	DeleteRecipe(r *http.Request) (int, *RecipeDTO)
+	AddIngredientToRecipe(r *http.Request) (int, *RecipeDTO)
 }
 
 var recipeServiceInstance *recipeService
 
-func (s *recipeService) GetAllRecipes() (int, []Recipe) {
+func (s *recipeService) GetAllRecipes() (int, *[]RecipeDTO) {
 	return s.recipeRepository.FindAllRecipes()
 }
 
-func (s *recipeService) GetRecipe(r *http.Request) (int, *Recipe) {
+func (s *recipeService) GetRecipe(r *http.Request) (int, *RecipeDTO) {
 	oid := core.ConvertHexToObjectId(mux.Vars(r)["id"])
 
 	if oid == nil {
@@ -43,8 +42,8 @@ func (s *recipeService) GetRecipe(r *http.Request) (int, *Recipe) {
 	return s.recipeRepository.FindRecipeByOID(oid)
 }
 
-func (s *recipeService) CreateRecipe(r *http.Request) (int, *Recipe) {
-	var recipeName *RecipeName = &RecipeName{}
+func (s *recipeService) CreateRecipe(r *http.Request) (int, *RecipeDTO) {
+	var recipeName *RecipeNameDTO = &RecipeNameDTO{}
 
 	invalidBody := core.DecodeBody(r, recipeName)
 
@@ -55,14 +54,14 @@ func (s *recipeService) CreateRecipe(r *http.Request) (int, *Recipe) {
 	return s.recipeRepository.CreateRecipe(recipeName)
 }
 
-func (s *recipeService) UpdateRecipe(r *http.Request) (int, *Recipe) {
+func (s *recipeService) UpdateRecipeName(r *http.Request) (int, *RecipeDTO) {
 	oid := core.ConvertHexToObjectId(mux.Vars(r)["id"])
 
 	if oid == nil {
 		return http.StatusBadRequest, nil
 	}
 
-	var recipe *Recipe = &Recipe{}
+	var recipe *RecipeNameDTO = &RecipeNameDTO{}
 
 	invalidBody := core.DecodeBody(r, recipe)
 
@@ -70,10 +69,10 @@ func (s *recipeService) UpdateRecipe(r *http.Request) (int, *Recipe) {
 		return http.StatusBadRequest, nil
 	}
 
-	return s.recipeRepository.UpdateRecipe(oid, recipe)
+	return s.recipeRepository.UpdateRecipeName(oid, recipe)
 }
 
-func (s *recipeService) DeleteRecipe(r *http.Request) (int, *Recipe) {
+func (s *recipeService) DeleteRecipe(r *http.Request) (int, *RecipeDTO) {
 	oid := core.ConvertHexToObjectId(mux.Vars(r)["id"])
 
 	if oid == nil {
@@ -83,7 +82,7 @@ func (s *recipeService) DeleteRecipe(r *http.Request) (int, *Recipe) {
 	return s.recipeRepository.DeleteRecipe(oid)
 }
 
-func (s *recipeService) AddIngredientToRecipe(r *http.Request) (int, *Recipe) {
+func (s *recipeService) AddIngredientToRecipe(r *http.Request) (int, *RecipeDTO) {
 	recipeOid := core.ConvertHexToObjectId(mux.Vars(r)["recipeId"])
 
 	if recipeOid == nil {
@@ -108,7 +107,7 @@ func (s *recipeService) AddIngredientToRecipe(r *http.Request) (int, *Recipe) {
 		return http.StatusNotFound, nil
 	}
 
-	var ingredientDetails *IngredientDetails = &IngredientDetails{}
+	var ingredientDetails *IngredientDetailsDTO = &IngredientDetailsDTO{}
 
 	invalidBody := core.DecodeBody(r, ingredientDetails)
 
@@ -122,30 +121,20 @@ func (s *recipeService) AddIngredientToRecipe(r *http.Request) (int, *Recipe) {
 		return http.StatusBadRequest, nil
 	}
 
-	envase := getIngredientPackage(ingredientDetails.Metric, ingredient.Packages)
+	envase := getIngredientPackage(ingredientDetails.Metric, ingredient.Package)
 
 	var ingredientPackage *ingredients.IngredientPackage = &ingredients.IngredientPackage{}
-
-	ingredientPackage.Price = float64(ingredientDetails.Quantity) / float64(envase.Quantity) * envase.Price
-	ingredientPackage.Quantity = ingredientDetails.Quantity
-	ingredientPackage.Package = *envase
+	ingredientPackage.ID = envase.ID
+	ingredientPackage.Price = envase.Price
 
 	var recipeIngredient *RecipeIngredient = &RecipeIngredient{
-		ID:                primitive.NewObjectID(),
-		Name:              ingredient.Name,
-		IngredientPackage: *ingredientPackage,
+		ID:       ingredient.ID,
+		Package:  *ingredientPackage,
+		Price:    float64(ingredientDetails.Quantity) / float64(envase.Quantity) * envase.Price,
+		Quantity: ingredientDetails.Quantity,
 	}
 
-	recipe.Ingredients = append(recipe.Ingredients, *recipeIngredient)
-	recipe.Price = func() float64 {
-		var result float64
-		for _, ingredient := range recipe.Ingredients {
-			result += ingredient.IngredientPackage.Price
-		}
-		return result
-	}()
-
-	_, recipeUpdated := s.recipeRepository.UpdateRecipe(recipeOid, recipe)
+	_, recipeUpdated := s.recipeRepository.AddIngredientToRecipe(recipeOid, recipeIngredient)
 
 	if recipeUpdated == nil {
 		return http.StatusInternalServerError, nil
@@ -154,8 +143,8 @@ func (s *recipeService) AddIngredientToRecipe(r *http.Request) (int, *Recipe) {
 	return http.StatusOK, recipeUpdated
 }
 
-func validate(ingredient *ingredients.Ingredient, ingredientDetails *IngredientDetails) error {
-	if !ingredientMetricMatches(ingredientDetails.Metric, ingredient.Packages) {
+func validate(ingredient *ingredients.IngredientDTO, ingredientDetails *IngredientDetailsDTO) error {
+	if !ingredientMetricMatches(ingredientDetails.Metric, ingredient.Package) {
 		log.Println("La unidad de medida no coincide")
 		return errors.New("la unidad de medida no coincide")
 	}

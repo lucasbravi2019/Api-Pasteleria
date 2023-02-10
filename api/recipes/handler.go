@@ -16,7 +16,7 @@ type RecipeHandler interface {
 	GetAllRecipes(w http.ResponseWriter, r *http.Request)
 	GetRecipe(w http.ResponseWriter, r *http.Request)
 	CreateRecipe(w http.ResponseWriter, r *http.Request)
-	UpdateRecipe(w http.ResponseWriter, r *http.Request)
+	UpdateRecipeName(w http.ResponseWriter, r *http.Request)
 	DeleteRecipe(w http.ResponseWriter, r *http.Request)
 	AddIngredientToRecipe(w http.ResponseWriter, r *http.Request)
 	GetRecipeRoutes() core.Routes
@@ -37,8 +37,8 @@ func (h *recipeHandler) CreateRecipe(w http.ResponseWriter, r *http.Request) {
 	core.EncodeJsonResponse(w, statusCode, body)
 }
 
-func (h *recipeHandler) UpdateRecipe(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.service.UpdateRecipe(r)
+func (h *recipeHandler) UpdateRecipeName(w http.ResponseWriter, r *http.Request) {
+	statusCode, body := h.service.UpdateRecipeName(r)
 	core.EncodeJsonResponse(w, statusCode, body)
 }
 
@@ -66,7 +66,7 @@ func (h *recipeHandler) GetRecipeRoutes() core.Routes {
 		},
 		core.Route{
 			Path:        "/recipes/{id}",
-			HandlerFunc: h.UpdateRecipe,
+			HandlerFunc: h.UpdateRecipeName,
 			Method:      "PUT",
 		},
 		core.Route{

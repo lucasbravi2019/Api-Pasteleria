@@ -6,6 +6,7 @@ import (
 	"github.com/lucasbravi2019/pasteleria/api/packages"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func GetIngredientById(id primitive.ObjectID) bson.M {
@@ -20,20 +21,22 @@ func GetIngredientByPackageId(packageId primitive.ObjectID) bson.M {
 	}
 }
 
-func GetAggregateShowIngredients() []bson.M {
-	packagesUnwind := bson.M{"$unwind": "$packages"}
-	packagesLookup := bson.M{"$lookup": bson.M{
+func GetAggregateShowIngredients() mongo.Pipeline {
+	packagesUnwind := bson.D{{"$unwind", "$packages"}}
+	packagesLookup := bson.D{{"$lookup", bson.M{
 		"from":         "packages",
 		"localField":   "packages._id",
 		"foreignField": "_id",
 		"as":           "package",
-	}}
-	packageUnwind := bson.M{"$unwind": "$package"}
-	priceSet := bson.M{"$set": bson.M{
+	}}}
+	packageUnwind := bson.D{{"$unwind", "$package"}}
+
+	priceSet := bson.D{{"$set", bson.M{
 		"package.price": "$packages.price",
-	}}
-	packagesUnset := bson.M{"$unset": "packages"}
-	group := bson.M{"$group": bson.M{
+	}}}
+	packagesUnset := bson.D{{"$unset", "packages"}}
+
+	group := bson.D{{"$group", bson.M{
 		"_id": "$_id",
 		"name": bson.M{
 			"$first": "$name",
@@ -41,12 +44,12 @@ func GetAggregateShowIngredients() []bson.M {
 		"package": bson.M{
 			"$push": "$package",
 		},
-	}}
+	}}}
 
-	return []bson.M{packagesUnwind, packagesLookup, packageUnwind, priceSet, packagesUnset, group}
+	return mongo.Pipeline{packagesUnwind, packagesLookup, packageUnwind, priceSet, packagesUnset, group}
 }
 
-func GetAggregateCreateIngredients(ingredient *Ingredient) []bson.D {
+func GetAggregateCreateIngredients(ingredient *IngredientDTO) mongo.Pipeline {
 	project := bson.D{
 		{Key: "$project", Value: bson.D{
 			{Key: "name", Value: bson.D{
@@ -61,7 +64,7 @@ func GetAggregateCreateIngredients(ingredient *Ingredient) []bson.D {
 		}},
 	}
 
-	return []bson.D{project, match}
+	return mongo.Pipeline{project, match}
 }
 
 func SetIngredientPackages(envase packages.Package) bson.M {
@@ -74,8 +77,15 @@ func GetIngredientWithoutExistingPackage(ingredientOid primitive.ObjectID, packa
 	return bson.D{{"_id", ingredientOid}, {"packages._id", bson.D{{"$ne", packageOid}}}}
 }
 
-func PushPackageIntoIngredient(envase packages.Package) bson.M {
-	return bson.M{"$push": bson.M{
-		"packages": envase,
+func UpdateIngredientName(dto IngredientDTO) bson.M {
+	return bson.M{"$set": bson.M{"name": dto.Name}}
+}
+
+func PushPackageIntoIngredient(dto IngredientPackageDTO) bson.M {
+	return bson.M{"$addToSet": bson.M{
+		"packages": bson.M{
+			"_id":   dto.PackageOid,
+			"price": dto.Price,
+		},
 	}}
 }

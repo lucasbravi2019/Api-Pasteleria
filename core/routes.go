@@ -4,7 +4,7 @@ import "net/http"
 
 type Route struct {
 	Path        string
-	HandlerFunc http.HandlerFunc
+	HandlerFunc func(w http.ResponseWriter, r *http.Request)
 	Method      string
 }
 

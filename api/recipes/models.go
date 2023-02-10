@@ -13,16 +13,8 @@ type Recipe struct {
 }
 
 type RecipeIngredient struct {
-	ID                primitive.ObjectID            `bson:"_id" json:"id,omitempty"`
-	Name              string                        `bson:"name" json:"name" validate:"required"`
-	IngredientPackage ingredients.IngredientPackage `bson:"ingredientPackage" json:"ingredientPackage" validate:"required"`
-}
-
-type IngredientDetails struct {
-	Metric   string  `json:"metric,omitempty"`
-	Quantity float32 `json:"quantity,omitempty"`
-}
-
-type RecipeName struct {
-	Name string `json:"name" validate:"required"`
+	ID       primitive.ObjectID            `bson:"_id" json:"id,omitempty"`
+	Package  ingredients.IngredientPackage `bson:"package" json:"package" validate:"required"`
+	Price    float64                       `bson:"price" json:"price" validate:"required"`
+	Quantity float32                       `bson:"quantity" json:"quantity" validate:"required"`
 }

@@ -13,22 +13,22 @@ type service struct {
 }
 
 type IngredientService interface {
-	GetAllIngredients() (int, []Ingredient)
-	CreateIngredient(r *http.Request) (int, *Ingredient)
-	UpdateIngredient(r *http.Request) (int, *Ingredient)
-	DeleteIngredient(r *http.Request) (int, *Ingredient)
-	AddPackageToIngredient(r *http.Request) (int, *Ingredient)
-	ChangeIngredientPrice(r *http.Request) (int, *Ingredient)
+	GetAllIngredients() (int, []IngredientDTO)
+	CreateIngredient(r *http.Request) (int, *IngredientDTO)
+	UpdateIngredient(r *http.Request) (int, *IngredientDTO)
+	DeleteIngredient(r *http.Request) (int, *IngredientDTO)
+	AddPackageToIngredient(r *http.Request) (int, *IngredientDTO)
+	ChangeIngredientPrice(r *http.Request) (int, *IngredientDTO)
 }
 
 var ingredientServiceInstance *service
 
-func (s *service) GetAllIngredients() (int, []Ingredient) {
+func (s *service) GetAllIngredients() (int, []IngredientDTO) {
 	return s.repository.GetAllIngredients()
 }
 
-func (s *service) CreateIngredient(r *http.Request) (int, *Ingredient) {
-	var ingredient *Ingredient = &Ingredient{}
+func (s *service) CreateIngredient(r *http.Request) (int, *IngredientDTO) {
+	var ingredient *IngredientDTO = &IngredientDTO{}
 
 	invalidBody := core.DecodeBody(r, ingredient)
 
@@ -36,19 +36,19 @@ func (s *service) CreateIngredient(r *http.Request) (int, *Ingredient) {
 		return http.StatusBadRequest, nil
 	}
 
-	ingredient.Packages = []packages.Package{}
+	ingredient.Package = []packages.Package{}
 
 	return s.repository.CreateIngredient(ingredient)
 }
 
-func (s *service) UpdateIngredient(r *http.Request) (int, *Ingredient) {
+func (s *service) UpdateIngredient(r *http.Request) (int, *IngredientDTO) {
 	oid := core.ConvertHexToObjectId(mux.Vars(r)["id"])
 
 	if oid == nil {
 		return http.StatusBadRequest, nil
 	}
 
-	var ingredient *Ingredient = &Ingredient{}
+	var ingredient *IngredientDTO = &IngredientDTO{}
 
 	invalidBody := core.DecodeBody(r, ingredient)
 
@@ -59,7 +59,7 @@ func (s *service) UpdateIngredient(r *http.Request) (int, *Ingredient) {
 	return s.repository.UpdateIngredient(oid, ingredient)
 }
 
-func (s *service) DeleteIngredient(r *http.Request) (int, *Ingredient) {
+func (s *service) DeleteIngredient(r *http.Request) (int, *IngredientDTO) {
 	oid := core.ConvertHexToObjectId(mux.Vars(r)["id"])
 
 	if oid == nil {
@@ -69,24 +69,24 @@ func (s *service) DeleteIngredient(r *http.Request) (int, *Ingredient) {
 	return s.repository.DeleteIngredient(oid)
 }
 
-func (s *service) AddPackageToIngredient(r *http.Request) (int, *Ingredient) {
+func (s *service) AddPackageToIngredient(r *http.Request) (int, *IngredientDTO) {
 	ingredientOid := mux.Vars(r)["ingredientId"]
 	packageOid := mux.Vars(r)["packageId"]
 
-	var ingredientPackagePrice *IngredientPackagePrice = &IngredientPackagePrice{}
+	var priceDTO *IngredientPackagePriceDTO = &IngredientPackagePriceDTO{}
 
-	core.DecodeBody(r, ingredientPackagePrice)
+	core.DecodeBody(r, priceDTO)
 
 	var ingredientPackageDto *IngredientPackageDTO = &IngredientPackageDTO{
 		IngredientOid: *core.ConvertHexToObjectId(ingredientOid),
 		PackageOid:    *core.ConvertHexToObjectId(packageOid),
-		Price:         ingredientPackagePrice.Price,
+		Price:         priceDTO.Price,
 	}
 
 	return s.repository.AddPackageToIngredient(*ingredientPackageDto)
 }
 
-func (s *service) ChangeIngredientPrice(r *http.Request) (int, *Ingredient) {
+func (s *service) ChangeIngredientPrice(r *http.Request) (int, *IngredientDTO) {
 	ingredientPackageId := mux.Vars(r)["id"]
 	ingredientPackageOid := core.ConvertHexToObjectId(ingredientPackageId)
 
@@ -94,7 +94,7 @@ func (s *service) ChangeIngredientPrice(r *http.Request) (int, *Ingredient) {
 		return http.StatusBadRequest, nil
 	}
 
-	var ingredientPackagePrice *IngredientPackagePrice = &IngredientPackagePrice{}
+	var ingredientPackagePrice *IngredientPackagePriceDTO = &IngredientPackagePriceDTO{}
 
 	invalidBody := core.DecodeBody(r, ingredientPackagePrice)
 
