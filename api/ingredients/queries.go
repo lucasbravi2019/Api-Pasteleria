@@ -3,16 +3,33 @@ package ingredients
 import (
 	"strings"
 
-	"github.com/lucasbravi2019/pasteleria/api/packages"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func GetIngredientById(id primitive.ObjectID) bson.M {
-	return bson.M{
-		"_id": id,
-	}
+func GetIngredientById(id primitive.ObjectID) mongo.Pipeline {
+	match := bson.D{{"$match", bson.D{{"_id", id}}}}
+	packagesUnwind := bson.D{{"$unwind", bson.D{{"path", "$packages"}, {"preserveNullAndEmptyArrays", true}}}}
+	packagesLookup := bson.D{{"$lookup", bson.D{
+		{"from", "packages"},
+		{"localField", "packages._id"},
+		{"foreignField", "_id"},
+		{"as", "package"},
+	}}}
+	packageUnwind := bson.D{{"$unwind", bson.D{{"path", "$package"}, {"preserveNullAndEmptyArrays", true}}}}
+
+	priceSet := bson.D{{"$set", bson.D{{"package.price", "$packages.price"}}}}
+
+	packagesUnset := bson.D{{"$unset", "packages"}}
+
+	group := bson.D{{"$group", bson.D{{"_id", "$_id"}, {"name", bson.D{{"$first", "$name"}}}, {"package", bson.D{{"$push", "$package"}}}}}}
+
+	addFields := bson.D{{"$addFields", bson.D{{"package", bson.D{{"$filter", bson.D{{"input", "$package"},
+		{"cond", bson.D{{"$ne", bson.A{"$$this._id", "undefined"}}}}}}}}}}}
+
+	return mongo.Pipeline{match, packagesUnwind, packagesLookup, packageUnwind, priceSet, packagesUnset, group, addFields}
 }
 
 func GetIngredientByPackageId(packageId primitive.ObjectID) bson.M {
@@ -22,31 +39,25 @@ func GetIngredientByPackageId(packageId primitive.ObjectID) bson.M {
 }
 
 func GetAggregateShowIngredients() mongo.Pipeline {
-	packagesUnwind := bson.D{{"$unwind", "$packages"}}
-	packagesLookup := bson.D{{"$lookup", bson.M{
-		"from":         "packages",
-		"localField":   "packages._id",
-		"foreignField": "_id",
-		"as":           "package",
+	packagesUnwind := bson.D{{"$unwind", bson.D{{"path", "$packages"}, {"preserveNullAndEmptyArrays", true}}}}
+	packagesLookup := bson.D{{"$lookup", bson.D{
+		{"from", "packages"},
+		{"localField", "packages._id"},
+		{"foreignField", "_id"},
+		{"as", "package"},
 	}}}
-	packageUnwind := bson.D{{"$unwind", "$package"}}
+	packageUnwind := bson.D{{"$unwind", bson.D{{"path", "$package"}, {"preserveNullAndEmptyArrays", true}}}}
 
-	priceSet := bson.D{{"$set", bson.M{
-		"package.price": "$packages.price",
-	}}}
+	priceSet := bson.D{{"$set", bson.D{{"package.price", "$packages.price"}}}}
+
 	packagesUnset := bson.D{{"$unset", "packages"}}
 
-	group := bson.D{{"$group", bson.M{
-		"_id": "$_id",
-		"name": bson.M{
-			"$first": "$name",
-		},
-		"package": bson.M{
-			"$push": "$package",
-		},
-	}}}
+	group := bson.D{{"$group", bson.D{{"_id", "$_id"}, {"name", bson.D{{"$first", "$name"}}}, {"package", bson.D{{"$push", "$package"}}}}}}
 
-	return mongo.Pipeline{packagesUnwind, packagesLookup, packageUnwind, priceSet, packagesUnset, group}
+	addFields := bson.D{{"$addFields", bson.D{{"package", bson.D{{"$filter", bson.D{{"input", "$package"},
+		{"cond", bson.D{{"$ne", bson.A{"$$this._id", bson.TypeUndefined}}}}}}}}}}}
+
+	return mongo.Pipeline{packagesUnwind, packagesLookup, packageUnwind, priceSet, packagesUnset, group, addFields}
 }
 
 func GetAggregateCreateIngredients(ingredient *IngredientDTO) mongo.Pipeline {
@@ -67,12 +78,6 @@ func GetAggregateCreateIngredients(ingredient *IngredientDTO) mongo.Pipeline {
 	return mongo.Pipeline{project, match}
 }
 
-func SetIngredientPackages(envase packages.Package) bson.M {
-	return bson.M{"$set": bson.M{
-		"packages.$": envase,
-	}}
-}
-
 func GetIngredientWithoutExistingPackage(ingredientOid primitive.ObjectID, packageOid primitive.ObjectID) bson.D {
 	return bson.D{{"_id", ingredientOid}, {"packages._id", bson.D{{"$ne", packageOid}}}}
 }
@@ -81,11 +86,26 @@ func UpdateIngredientName(dto IngredientDTO) bson.M {
 	return bson.M{"$set": bson.M{"name": dto.Name}}
 }
 
-func PushPackageIntoIngredient(dto IngredientPackageDTO) bson.M {
+func PushPackageIntoIngredient(envase IngredientPackage) bson.M {
 	return bson.M{"$addToSet": bson.M{
-		"packages": bson.M{
-			"_id":   dto.PackageOid,
-			"price": dto.Price,
-		},
+		"packages": envase,
 	}}
+}
+
+func SetIngredientPrice(price float64) bson.M {
+	return bson.M{
+		"$set": bson.M{
+			"packages.$[package].package.price": price,
+		},
+	}
+}
+
+func GetArrayFilterForPackageId(oid primitive.ObjectID) *options.UpdateOptions {
+	return options.Update().SetArrayFilters(options.ArrayFilters{
+		Filters: []interface{}{
+			bson.M{
+				"package.package._id": oid,
+			},
+		},
+	})
 }

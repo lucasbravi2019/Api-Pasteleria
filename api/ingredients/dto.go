@@ -8,7 +8,7 @@ import (
 type IngredientDTO struct {
 	ID      primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
 	Name    string             `bson:"name" json:"name,omitempty" validate:"required"`
-	Package []packages.Package `bson:"packages" json:"packages,omitempty"`
+	Package []packages.Package `bson:"package" json:"package,omitempty"`
 }
 
 type IngredientPackageDTO struct {

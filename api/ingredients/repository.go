@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/lucasbravi2019/pasteleria/api/packages"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -58,25 +57,34 @@ func (r *repository) FindIngredientByOID(oid *primitive.ObjectID) (int, *Ingredi
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	var ingredient *IngredientDTO = &IngredientDTO{}
+	var ingredient []IngredientDTO = []IngredientDTO{}
 
-	err := r.ingredientCollection.FindOne(ctx, GetIngredientById(*oid)).Decode(ingredient)
+	cursor, err := r.ingredientCollection.Aggregate(ctx, GetIngredientById(*oid))
 
 	if err != nil {
 		log.Println(err.Error())
 		return http.StatusNotFound, nil
 	}
 
-	return http.StatusOK, ingredient
+	err = cursor.All(ctx, &ingredient)
+
+	if err != nil {
+		log.Println(err.Error())
+		return http.StatusBadRequest, nil
+	}
+
+	if len(ingredient) == 0 {
+		return http.StatusNotFound, nil
+	}
+
+	return http.StatusOK, &ingredient[0]
 }
 
 func (r *repository) CreateIngredient(ingredient *IngredientDTO) (int, *IngredientDTO) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	pipelines := GetAggregateCreateIngredients(ingredient)
-
-	cursor, err := r.ingredientCollection.Aggregate(ctx, pipelines)
+	cursor, err := r.ingredientCollection.Aggregate(ctx, GetAggregateCreateIngredients(ingredient))
 
 	if err != nil {
 		log.Println(err.Error())
@@ -96,7 +104,12 @@ func (r *repository) CreateIngredient(ingredient *IngredientDTO) (int, *Ingredie
 		return http.StatusBadRequest, nil
 	}
 
-	insertResult, err := r.ingredientCollection.InsertOne(ctx, *ingredient)
+	var ingredientEntity *Ingredient = &Ingredient{
+		Name:     ingredient.Name,
+		Packages: []IngredientPackage{},
+	}
+
+	insertResult, err := r.ingredientCollection.InsertOne(ctx, *ingredientEntity)
 
 	if err != nil {
 		log.Println(err.Error())
@@ -149,8 +162,13 @@ func (r *repository) AddPackageToIngredient(dto IngredientPackageDTO) (int, *Ing
 	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
 	defer cancel()
 
+	var ingredientPackage *IngredientPackage = &IngredientPackage{
+		ID:    dto.PackageOid,
+		Price: dto.Price,
+	}
+
 	_, err := r.ingredientCollection.UpdateOne(ctx, GetIngredientWithoutExistingPackage(dto.IngredientOid, dto.PackageOid),
-		PushPackageIntoIngredient(dto))
+		PushPackageIntoIngredient(*ingredientPackage))
 
 	if err != nil {
 		log.Println(err.Error())
@@ -165,20 +183,9 @@ func (r *repository) ChangeIngredientPrice(packageOid *primitive.ObjectID, price
 	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
 	defer cancel()
 
-	var envase *packages.Package = &packages.Package{}
-
-	err := r.packageCollection.FindOne(ctx, packages.GetPackageById(*packageOid)).Decode(envase)
-
-	if err != nil {
-		log.Println(err.Error())
-		return http.StatusBadRequest, nil
-	}
-
-	envase.Price = priceDTO.Price
-
 	var ingredient *IngredientDTO = &IngredientDTO{}
 
-	_, err = r.ingredientCollection.UpdateOne(ctx, GetIngredientByPackageId(*packageOid), SetIngredientPackages(*envase))
+	_, err := r.ingredientCollection.UpdateOne(ctx, GetIngredientByPackageId(*packageOid), SetIngredientPrice(priceDTO.Price), GetArrayFilterForPackageId(*packageOid))
 
 	if err != nil {
 		log.Println(err.Error())

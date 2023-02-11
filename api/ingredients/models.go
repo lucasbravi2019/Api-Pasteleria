@@ -5,7 +5,7 @@ import (
 )
 
 type Ingredient struct {
-	ID       primitive.ObjectID  `bson:"_id" validate:"required"`
+	ID       primitive.ObjectID  `bson:"_id,omitempty" validate:"required"`
 	Name     string              `bson:"name" validate:"required"`
 	Packages []IngredientPackage `bson:"packages" validate:"required"`
 }

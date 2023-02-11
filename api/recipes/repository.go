@@ -20,7 +20,7 @@ type RecipeRepository interface {
 	CreateRecipe(recipe *RecipeNameDTO) (int, *RecipeDTO)
 	UpdateRecipeName(oid *primitive.ObjectID, recipeName *RecipeNameDTO) (int, *RecipeDTO)
 	AddIngredientToRecipe(oid *primitive.ObjectID, recipe *RecipeIngredient) (int, *RecipeDTO)
-	DeleteRecipe(oid *primitive.ObjectID) (int, *RecipeDTO)
+	DeleteRecipe(oid *primitive.ObjectID) (int, *primitive.ObjectID)
 }
 
 var recipeRepositoryInstance *recipeRepository
@@ -65,6 +65,10 @@ func (r *recipeRepository) FindRecipeByOID(oid *primitive.ObjectID) (int, *Recip
 	if err != nil {
 		log.Println(err.Error())
 		return http.StatusInternalServerError, nil
+	}
+
+	if len(recipe) == 0 {
+		return http.StatusNotFound, nil
 	}
 
 	return http.StatusOK, &recipe[0]
@@ -137,7 +141,7 @@ func (r *recipeRepository) AddIngredientToRecipe(oid *primitive.ObjectID, recipe
 		return http.StatusBadRequest, nil
 	}
 
-	var dto *RecipeDTO = &RecipeDTO{}
+	var dto []RecipeDTO = []RecipeDTO{}
 
 	cursor, err := r.db.Aggregate(ctx, GetAggregateRecipeById(*oid))
 
@@ -146,17 +150,21 @@ func (r *recipeRepository) AddIngredientToRecipe(oid *primitive.ObjectID, recipe
 		return http.StatusInternalServerError, nil
 	}
 
-	err = cursor.Decode(dto)
+	err = cursor.All(ctx, &dto)
 
 	if err != nil {
 		log.Println(err.Error())
 		return http.StatusInternalServerError, nil
 	}
 
-	return http.StatusOK, dto
+	if len(dto) == 0 {
+		return http.StatusNotFound, nil
+	}
+
+	return http.StatusOK, &dto[0]
 }
 
-func (r *recipeRepository) DeleteRecipe(oid *primitive.ObjectID) (int, *RecipeDTO) {
+func (r *recipeRepository) DeleteRecipe(oid *primitive.ObjectID) (int, *primitive.ObjectID) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -167,21 +175,5 @@ func (r *recipeRepository) DeleteRecipe(oid *primitive.ObjectID) (int, *RecipeDT
 		return http.StatusNotFound, nil
 	}
 
-	var dto *RecipeDTO = &RecipeDTO{}
-
-	cursor, err := r.db.Aggregate(ctx, GetAggregateRecipeById(*oid))
-
-	if err != nil {
-		log.Println(err.Error())
-		return http.StatusInternalServerError, nil
-	}
-
-	err = cursor.Decode(dto)
-
-	if err != nil {
-		log.Println(err.Error())
-		return http.StatusInternalServerError, nil
-	}
-
-	return http.StatusOK, dto
+	return http.StatusOK, oid
 }
