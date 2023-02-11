@@ -6,39 +6,40 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/lucasbravi2019/pasteleria/api/packages"
 	"github.com/lucasbravi2019/pasteleria/core"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type service struct {
-	repository IngredientRepository
+	ingredientRepository IngredientRepository
+	packageRepository    packages.PackageRepository
 }
 
 type IngredientService interface {
 	GetAllIngredients() (int, []IngredientDTO)
 	CreateIngredient(r *http.Request) (int, *IngredientDTO)
 	UpdateIngredient(r *http.Request) (int, *IngredientDTO)
-	DeleteIngredient(r *http.Request) (int, *IngredientDTO)
+	DeleteIngredient(r *http.Request) (int, *primitive.ObjectID)
 	AddPackageToIngredient(r *http.Request) (int, *IngredientDTO)
+	RemovePackageFromIngredients(r *http.Request) (int, *primitive.ObjectID)
 	ChangeIngredientPrice(r *http.Request) (int, *IngredientDTO)
 }
 
 var ingredientServiceInstance *service
 
 func (s *service) GetAllIngredients() (int, []IngredientDTO) {
-	return s.repository.GetAllIngredients()
+	return s.ingredientRepository.GetAllIngredients()
 }
 
 func (s *service) CreateIngredient(r *http.Request) (int, *IngredientDTO) {
-	var ingredient *IngredientDTO = &IngredientDTO{}
+	var ingredientDto *IngredientNameDTO = &IngredientNameDTO{}
 
-	invalidBody := core.DecodeBody(r, ingredient)
+	invalidBody := core.DecodeBody(r, ingredientDto)
 
 	if invalidBody {
 		return http.StatusBadRequest, nil
 	}
 
-	ingredient.Package = []packages.Package{}
-
-	return s.repository.CreateIngredient(ingredient)
+	return s.ingredientRepository.CreateIngredient(ingredientDto)
 }
 
 func (s *service) UpdateIngredient(r *http.Request) (int, *IngredientDTO) {
@@ -48,7 +49,7 @@ func (s *service) UpdateIngredient(r *http.Request) (int, *IngredientDTO) {
 		return http.StatusBadRequest, nil
 	}
 
-	var ingredient *IngredientDTO = &IngredientDTO{}
+	var ingredient *IngredientNameDTO = &IngredientNameDTO{}
 
 	invalidBody := core.DecodeBody(r, ingredient)
 
@@ -56,34 +57,53 @@ func (s *service) UpdateIngredient(r *http.Request) (int, *IngredientDTO) {
 		return http.StatusBadRequest, nil
 	}
 
-	return s.repository.UpdateIngredient(oid, ingredient)
+	return s.ingredientRepository.UpdateIngredient(oid, ingredient)
 }
 
-func (s *service) DeleteIngredient(r *http.Request) (int, *IngredientDTO) {
+func (s *service) DeleteIngredient(r *http.Request) (int, *primitive.ObjectID) {
 	oid := core.ConvertHexToObjectId(mux.Vars(r)["id"])
 
 	if oid == nil {
 		return http.StatusBadRequest, nil
 	}
 
-	return s.repository.DeleteIngredient(oid)
+	return s.ingredientRepository.DeleteIngredient(oid)
 }
 
 func (s *service) AddPackageToIngredient(r *http.Request) (int, *IngredientDTO) {
 	ingredientOid := mux.Vars(r)["ingredientId"]
 	packageOid := mux.Vars(r)["packageId"]
+	ingredientId := core.ConvertHexToObjectId(ingredientOid)
+	packageId := core.ConvertHexToObjectId(packageOid)
 
 	var priceDTO *IngredientPackagePriceDTO = &IngredientPackagePriceDTO{}
 
-	core.DecodeBody(r, priceDTO)
+	invalidBody := core.DecodeBody(r, priceDTO)
 
-	var ingredientPackageDto *IngredientPackageDTO = &IngredientPackageDTO{
-		IngredientOid: *core.ConvertHexToObjectId(ingredientOid),
-		PackageOid:    *core.ConvertHexToObjectId(packageOid),
-		Price:         priceDTO.Price,
+	if invalidBody {
+		return http.StatusBadRequest, nil
 	}
 
-	return s.repository.AddPackageToIngredient(*ingredientPackageDto)
+	_, envase := s.packageRepository.GetPackageById(packageId)
+
+	var ingredientPackage *IngredientPackage = &IngredientPackage{
+		ID:       envase.ID,
+		Metric:   envase.Metric,
+		Quantity: envase.Quantity,
+		Price:    priceDTO.Price,
+	}
+
+	return s.ingredientRepository.AddPackageToIngredient(ingredientId, packageId, ingredientPackage)
+}
+
+func (s *service) RemovePackageFromIngredients(r *http.Request) (int, *primitive.ObjectID) {
+	packageOid := mux.Vars(r)["packageId"]
+
+	var ingredientPackageDto *IngredientPackageDTO = &IngredientPackageDTO{
+		PackageOid: *core.ConvertHexToObjectId(packageOid),
+	}
+
+	return s.ingredientRepository.RemovePackageFromIngredients(*ingredientPackageDto)
 }
 
 func (s *service) ChangeIngredientPrice(r *http.Request) (int, *IngredientDTO) {
@@ -102,5 +122,5 @@ func (s *service) ChangeIngredientPrice(r *http.Request) (int, *IngredientDTO) {
 		return http.StatusBadRequest, nil
 	}
 
-	return s.repository.ChangeIngredientPrice(ingredientPackageOid, ingredientPackagePrice)
+	return s.ingredientRepository.ChangeIngredientPrice(ingredientPackageOid, ingredientPackagePrice)
 }

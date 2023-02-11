@@ -8,7 +8,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/lucasbravi2019/pasteleria/api/ingredients"
-	"github.com/lucasbravi2019/pasteleria/api/packages"
 	"github.com/lucasbravi2019/pasteleria/core"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -85,8 +84,9 @@ func (s *recipeService) DeleteRecipe(r *http.Request) (int, *primitive.ObjectID)
 
 func (s *recipeService) AddIngredientToRecipe(r *http.Request) (int, *RecipeDTO) {
 	recipeOid := core.ConvertHexToObjectId(mux.Vars(r)["recipeId"])
-	log.Println(recipeOid)
-	if recipeOid == nil {
+	ingredientOid := core.ConvertHexToObjectId(mux.Vars(r)["ingredientId"])
+
+	if recipeOid == nil || ingredientOid == nil {
 		return http.StatusBadRequest, nil
 	}
 
@@ -96,17 +96,9 @@ func (s *recipeService) AddIngredientToRecipe(r *http.Request) (int, *RecipeDTO)
 		return http.StatusNotFound, nil
 	}
 
-	ingredientOid := core.ConvertHexToObjectId(mux.Vars(r)["ingredientId"])
-	log.Println(ingredientOid)
+	_, ingredientDTO := s.ingredientRepository.FindIngredientByOID(ingredientOid)
 
-	if ingredientOid == nil {
-		return http.StatusBadRequest, nil
-	}
-
-	_, ingredient := s.ingredientRepository.FindIngredientByOID(ingredientOid)
-
-	log.Println(ingredient)
-	if ingredient == nil {
+	if ingredientDTO == nil {
 		return http.StatusNotFound, nil
 	}
 
@@ -118,27 +110,25 @@ func (s *recipeService) AddIngredientToRecipe(r *http.Request) (int, *RecipeDTO)
 		return http.StatusBadRequest, nil
 	}
 
-	log.Println(ingredient)
-
-	err := validate(ingredient, ingredientDetails)
+	err := validate(ingredientDTO, ingredientDetails)
 
 	if err != nil {
 		return http.StatusBadRequest, nil
 	}
 
-	log.Println(ingredient.Package)
-	log.Println(ingredientDetails.Metric)
-
-	envase := getIngredientPackage(ingredientDetails.Metric, ingredient.Package)
-
-	var recipeIngredientPackage *RecipeIngredientPackage = &RecipeIngredientPackage{
-		ID: envase.ID,
-	}
+	envase := getIngredientPackage(ingredientDetails.Metric, ingredientDTO.Packages)
 
 	var recipeIngredient *RecipeIngredient = &RecipeIngredient{
-		ID:       ingredient.ID,
-		Package:  *recipeIngredientPackage,
+		ID:       primitive.NewObjectID(),
 		Quantity: ingredientDetails.Quantity,
+		Name:     ingredientDTO.Name,
+		Package: RecipeIngredientPackage{
+			ID:       envase.ID,
+			Metric:   envase.Metric,
+			Quantity: envase.Quantity,
+			Price:    envase.Price,
+		},
+		Price: float64(ingredientDetails.Quantity) / envase.Quantity * envase.Price,
 	}
 
 	_, recipeUpdated := s.recipeRepository.AddIngredientToRecipe(recipeOid, recipeIngredient)
@@ -147,11 +137,11 @@ func (s *recipeService) AddIngredientToRecipe(r *http.Request) (int, *RecipeDTO)
 		return http.StatusInternalServerError, nil
 	}
 
-	return http.StatusOK, recipeUpdated
+	return http.StatusOK, nil
 }
 
 func validate(ingredient *ingredients.IngredientDTO, ingredientDetails *IngredientDetailsDTO) error {
-	if !ingredientMetricMatches(ingredientDetails.Metric, ingredient.Package) {
+	if !ingredientMetricMatches(ingredientDetails.Metric, ingredient.Packages) {
 		log.Println("La unidad de medida no coincide")
 		return errors.New("la unidad de medida no coincide")
 	}
@@ -163,10 +153,8 @@ func validate(ingredient *ingredients.IngredientDTO, ingredientDetails *Ingredie
 	return nil
 }
 
-func ingredientMetricMatches(metric string, packages []packages.Package) bool {
+func ingredientMetricMatches(metric string, packages []ingredients.PackageDTO) bool {
 	for _, pack := range packages {
-		log.Println(pack)
-		log.Println(metric)
 		if fmt.Sprintf("%g %s", pack.Quantity, pack.Metric) == metric {
 			return true
 		}
@@ -174,7 +162,7 @@ func ingredientMetricMatches(metric string, packages []packages.Package) bool {
 	return false
 }
 
-func getIngredientPackage(metric string, packages []packages.Package) *packages.Package {
+func getIngredientPackage(metric string, packages []ingredients.PackageDTO) *ingredients.PackageDTO {
 	for _, pack := range packages {
 		if fmt.Sprintf("%g %s", pack.Quantity, pack.Metric) == metric {
 			return &pack

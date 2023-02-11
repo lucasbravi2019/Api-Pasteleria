@@ -20,6 +20,7 @@ type PackageRepository interface {
 	CreatePackage(body *Package) (int, *Package)
 	UpdatePackage(oid *primitive.ObjectID, body *Package) (int, *Package)
 	DeletePackage(oid *primitive.ObjectID) (int, *Package)
+	GetPackageById(oid *primitive.ObjectID) (int, *Package)
 }
 
 var packageRepositoryInstance *repository
@@ -103,4 +104,20 @@ func (r *repository) DeletePackage(oid *primitive.ObjectID) (int, *Package) {
 	}
 
 	return http.StatusOK, packageDeleted
+}
+
+func (r *repository) GetPackageById(oid *primitive.ObjectID) (int, *Package) {
+	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
+	defer cancel()
+
+	var envase *Package = &Package{}
+
+	err := r.db.FindOne(ctx, GetPackageById(*oid)).Decode(envase)
+
+	if err != nil {
+		log.Println(err.Error())
+		return http.StatusNotFound, nil
+	}
+
+	return http.StatusOK, envase
 }

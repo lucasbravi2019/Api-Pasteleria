@@ -16,6 +16,7 @@ type IngredientHandler interface {
 	UpdateIngredient(w http.ResponseWriter, r *http.Request)
 	DeleteIngredient(w http.ResponseWriter, r *http.Request)
 	AddPackageToIngredient(w http.ResponseWriter, r *http.Request)
+	RemovePackageFromIngredients(w http.ResponseWriter, r *http.Request)
 	ChangeIngredientPrice(w http.ResponseWriter, r *http.Request)
 	GetIngredientRoutes() core.Routes
 }
@@ -44,6 +45,11 @@ func (h *handler) DeleteIngredient(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) AddPackageToIngredient(w http.ResponseWriter, r *http.Request) {
 	statusCode, body := h.service.AddPackageToIngredient(r)
+	core.EncodeJsonResponse(w, statusCode, body)
+}
+
+func (h *handler) RemovePackageFromIngredients(w http.ResponseWriter, r *http.Request) {
+	statusCode, body := h.service.RemovePackageFromIngredients(r)
 	core.EncodeJsonResponse(w, statusCode, body)
 }
 
@@ -82,6 +88,11 @@ func (h *handler) GetIngredientRoutes() core.Routes {
 		core.Route{
 			Path:        "/ingredients/{ingredientId}/packages/{packageId}",
 			HandlerFunc: h.AddPackageToIngredient,
+			Method:      "PUT",
+		},
+		core.Route{
+			Path:        "/ingredients/packages/{packageId}/remove",
+			HandlerFunc: h.RemovePackageFromIngredients,
 			Method:      "PUT",
 		},
 	}

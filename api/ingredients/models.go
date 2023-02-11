@@ -11,6 +11,8 @@ type Ingredient struct {
 }
 
 type IngredientPackage struct {
-	ID    primitive.ObjectID `bson:"_id" validate:"required"`
-	Price float64            `bson:"price" validate:"required"`
+	ID       primitive.ObjectID `bson:"_id" json:"id,omitempty"`
+	Metric   string             `bson:"metric" json:"metric,omitempty"`
+	Quantity float64            `bson:"quantity" json:"quantity,omitempty"`
+	Price    float64            `bson:"price" json:"price,omitempty"`
 }

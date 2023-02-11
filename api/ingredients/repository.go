@@ -19,10 +19,11 @@ type repository struct {
 type IngredientRepository interface {
 	GetAllIngredients() (int, []IngredientDTO)
 	FindIngredientByOID(oid *primitive.ObjectID) (int, *IngredientDTO)
-	CreateIngredient(ingredient *IngredientDTO) (int, *IngredientDTO)
-	UpdateIngredient(oid *primitive.ObjectID, dto *IngredientDTO) (int, *IngredientDTO)
-	DeleteIngredient(oid *primitive.ObjectID) (int, *IngredientDTO)
-	AddPackageToIngredient(dto IngredientPackageDTO) (int, *IngredientDTO)
+	CreateIngredient(ingredient *IngredientNameDTO) (int, *IngredientDTO)
+	UpdateIngredient(oid *primitive.ObjectID, dto *IngredientNameDTO) (int, *IngredientDTO)
+	DeleteIngredient(oid *primitive.ObjectID) (int, *primitive.ObjectID)
+	AddPackageToIngredient(ingredientOid *primitive.ObjectID, packageOid *primitive.ObjectID, envase *IngredientPackage) (int, *IngredientDTO)
+	RemovePackageFromIngredients(dto IngredientPackageDTO) (int, *primitive.ObjectID)
 	ChangeIngredientPrice(packageOid *primitive.ObjectID, priceDTO *IngredientPackagePriceDTO) (int, *IngredientDTO)
 }
 
@@ -32,7 +33,7 @@ func (r *repository) GetAllIngredients() (int, []IngredientDTO) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	results, err := r.ingredientCollection.Aggregate(ctx, GetAggregateShowIngredients())
+	results, err := r.ingredientCollection.Aggregate(ctx, GetAllIngredients())
 
 	if err != nil {
 		log.Println(err.Error())
@@ -57,30 +58,19 @@ func (r *repository) FindIngredientByOID(oid *primitive.ObjectID) (int, *Ingredi
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	var ingredient []IngredientDTO = []IngredientDTO{}
+	var ingredient *IngredientDTO = &IngredientDTO{}
 
-	cursor, err := r.ingredientCollection.Aggregate(ctx, GetIngredientById(*oid))
+	err := r.ingredientCollection.FindOne(ctx, GetIngredientById(*oid)).Decode(ingredient)
 
 	if err != nil {
 		log.Println(err.Error())
 		return http.StatusNotFound, nil
 	}
 
-	err = cursor.All(ctx, &ingredient)
-
-	if err != nil {
-		log.Println(err.Error())
-		return http.StatusBadRequest, nil
-	}
-
-	if len(ingredient) == 0 {
-		return http.StatusNotFound, nil
-	}
-
-	return http.StatusOK, &ingredient[0]
+	return http.StatusOK, ingredient
 }
 
-func (r *repository) CreateIngredient(ingredient *IngredientDTO) (int, *IngredientDTO) {
+func (r *repository) CreateIngredient(ingredient *IngredientNameDTO) (int, *IngredientDTO) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -130,7 +120,7 @@ func (r *repository) CreateIngredient(ingredient *IngredientDTO) (int, *Ingredie
 	return http.StatusCreated, ingredientCreated
 }
 
-func (r *repository) UpdateIngredient(oid *primitive.ObjectID, dto *IngredientDTO) (int, *IngredientDTO) {
+func (r *repository) UpdateIngredient(oid *primitive.ObjectID, dto *IngredientNameDTO) (int, *IngredientDTO) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -141,34 +131,36 @@ func (r *repository) UpdateIngredient(oid *primitive.ObjectID, dto *IngredientDT
 		return http.StatusBadRequest, nil
 	}
 
-	return http.StatusOK, dto
+	var ingredient *IngredientDTO = &IngredientDTO{}
+
+	err = r.ingredientCollection.FindOne(ctx, GetIngredientById(*oid)).Decode(ingredient)
+
+	if err != nil {
+		log.Println(err.Error())
+		return http.StatusNotFound, nil
+	}
+
+	return http.StatusOK, ingredient
 }
 
-func (r *repository) DeleteIngredient(oid *primitive.ObjectID) (int, *IngredientDTO) {
+func (r *repository) DeleteIngredient(oid *primitive.ObjectID) (int, *primitive.ObjectID) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	var ingredientDeleted *IngredientDTO = &IngredientDTO{}
-	err := r.ingredientCollection.FindOneAndDelete(ctx, GetIngredientById(*oid)).Decode(ingredientDeleted)
+	_, err := r.ingredientCollection.DeleteOne(ctx, GetIngredientById(*oid))
 
 	if err != nil {
 		return http.StatusNotFound, nil
 	}
 
-	return http.StatusOK, ingredientDeleted
+	return http.StatusOK, oid
 }
 
-func (r *repository) AddPackageToIngredient(dto IngredientPackageDTO) (int, *IngredientDTO) {
+func (r *repository) AddPackageToIngredient(ingredientOid *primitive.ObjectID, packageOid *primitive.ObjectID, envase *IngredientPackage) (int, *IngredientDTO) {
 	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
 	defer cancel()
 
-	var ingredientPackage *IngredientPackage = &IngredientPackage{
-		ID:    dto.PackageOid,
-		Price: dto.Price,
-	}
-
-	_, err := r.ingredientCollection.UpdateOne(ctx, GetIngredientWithoutExistingPackage(dto.IngredientOid, dto.PackageOid),
-		PushPackageIntoIngredient(*ingredientPackage))
+	_, err := r.ingredientCollection.UpdateOne(ctx, GetIngredientWithoutExistingPackage(*ingredientOid, *packageOid), PushPackageIntoIngredient(*envase))
 
 	if err != nil {
 		log.Println(err.Error())
@@ -176,6 +168,20 @@ func (r *repository) AddPackageToIngredient(dto IngredientPackageDTO) (int, *Ing
 	}
 
 	return http.StatusOK, nil
+}
+
+func (r *repository) RemovePackageFromIngredients(dto IngredientPackageDTO) (int, *primitive.ObjectID) {
+	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
+	defer cancel()
+
+	_, err := r.ingredientCollection.UpdateMany(ctx, GetIngredientByPackageId(dto.PackageOid), PullPackageFromIngredients(dto))
+
+	if err != nil {
+		log.Println(err.Error())
+		return http.StatusBadRequest, nil
+	}
+
+	return http.StatusOK, &dto.PackageOid
 }
 
 func (r *repository) ChangeIngredientPrice(packageOid *primitive.ObjectID, priceDTO *IngredientPackagePriceDTO) (int, *IngredientDTO) {

@@ -6,6 +6,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+func All() bson.M {
+	return bson.M{}
+}
+
 func GetRecipeById(oid primitive.ObjectID) bson.M {
 	return bson.M{"_id": oid}
 }
@@ -16,6 +20,10 @@ func UpdateRecipeName(dto RecipeNameDTO) bson.M {
 
 func AddIngredientToRecipe(recipe RecipeIngredient) bson.M {
 	return bson.M{"$addToSet": bson.M{"ingredients": recipe}}
+}
+
+func RemoveIngredientFromRecipe(recipe RecipeIngredient) bson.M {
+	return bson.M{"$pull": bson.M{"ingredients._id": recipe.ID}}
 }
 
 func GetAggregateAllRecipe() mongo.Pipeline {
@@ -71,4 +79,8 @@ func GetAggregateRecipeById(oid primitive.ObjectID) mongo.Pipeline {
 		{"price", bson.D{{"$sum", "$ingredient.price"}}}}}}
 
 	return mongo.Pipeline{matchById, unwindIngredients, lookupIngredients, unwindIngredient, lookupPackages, unwindPackages, setFields, group}
+}
+
+func SetRecipePrice() bson.A {
+	return bson.A{bson.D{{"$set", bson.D{{"price", bson.D{{"$sum", "$ingredients.price"}}}}}}}
 }
