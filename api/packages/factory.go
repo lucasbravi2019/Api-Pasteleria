@@ -1,6 +1,10 @@
 package packages
 
-import "github.com/lucasbravi2019/pasteleria/core"
+import (
+	"github.com/lucasbravi2019/pasteleria/api/ingredients"
+	"github.com/lucasbravi2019/pasteleria/api/recipes"
+	"github.com/lucasbravi2019/pasteleria/core"
+)
 
 func GetPackageHandlerInstance() *handler {
 	if packageHandlerInstance == nil {
@@ -14,7 +18,9 @@ func GetPackageHandlerInstance() *handler {
 func GetPackageServiceInstance() *service {
 	if packageServiceInstance == nil {
 		packageServiceInstance = &service{
-			repository: GetPackageRepositoryInstance(),
+			packageRepository:    GetPackageRepositoryInstance(),
+			ingredientRepository: ingredients.GetIngredientRepositoryInstance(),
+			recipeRepository:     recipes.GetRecipeRepositoryInstance(),
 		}
 	}
 	return packageServiceInstance
