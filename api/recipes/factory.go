@@ -1,7 +1,6 @@
 package recipes
 
 import (
-	"github.com/lucasbravi2019/pasteleria/api/ingredients"
 	"github.com/lucasbravi2019/pasteleria/core"
 )
 
@@ -17,8 +16,7 @@ func GetRecipeHandlerInstance() *recipeHandler {
 func GetRecipeServiceInstance() *recipeService {
 	if recipeServiceInstance == nil {
 		recipeServiceInstance = &recipeService{
-			recipeRepository:     GetRecipeRepositoryInstance(),
-			ingredientRepository: ingredients.GetIngredientRepositoryInstance(),
+			recipeRepository: GetRecipeRepositoryInstance(),
 		}
 	}
 	return recipeServiceInstance

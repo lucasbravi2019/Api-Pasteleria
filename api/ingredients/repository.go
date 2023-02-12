@@ -33,25 +33,25 @@ func (r *repository) GetAllIngredients() (int, []IngredientDTO) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	results, err := r.ingredientCollection.Aggregate(ctx, GetAllIngredients())
+	results, err := r.ingredientCollection.Find(ctx, All())
 
 	if err != nil {
 		log.Println(err.Error())
 	}
 
-	var ingredients []IngredientDTO
+	var ingredients *[]IngredientDTO = &[]IngredientDTO{}
 
-	err = results.All(ctx, &ingredients)
+	err = results.All(ctx, ingredients)
 
 	if err != nil {
 		log.Println(err.Error())
 	}
 
-	if len(ingredients) < 1 {
+	if len(*ingredients) < 1 {
 		return http.StatusOK, []IngredientDTO{}
 	}
 
-	return http.StatusOK, ingredients
+	return http.StatusOK, *ingredients
 }
 
 func (r *repository) FindIngredientByOID(oid *primitive.ObjectID) (int, *IngredientDTO) {

@@ -18,7 +18,7 @@ type RecipeHandler interface {
 	CreateRecipe(w http.ResponseWriter, r *http.Request)
 	UpdateRecipeName(w http.ResponseWriter, r *http.Request)
 	DeleteRecipe(w http.ResponseWriter, r *http.Request)
-	AddIngredientToRecipe(w http.ResponseWriter, r *http.Request)
+
 	GetRecipeRoutes() core.Routes
 }
 
@@ -44,11 +44,6 @@ func (h *recipeHandler) UpdateRecipeName(w http.ResponseWriter, r *http.Request)
 
 func (h *recipeHandler) DeleteRecipe(w http.ResponseWriter, r *http.Request) {
 	statusCode, body := h.service.DeleteRecipe(r)
-	core.EncodeJsonResponse(w, statusCode, body)
-}
-
-func (h *recipeHandler) AddIngredientToRecipe(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.service.AddIngredientToRecipe(r)
 	core.EncodeJsonResponse(w, statusCode, body)
 }
 
@@ -78,11 +73,6 @@ func (h *recipeHandler) GetRecipeRoutes() core.Routes {
 			Path:        "/recipes/{id}",
 			HandlerFunc: h.DeleteRecipe,
 			Method:      "DELETE",
-		},
-		core.Route{
-			Path:        "/recipes/{recipeId}/ingredients/{ingredientId}",
-			HandlerFunc: h.AddIngredientToRecipe,
-			Method:      "PUT",
 		},
 	}
 }

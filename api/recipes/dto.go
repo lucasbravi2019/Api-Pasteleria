@@ -13,19 +13,15 @@ type IngredientsDTO struct {
 	ID       primitive.ObjectID `bson:"_id" json:"id"`
 	Name     string             `json:"name"`
 	Price    float64            `json:"price"`
-	Packages PackageDTO         `json:"packages"`
+	Package  PackageDTO         `json:"package"`
 	Quantity float64            `json:"quantity"`
 }
 
 type PackageDTO struct {
-	ID       primitive.ObjectID `bson:"_id" json:"id"`
-	Metric   string             `json:"metric"`
-	Quantity float64            `json:"quantity"`
-}
-
-type IngredientDetailsDTO struct {
-	Metric   string  `json:"metric,omitempty"`
-	Quantity float32 `json:"quantity,omitempty"`
+	ID       primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	Metric   string             `bson:"metric,omitempty" json:"metric,omitempty"`
+	Quantity float64            `bson:"quantity,omitempty" json:"quantity,omitempty"`
+	Price    float64            `bson:"price,omitempty" json:"price,omitempty"`
 }
 
 type RecipeNameDTO struct {

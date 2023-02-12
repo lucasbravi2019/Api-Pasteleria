@@ -1,17 +1,20 @@
 package ingredients
 
 import (
+	"errors"
+	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/lucasbravi2019/pasteleria/api/packages"
+	"github.com/lucasbravi2019/pasteleria/api/recipes"
 	"github.com/lucasbravi2019/pasteleria/core"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type service struct {
 	ingredientRepository IngredientRepository
-	packageRepository    packages.PackageRepository
+	recipeRepository     recipes.RecipeRepository
 }
 
 type IngredientService interface {
@@ -19,8 +22,7 @@ type IngredientService interface {
 	CreateIngredient(r *http.Request) (int, *IngredientDTO)
 	UpdateIngredient(r *http.Request) (int, *IngredientDTO)
 	DeleteIngredient(r *http.Request) (int, *primitive.ObjectID)
-	AddPackageToIngredient(r *http.Request) (int, *IngredientDTO)
-	RemovePackageFromIngredients(r *http.Request) (int, *primitive.ObjectID)
+	AddIngredientToRecipe(r *http.Request) (int, *primitive.ObjectID)
 	ChangeIngredientPrice(r *http.Request) (int, *IngredientDTO)
 }
 
@@ -70,40 +72,62 @@ func (s *service) DeleteIngredient(r *http.Request) (int, *primitive.ObjectID) {
 	return s.ingredientRepository.DeleteIngredient(oid)
 }
 
-func (s *service) AddPackageToIngredient(r *http.Request) (int, *IngredientDTO) {
-	ingredientOid := mux.Vars(r)["ingredientId"]
-	packageOid := mux.Vars(r)["packageId"]
-	ingredientId := core.ConvertHexToObjectId(ingredientOid)
-	packageId := core.ConvertHexToObjectId(packageOid)
+func (s *service) AddIngredientToRecipe(r *http.Request) (int, *primitive.ObjectID) {
+	recipeOid := core.ConvertHexToObjectId(mux.Vars(r)["recipeId"])
+	ingredientOid := core.ConvertHexToObjectId(mux.Vars(r)["ingredientId"])
 
-	var priceDTO *IngredientPackagePriceDTO = &IngredientPackagePriceDTO{}
+	if recipeOid == nil || ingredientOid == nil {
+		return http.StatusBadRequest, nil
+	}
 
-	invalidBody := core.DecodeBody(r, priceDTO)
+	_, recipe := s.recipeRepository.FindRecipeByOID(recipeOid)
+
+	if recipe == nil {
+		return http.StatusNotFound, nil
+	}
+
+	_, ingredientDTO := s.ingredientRepository.FindIngredientByOID(ingredientOid)
+
+	if ingredientDTO == nil {
+		return http.StatusNotFound, nil
+	}
+
+	var ingredientDetails *IngredientDetailsDTO = &IngredientDetailsDTO{}
+
+	invalidBody := core.DecodeBody(r, ingredientDetails)
 
 	if invalidBody {
 		return http.StatusBadRequest, nil
 	}
 
-	_, envase := s.packageRepository.GetPackageById(packageId)
+	err := validate(ingredientDTO, ingredientDetails)
 
-	var ingredientPackage *IngredientPackage = &IngredientPackage{
-		ID:       envase.ID,
-		Metric:   envase.Metric,
-		Quantity: envase.Quantity,
-		Price:    priceDTO.Price,
+	if err != nil {
+		return http.StatusBadRequest, nil
 	}
 
-	return s.ingredientRepository.AddPackageToIngredient(ingredientId, packageId, ingredientPackage)
-}
+	envase := getIngredientPackage(ingredientDetails.Metric, ingredientDTO.Packages)
 
-func (s *service) RemovePackageFromIngredients(r *http.Request) (int, *primitive.ObjectID) {
-	packageOid := mux.Vars(r)["packageId"]
-
-	var ingredientPackageDto *IngredientPackageDTO = &IngredientPackageDTO{
-		PackageOid: *core.ConvertHexToObjectId(packageOid),
+	var recipeIngredient *recipes.RecipeIngredient = &recipes.RecipeIngredient{
+		ID:       primitive.NewObjectID(),
+		Quantity: ingredientDetails.Quantity,
+		Name:     ingredientDTO.Name,
+		Package: recipes.RecipeIngredientPackage{
+			ID:       envase.ID,
+			Metric:   envase.Metric,
+			Quantity: envase.Quantity,
+			Price:    envase.Price,
+		},
+		Price: float64(ingredientDetails.Quantity) / envase.Quantity * envase.Price,
 	}
 
-	return s.ingredientRepository.RemovePackageFromIngredients(*ingredientPackageDto)
+	_, recipeUpdated := s.recipeRepository.AddIngredientToRecipe(recipeOid, recipeIngredient)
+
+	if recipeUpdated == nil {
+		return http.StatusInternalServerError, nil
+	}
+
+	return http.StatusOK, nil
 }
 
 func (s *service) ChangeIngredientPrice(r *http.Request) (int, *IngredientDTO) {
@@ -122,5 +146,39 @@ func (s *service) ChangeIngredientPrice(r *http.Request) (int, *IngredientDTO) {
 		return http.StatusBadRequest, nil
 	}
 
-	return s.ingredientRepository.ChangeIngredientPrice(ingredientPackageOid, ingredientPackagePrice)
+	_, dto := s.ingredientRepository.ChangeIngredientPrice(ingredientPackageOid, ingredientPackagePrice)
+	s.recipeRepository.UpdateIngredientsPrice(ingredientPackageOid, ingredientPackagePrice.Price)
+
+	return http.StatusOK, dto
+}
+
+func validate(ingredient *IngredientDTO, ingredientDetails *IngredientDetailsDTO) error {
+	if !ingredientMetricMatches(ingredientDetails.Metric, ingredient.Packages) {
+		log.Println("La unidad de medida no coincide")
+		return errors.New("la unidad de medida no coincide")
+	}
+
+	if ingredientDetails.Quantity == 0 {
+		log.Println("La cantidad del ingrediente no puede ser 0")
+		return errors.New("la cantidad del ingrediente no puede ser 0")
+	}
+	return nil
+}
+
+func ingredientMetricMatches(metric string, packages []PackageDTO) bool {
+	for _, pack := range packages {
+		if fmt.Sprintf("%g %s", pack.Quantity, pack.Metric) == metric {
+			return true
+		}
+	}
+	return false
+}
+
+func getIngredientPackage(metric string, packages []PackageDTO) *PackageDTO {
+	for _, pack := range packages {
+		if fmt.Sprintf("%g %s", pack.Quantity, pack.Metric) == metric {
+			return &pack
+		}
+	}
+	return nil
 }

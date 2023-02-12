@@ -10,15 +10,15 @@ type IngredientNameDTO struct {
 
 type IngredientDTO struct {
 	ID       primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
-	Name     string             `bson:"name" json:"name,omitempty" validate:"required"`
-	Packages []PackageDTO       `bson:"packages" json:"packages,omitempty"`
+	Name     string             `bson:"name,omitempty" json:"name,omitempty" validate:"required"`
+	Packages []PackageDTO       `bson:"packages,omitempty" json:"packages,omitempty"`
 }
 
 type PackageDTO struct {
-	ID       primitive.ObjectID `bson:"_id" json:"id,omitempty"`
-	Metric   string             `bson:"metric" json:"metric,omitempty"`
-	Quantity float64            `bson:"quantity" json:"quantity,omitempty"`
-	Price    float64            `bson:"price" json:"price,omitempty"`
+	ID       primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	Metric   string             `bson:"metric,omitempty" json:"metric,omitempty"`
+	Quantity float64            `bson:"quantity,omitempty" json:"quantity,omitempty"`
+	Price    float64            `bson:"price,omitempty" json:"price,omitempty"`
 }
 
 type IngredientPackageDTO struct {
@@ -29,4 +29,17 @@ type IngredientPackageDTO struct {
 
 type IngredientPackagePriceDTO struct {
 	Price float64 `json:"price" validate:"required"`
+}
+
+type RecipeIngredientDTO struct {
+	ID       primitive.ObjectID `bson:"_id" json:"id"`
+	Name     string             `json:"name"`
+	Price    float64            `json:"price"`
+	Package  PackageDTO         `json:"package"`
+	Quantity float64            `json:"quantity"`
+}
+
+type IngredientDetailsDTO struct {
+	Metric   string  `json:"metric,omitempty"`
+	Quantity float32 `json:"quantity,omitempty"`
 }

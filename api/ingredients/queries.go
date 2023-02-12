@@ -9,6 +9,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+func All() bson.M {
+	return bson.M{}
+}
+
 func GetIngredientByIdAggregation(id primitive.ObjectID) mongo.Pipeline {
 	match := bson.D{{"$match", bson.D{{"_id", id}}}}
 	packagesUnwind := bson.D{{"$unwind", bson.D{{"path", "$packages"}, {"preserveNullAndEmptyArrays", true}}}}
@@ -99,7 +103,7 @@ func PullPackageFromIngredients(envase IngredientPackageDTO) bson.M {
 func SetIngredientPrice(price float64) bson.M {
 	return bson.M{
 		"$set": bson.M{
-			"packages.$[package].package.price": price,
+			"packages.$[package].price": price,
 		},
 	}
 }
@@ -108,7 +112,7 @@ func GetArrayFilterForPackageId(oid primitive.ObjectID) *options.UpdateOptions {
 	return options.Update().SetArrayFilters(options.ArrayFilters{
 		Filters: []interface{}{
 			bson.M{
-				"package.package._id": oid,
+				"package._id": oid,
 			},
 		},
 	})
