@@ -18,7 +18,6 @@ type RecipeHandler interface {
 	CreateRecipe(w http.ResponseWriter, r *http.Request)
 	UpdateRecipeName(w http.ResponseWriter, r *http.Request)
 	DeleteRecipe(w http.ResponseWriter, r *http.Request)
-
 	GetRecipeRoutes() core.Routes
 }
 

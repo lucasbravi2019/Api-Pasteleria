@@ -73,7 +73,6 @@ func (r *recipeRepository) CreateRecipe(recipe *RecipeNameDTO) (int, *RecipeDTO)
 	defer cancel()
 
 	result, err := r.db.InsertOne(ctx, recipe)
-
 	if err != nil {
 		log.Println(err.Error())
 		return http.StatusBadRequest, nil
