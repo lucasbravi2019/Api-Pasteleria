@@ -29,7 +29,8 @@ func RegisterRoutes(routes core.Routes) {
 			Path(route.Path).
 			HandlerFunc(
 				middleware.RequestLoggerMiddleware(
-					middleware.DatabaseCheckMiddleware(route.HandlerFunc))).
+					middleware.DatabaseCheckMiddleware(
+						route.HandlerFunc))).
 			Methods(route.Method)
 	}
 }
