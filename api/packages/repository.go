@@ -73,7 +73,7 @@ func (r *repository) UpdatePackage(oid *primitive.ObjectID, body *Package) error
 
 	defer cancel()
 
-	err := r.db.FindOneAndUpdate(ctx, GetPackageById(*oid), UpdatePackageById(*body)).Decode(body)
+	_, err := r.db.UpdateOne(ctx, GetPackageById(*oid), UpdatePackageById(*body))
 
 	if err != nil {
 		log.Println(err.Error())
@@ -87,9 +87,7 @@ func (r *repository) DeletePackage(oid *primitive.ObjectID) error {
 
 	defer cancel()
 
-	var packageDeleted *Package = &Package{}
-
-	err := r.db.FindOneAndDelete(ctx, GetPackageById(*oid)).Decode(packageDeleted)
+	_, err := r.db.DeleteOne(ctx, GetPackageById(*oid))
 
 	if err != nil {
 		log.Println(err.Error())
