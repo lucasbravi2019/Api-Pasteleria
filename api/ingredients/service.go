@@ -22,14 +22,16 @@ type IngredientService interface {
 	CreateIngredient(r *http.Request) (int, *IngredientDTO)
 	UpdateIngredient(r *http.Request) (int, *IngredientDTO)
 	DeleteIngredient(r *http.Request) (int, *primitive.ObjectID)
-	AddIngredientToRecipe(r *http.Request) (int, *primitive.ObjectID)
+	AddIngredientToRecipe(r *http.Request) int
 	ChangeIngredientPrice(r *http.Request) (int, *IngredientDTO)
 }
 
 var ingredientServiceInstance *service
 
 func (s *service) GetAllIngredients() (int, []IngredientDTO) {
-	return s.ingredientRepository.GetAllIngredients()
+	ingredients := s.ingredientRepository.GetAllIngredients()
+
+	return http.StatusOK, ingredients
 }
 
 func (s *service) CreateIngredient(r *http.Request) (int, *IngredientDTO) {
@@ -41,7 +43,24 @@ func (s *service) CreateIngredient(r *http.Request) (int, *IngredientDTO) {
 		return http.StatusBadRequest, nil
 	}
 
-	return s.ingredientRepository.CreateIngredient(ingredientDto)
+	var ingredientEntity *Ingredient = &Ingredient{
+		Name:     ingredientDto.Name,
+		Packages: []IngredientPackage{},
+	}
+
+	ingredientCreatedId := s.ingredientRepository.CreateIngredient(ingredientEntity)
+
+	if ingredientCreatedId == nil {
+		return http.StatusInternalServerError, nil
+	}
+
+	ingredientCreated := s.ingredientRepository.FindIngredientByOID(ingredientCreatedId)
+
+	if ingredientCreated == nil {
+		return http.StatusNotFound, nil
+	}
+
+	return http.StatusCreated, ingredientCreated
 }
 
 func (s *service) UpdateIngredient(r *http.Request) (int, *IngredientDTO) {
@@ -59,7 +78,19 @@ func (s *service) UpdateIngredient(r *http.Request) (int, *IngredientDTO) {
 		return http.StatusBadRequest, nil
 	}
 
-	return s.ingredientRepository.UpdateIngredient(oid, ingredient)
+	err := s.ingredientRepository.UpdateIngredient(oid, ingredient)
+
+	if err != nil {
+		return http.StatusInternalServerError, nil
+	}
+
+	ingredientUpdated := s.ingredientRepository.FindIngredientByOID(oid)
+
+	if ingredientUpdated == nil {
+		return http.StatusNotFound, nil
+	}
+
+	return http.StatusOK, ingredientUpdated
 }
 
 func (s *service) DeleteIngredient(r *http.Request) (int, *primitive.ObjectID) {
@@ -69,27 +100,33 @@ func (s *service) DeleteIngredient(r *http.Request) (int, *primitive.ObjectID) {
 		return http.StatusBadRequest, nil
 	}
 
-	return s.ingredientRepository.DeleteIngredient(oid)
+	err := s.ingredientRepository.DeleteIngredient(oid)
+
+	if err != nil {
+		return http.StatusInternalServerError, nil
+	}
+
+	return http.StatusOK, oid
 }
 
-func (s *service) AddIngredientToRecipe(r *http.Request) (int, *primitive.ObjectID) {
+func (s *service) AddIngredientToRecipe(r *http.Request) int {
 	recipeOid := core.ConvertHexToObjectId(mux.Vars(r)["recipeId"])
 	ingredientOid := core.ConvertHexToObjectId(mux.Vars(r)["ingredientId"])
 
 	if recipeOid == nil || ingredientOid == nil {
-		return http.StatusBadRequest, nil
+		return http.StatusBadRequest
 	}
 
-	_, recipe := s.recipeRepository.FindRecipeByOID(recipeOid)
+	recipe := s.recipeRepository.FindRecipeByOID(recipeOid)
 
 	if recipe == nil {
-		return http.StatusNotFound, nil
+		return http.StatusNotFound
 	}
 
-	_, ingredientDTO := s.ingredientRepository.FindIngredientByOID(ingredientOid)
+	ingredientDTO := s.ingredientRepository.FindIngredientByOID(ingredientOid)
 
 	if ingredientDTO == nil {
-		return http.StatusNotFound, nil
+		return http.StatusNotFound
 	}
 
 	var ingredientDetails *IngredientDetailsDTO = &IngredientDetailsDTO{}
@@ -97,13 +134,13 @@ func (s *service) AddIngredientToRecipe(r *http.Request) (int, *primitive.Object
 	invalidBody := core.DecodeBody(r, ingredientDetails)
 
 	if invalidBody {
-		return http.StatusBadRequest, nil
+		return http.StatusBadRequest
 	}
 
 	err := validate(ingredientDTO, ingredientDetails)
 
 	if err != nil {
-		return http.StatusBadRequest, nil
+		return http.StatusBadRequest
 	}
 
 	envase := getIngredientPackage(ingredientDetails.Metric, ingredientDTO.Packages)
@@ -121,13 +158,15 @@ func (s *service) AddIngredientToRecipe(r *http.Request) (int, *primitive.Object
 		Price: float64(ingredientDetails.Quantity) / envase.Quantity * envase.Price,
 	}
 
-	_, recipeUpdated := s.recipeRepository.AddIngredientToRecipe(recipeOid, recipeIngredient)
+	err = s.recipeRepository.AddIngredientToRecipe(recipeOid, recipeIngredient)
 
-	if recipeUpdated == nil {
-		return http.StatusInternalServerError, nil
+	if err != nil {
+		return http.StatusInternalServerError
 	}
 
-	return http.StatusOK, nil
+	s.recipeRepository.UpdateRecipeByIdPrice(recipeOid)
+
+	return http.StatusOK
 }
 
 func (s *service) ChangeIngredientPrice(r *http.Request) (int, *IngredientDTO) {
@@ -146,10 +185,42 @@ func (s *service) ChangeIngredientPrice(r *http.Request) (int, *IngredientDTO) {
 		return http.StatusBadRequest, nil
 	}
 
-	_, dto := s.ingredientRepository.ChangeIngredientPrice(ingredientPackageOid, ingredientPackagePrice)
-	s.recipeRepository.UpdateIngredientsPrice(ingredientPackageOid, ingredientPackagePrice.Price)
+	err := s.ingredientRepository.ChangeIngredientPrice(ingredientPackageOid, ingredientPackagePrice)
 
-	return http.StatusOK, dto
+	if err != nil {
+		return http.StatusInternalServerError, nil
+	}
+
+	s.recipeRepository.UpdateIngredientPackagePrice(ingredientPackageOid, ingredientPackagePrice.Price)
+
+	recipes := s.recipeRepository.FindRecipesByPackageId(ingredientPackageOid)
+
+	if len(recipes) == 0 {
+		return http.StatusInternalServerError, nil
+	}
+
+	for i := 0; i < len(recipes); i++ {
+		var recipePrice float64 = 0
+		for j := 0; j < len(recipes[i].Ingredients); j++ {
+			recipes[i].Ingredients[j].Price = recipes[i].Ingredients[j].Quantity / recipes[i].Ingredients[j].Package.Quantity * recipes[i].Ingredients[j].Package.Price
+			recipePrice += recipes[i].Ingredients[j].Price
+		}
+		recipes[i].Price = recipePrice
+
+		err := s.recipeRepository.UpdateIngredientsPrice(ingredientPackageOid, recipes[i])
+
+		if err != nil {
+			log.Println(err.Error())
+		}
+	}
+
+	ingredientUpdated := s.ingredientRepository.FindIngredientByPackageId(ingredientPackageOid)
+
+	if ingredientUpdated == nil {
+		return http.StatusInternalServerError, nil
+	}
+
+	return http.StatusOK, ingredientUpdated
 }
 
 func validate(ingredient *IngredientDTO, ingredientDetails *IngredientDetailsDTO) error {

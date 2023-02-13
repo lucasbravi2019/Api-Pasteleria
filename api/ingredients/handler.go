@@ -45,8 +45,8 @@ func (h *handler) DeleteIngredient(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) AddIngredientToRecipe(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.service.AddIngredientToRecipe(r)
-	core.EncodeJsonResponse(w, statusCode, body)
+	statusCode := h.service.AddIngredientToRecipe(r)
+	core.EncodeJsonResponse(w, statusCode, nil)
 }
 
 func (h *handler) ChangeIngredientPrice(w http.ResponseWriter, r *http.Request) {
