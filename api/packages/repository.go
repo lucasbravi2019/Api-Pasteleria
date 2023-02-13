@@ -3,7 +3,6 @@ package packages
 import (
 	"context"
 	"log"
-	"net/http"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -16,44 +15,39 @@ type repository struct {
 }
 
 type PackageRepository interface {
-	GetPackages() (int, []Package)
-	CreatePackage(body *Package) (int, *Package)
-	UpdatePackage(oid *primitive.ObjectID, body *Package) (int, *Package)
-	DeletePackage(oid *primitive.ObjectID) (int, *Package)
-	GetPackageById(oid *primitive.ObjectID) (int, *Package)
+	GetPackages() *[]Package
+	GetPackageById(oid *primitive.ObjectID) *Package
+	CreatePackage(body *Package) *primitive.ObjectID
+	UpdatePackage(oid *primitive.ObjectID, body *Package) error
+	DeletePackage(oid *primitive.ObjectID) error
 }
 
 var packageRepositoryInstance *repository
 
-func (r *repository) GetPackages() (int, []Package) {
+func (r *repository) GetPackages() *[]Package {
 	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
 
 	defer cancel()
 
 	cursor, err := r.db.Find(ctx, bson.M{})
 
-	if err != nil {
-		log.Println(err.Error())
-		return http.StatusInternalServerError, nil
-	}
-
-	var packages []Package
-
-	err = cursor.All(ctx, &packages)
+	var packages *[]Package = &[]Package{}
 
 	if err != nil {
 		log.Println(err.Error())
-		return http.StatusInternalServerError, nil
+		return packages
 	}
 
-	if packages == nil {
-		return http.StatusOK, []Package{}
+	err = cursor.All(ctx, packages)
+
+	if err != nil {
+		log.Println(err.Error())
 	}
 
-	return http.StatusOK, packages
+	return packages
 }
 
-func (r *repository) CreatePackage(body *Package) (int, *Package) {
+func (r *repository) CreatePackage(body *Package) *primitive.ObjectID {
 	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
 
 	defer cancel()
@@ -62,19 +56,19 @@ func (r *repository) CreatePackage(body *Package) (int, *Package) {
 
 	if err != nil {
 		log.Println(err.Error())
-		return http.StatusBadRequest, nil
+		return nil
 	}
 
 	if result.InsertedID == nil {
-		return http.StatusInternalServerError, nil
+		return nil
 	}
 
-	body.ID = result.InsertedID.(primitive.ObjectID)
+	id := result.InsertedID.(primitive.ObjectID)
 
-	return http.StatusCreated, body
+	return &id
 }
 
-func (r *repository) UpdatePackage(oid *primitive.ObjectID, body *Package) (int, *Package) {
+func (r *repository) UpdatePackage(oid *primitive.ObjectID, body *Package) error {
 	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
 
 	defer cancel()
@@ -83,13 +77,12 @@ func (r *repository) UpdatePackage(oid *primitive.ObjectID, body *Package) (int,
 
 	if err != nil {
 		log.Println(err.Error())
-		return http.StatusBadRequest, nil
 	}
 
-	return http.StatusOK, body
+	return err
 }
 
-func (r *repository) DeletePackage(oid *primitive.ObjectID) (int, *Package) {
+func (r *repository) DeletePackage(oid *primitive.ObjectID) error {
 	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
 
 	defer cancel()
@@ -99,14 +92,13 @@ func (r *repository) DeletePackage(oid *primitive.ObjectID) (int, *Package) {
 	err := r.db.FindOneAndDelete(ctx, GetPackageById(*oid)).Decode(packageDeleted)
 
 	if err != nil {
-		log.Println("No pudo borrarse el paquete")
-		return http.StatusInternalServerError, nil
+		log.Println(err.Error())
 	}
 
-	return http.StatusOK, packageDeleted
+	return err
 }
 
-func (r *repository) GetPackageById(oid *primitive.ObjectID) (int, *Package) {
+func (r *repository) GetPackageById(oid *primitive.ObjectID) *Package {
 	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
 	defer cancel()
 
@@ -116,8 +108,8 @@ func (r *repository) GetPackageById(oid *primitive.ObjectID) (int, *Package) {
 
 	if err != nil {
 		log.Println(err.Error())
-		return http.StatusNotFound, nil
+		return nil
 	}
 
-	return http.StatusOK, envase
+	return envase
 }

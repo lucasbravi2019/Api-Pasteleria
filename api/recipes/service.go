@@ -23,7 +23,8 @@ type RecipeService interface {
 var recipeServiceInstance *recipeService
 
 func (s *recipeService) GetAllRecipes() (int, *[]RecipeDTO) {
-	return s.recipeRepository.FindAllRecipes()
+	recipes := s.recipeRepository.FindAllRecipes()
+	return http.StatusOK, recipes
 }
 
 func (s *recipeService) GetRecipe(r *http.Request) (int, *RecipeDTO) {
@@ -33,7 +34,13 @@ func (s *recipeService) GetRecipe(r *http.Request) (int, *RecipeDTO) {
 		return http.StatusBadRequest, nil
 	}
 
-	return s.recipeRepository.FindRecipeByOID(oid)
+	recipe := s.recipeRepository.FindRecipeByOID(oid)
+
+	if recipe == nil {
+		return http.StatusNotFound, nil
+	}
+
+	return http.StatusOK, recipe
 }
 
 func (s *recipeService) CreateRecipe(r *http.Request) (int, *RecipeDTO) {
@@ -45,7 +52,19 @@ func (s *recipeService) CreateRecipe(r *http.Request) (int, *RecipeDTO) {
 		return http.StatusBadRequest, nil
 	}
 
-	return s.recipeRepository.CreateRecipe(recipeName)
+	oid := s.recipeRepository.CreateRecipe(recipeName)
+
+	if oid == nil {
+		return http.StatusInternalServerError, nil
+	}
+
+	recipe := s.recipeRepository.FindRecipeByOID(oid)
+
+	if recipe == nil {
+		return http.StatusInternalServerError, nil
+	}
+
+	return http.StatusCreated, recipe
 }
 
 func (s *recipeService) UpdateRecipeName(r *http.Request) (int, *RecipeDTO) {
@@ -63,7 +82,19 @@ func (s *recipeService) UpdateRecipeName(r *http.Request) (int, *RecipeDTO) {
 		return http.StatusBadRequest, nil
 	}
 
-	return s.recipeRepository.UpdateRecipeName(oid, recipe)
+	err := s.recipeRepository.UpdateRecipeName(oid, recipe)
+
+	if err != nil {
+		return http.StatusInternalServerError, nil
+	}
+
+	recipeUpdated := s.recipeRepository.FindRecipeByOID(oid)
+
+	if recipeUpdated == nil {
+		return http.StatusInternalServerError, nil
+	}
+
+	return http.StatusOK, recipeUpdated
 }
 
 func (s *recipeService) DeleteRecipe(r *http.Request) (int, *primitive.ObjectID) {
@@ -73,5 +104,11 @@ func (s *recipeService) DeleteRecipe(r *http.Request) (int, *primitive.ObjectID)
 		return http.StatusBadRequest, nil
 	}
 
-	return s.recipeRepository.DeleteRecipe(oid)
+	err := s.recipeRepository.DeleteRecipe(oid)
+
+	if err != nil {
+		return http.StatusInternalServerError, nil
+	}
+
+	return http.StatusOK, oid
 }
