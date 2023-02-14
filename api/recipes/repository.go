@@ -3,7 +3,6 @@ package recipes
 import (
 	"context"
 	"log"
-	"net/http"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -15,44 +14,46 @@ type recipeRepository struct {
 }
 
 type RecipeRepository interface {
-	FindAllRecipes() (int, *[]RecipeDTO)
-	FindRecipeByOID(oid *primitive.ObjectID) (int, *RecipeDTO)
-	CreateRecipe(recipe *RecipeNameDTO) (int, *RecipeDTO)
-	UpdateRecipeName(oid *primitive.ObjectID, recipeName *RecipeNameDTO) (int, *RecipeDTO)
-	AddIngredientToRecipe(oid *primitive.ObjectID, recipe *RecipeIngredient) (int, *RecipeDTO)
-	RemoveIngredientFromRecipe(oid *primitive.ObjectID, recipe *RecipeIngredient) (int, *RecipeDTO)
-	DeleteRecipe(oid *primitive.ObjectID) (int, *primitive.ObjectID)
-	RemoveIngredientByPackageId(packageId *primitive.ObjectID) (int, *primitive.ObjectID)
-	UpdateRecipeByIdPrice(recipeId *primitive.ObjectID) (int, *primitive.ObjectID)
-	UpdateRecipesPrice() int
-	UpdateIngredientsPrice(ingredientId *primitive.ObjectID, price float64) (int, *primitive.ObjectID)
+	FindAllRecipes() *[]RecipeDTO
+	FindRecipeByOID(oid *primitive.ObjectID) *RecipeDTO
+	FindRecipesByPackageId(oid *primitive.ObjectID) []RecipeDTO
+	CreateRecipe(recipe *RecipeNameDTO) *primitive.ObjectID
+	UpdateRecipeName(oid *primitive.ObjectID, recipeName *RecipeNameDTO) error
+	AddIngredientToRecipe(oid *primitive.ObjectID, recipe *RecipeIngredient) error
+	RemoveIngredientFromRecipe(oid *primitive.ObjectID, recipe *RecipeIngredient) error
+	DeleteRecipe(oid *primitive.ObjectID) error
+	RemoveIngredientByPackageId(packageId *primitive.ObjectID) error
+	UpdateRecipeByIdPrice(recipeId *primitive.ObjectID) error
+	UpdateIngredientPackagePrice(packageId *primitive.ObjectID, price float64) error
+	UpdateIngredientsPrice(packageId *primitive.ObjectID, recipe RecipeDTO) error
+	UpdateRecipesPrice() error
 }
 
 var recipeRepositoryInstance *recipeRepository
 
-func (r *recipeRepository) FindAllRecipes() (int, *[]RecipeDTO) {
+func (r *recipeRepository) FindAllRecipes() *[]RecipeDTO {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	cursor, err := r.db.Find(ctx, All())
 
+	var recipes *[]RecipeDTO = &[]RecipeDTO{}
+
 	if err != nil {
 		log.Println(err.Error())
-		return http.StatusInternalServerError, nil
+		return recipes
 	}
 
-	var recipes *[]RecipeDTO = &[]RecipeDTO{}
 	err = cursor.All(ctx, recipes)
 
 	if err != nil {
 		log.Println(err.Error())
-		return http.StatusInternalServerError, nil
 	}
 
-	return http.StatusOK, recipes
+	return recipes
 }
 
-func (r *recipeRepository) FindRecipeByOID(oid *primitive.ObjectID) (int, *RecipeDTO) {
+func (r *recipeRepository) FindRecipeByOID(oid *primitive.ObjectID) *RecipeDTO {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -62,38 +63,55 @@ func (r *recipeRepository) FindRecipeByOID(oid *primitive.ObjectID) (int, *Recip
 
 	if err != nil {
 		log.Println(err.Error())
-		return http.StatusNotFound, nil
+		return nil
 	}
 
-	return http.StatusOK, recipe
+	return recipe
 }
 
-func (r *recipeRepository) CreateRecipe(recipe *RecipeNameDTO) (int, *RecipeDTO) {
+func (r *recipeRepository) FindRecipesByPackageId(packageId *primitive.ObjectID) []RecipeDTO {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	cursor, err := r.db.Find(ctx, GetRecipeByPackageId(*packageId))
+
+	var recipes []RecipeDTO = []RecipeDTO{}
+
+	if err != nil {
+		log.Println(err.Error())
+		return recipes
+	}
+
+	err = cursor.All(ctx, &recipes)
+
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	return recipes
+}
+
+func (r *recipeRepository) CreateRecipe(recipe *RecipeNameDTO) *primitive.ObjectID {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	result, err := r.db.InsertOne(ctx, recipe)
+
 	if err != nil {
 		log.Println(err.Error())
-		return http.StatusBadRequest, nil
+		return nil
 	}
 
-	oid := result.InsertedID
-
-	if oid == nil {
-		log.Println("No pudo insertarse en la base de datos")
-		return http.StatusInternalServerError, nil
+	if result.InsertedID == nil {
+		return nil
 	}
 
-	var recipeCreated *RecipeDTO = &RecipeDTO{
-		ID:   oid.(primitive.ObjectID),
-		Name: recipe.Name,
-	}
+	id := result.InsertedID.(primitive.ObjectID)
 
-	return http.StatusCreated, recipeCreated
+	return &id
 }
 
-func (r *recipeRepository) UpdateRecipeName(oid *primitive.ObjectID, recipeName *RecipeNameDTO) (int, *RecipeDTO) {
+func (r *recipeRepository) UpdateRecipeName(oid *primitive.ObjectID, recipeName *RecipeNameDTO) error {
 	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
 	defer cancel()
 
@@ -101,46 +119,25 @@ func (r *recipeRepository) UpdateRecipeName(oid *primitive.ObjectID, recipeName 
 
 	if err != nil {
 		log.Println(err.Error())
-		return http.StatusBadRequest, nil
 	}
 
-	var recipe *RecipeDTO = &RecipeDTO{}
-
-	err = r.db.FindOne(ctx, GetRecipeById(*oid)).Decode(recipe)
-
-	if err != nil {
-		log.Println(err.Error())
-		return http.StatusInternalServerError, nil
-	}
-
-	return http.StatusOK, recipe
+	return err
 }
 
-func (r *recipeRepository) AddIngredientToRecipe(oid *primitive.ObjectID, recipe *RecipeIngredient) (int, *RecipeDTO) {
+func (r *recipeRepository) AddIngredientToRecipe(oid *primitive.ObjectID, recipe *RecipeIngredient) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	_, err := r.db.UpdateOne(ctx, GetRecipeById(*oid), AddIngredientToRecipe(*recipe))
-	_, err = r.db.UpdateOne(ctx, GetRecipeById(*oid), SetRecipePrice())
 
 	if err != nil {
 		log.Println(err.Error())
-		return http.StatusBadRequest, nil
 	}
 
-	var recipeUpdated *RecipeDTO = &RecipeDTO{}
-
-	err = r.db.FindOne(ctx, GetRecipeById(*oid)).Decode(recipeUpdated)
-
-	if err != nil {
-		log.Println(err.Error())
-		return http.StatusInternalServerError, nil
-	}
-
-	return http.StatusOK, recipeUpdated
+	return err
 }
 
-func (r *recipeRepository) RemoveIngredientFromRecipe(oid *primitive.ObjectID, recipe *RecipeIngredient) (int, *RecipeDTO) {
+func (r *recipeRepository) RemoveIngredientFromRecipe(oid *primitive.ObjectID, recipe *RecipeIngredient) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -148,22 +145,12 @@ func (r *recipeRepository) RemoveIngredientFromRecipe(oid *primitive.ObjectID, r
 
 	if err != nil {
 		log.Println(err.Error())
-		return http.StatusBadRequest, nil
 	}
 
-	var recipeUpdated *RecipeDTO = &RecipeDTO{}
-
-	err = r.db.FindOne(ctx, GetRecipeById(*oid)).Decode(recipeUpdated)
-
-	if err != nil {
-		log.Println(err.Error())
-		return http.StatusInternalServerError, nil
-	}
-
-	return http.StatusOK, recipeUpdated
+	return err
 }
 
-func (r *recipeRepository) DeleteRecipe(oid *primitive.ObjectID) (int, *primitive.ObjectID) {
+func (r *recipeRepository) DeleteRecipe(oid *primitive.ObjectID) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -171,13 +158,12 @@ func (r *recipeRepository) DeleteRecipe(oid *primitive.ObjectID) (int, *primitiv
 
 	if err != nil {
 		log.Println(err.Error())
-		return http.StatusNotFound, nil
 	}
 
-	return http.StatusOK, oid
+	return err
 }
 
-func (r *recipeRepository) RemoveIngredientByPackageId(packageId *primitive.ObjectID) (int, *primitive.ObjectID) {
+func (r *recipeRepository) RemoveIngredientByPackageId(packageId *primitive.ObjectID) error {
 	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
 	defer cancel()
 
@@ -185,13 +171,12 @@ func (r *recipeRepository) RemoveIngredientByPackageId(packageId *primitive.Obje
 
 	if err != nil {
 		log.Println(err.Error())
-		return http.StatusInternalServerError, nil
 	}
 
-	return http.StatusOK, packageId
+	return err
 }
 
-func (r *recipeRepository) UpdateRecipeByIdPrice(recipeId *primitive.ObjectID) (int, *primitive.ObjectID) {
+func (r *recipeRepository) UpdateRecipeByIdPrice(recipeId *primitive.ObjectID) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -199,13 +184,12 @@ func (r *recipeRepository) UpdateRecipeByIdPrice(recipeId *primitive.ObjectID) (
 
 	if err != nil {
 		log.Println(err.Error())
-		return http.StatusBadRequest, nil
 	}
 
-	return http.StatusOK, recipeId
+	return err
 }
 
-func (r *recipeRepository) UpdateRecipesPrice() int {
+func (r *recipeRepository) UpdateRecipesPrice() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -213,43 +197,33 @@ func (r *recipeRepository) UpdateRecipesPrice() int {
 
 	if err != nil {
 		log.Println(err.Error())
-		return http.StatusBadRequest
 	}
 
-	return http.StatusOK
+	return err
 }
 
-func (r *recipeRepository) UpdateIngredientsPrice(packageId *primitive.ObjectID, price float64) (int, *primitive.ObjectID) {
+func (r *recipeRepository) UpdateIngredientPackagePrice(packageId *primitive.ObjectID, price float64) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	_, err := r.db.UpdateMany(ctx, GetRecipeByPackageId(*packageId), SetIngredientPackagePrice(price), GetArrayFiltersForIngredientsByPackageId(*packageId))
 
-	cursor, err := r.db.Find(ctx, GetRecipeByPackageId(*packageId))
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	return err
+}
+
+func (r *recipeRepository) UpdateIngredientsPrice(packageId *primitive.ObjectID, recipe RecipeDTO) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	_, err := r.db.UpdateOne(ctx, GetRecipeByPackageId(*packageId), SetIngredientPrice(recipe))
 
 	if err != nil {
 		log.Println(err.Error())
-		return http.StatusInternalServerError, nil
 	}
 
-	var recipes []RecipeDTO = []RecipeDTO{}
-
-	err = cursor.All(ctx, &recipes)
-
-	for i := 0; i < len(recipes); i++ {
-		var recipePrice float64 = 0
-		for j := 0; j < len(recipes[i].Ingredients); j++ {
-			recipes[i].Ingredients[j].Price = recipes[i].Ingredients[j].Quantity / recipes[i].Ingredients[j].Package.Quantity * recipes[i].Ingredients[j].Package.Price
-			recipePrice += recipes[i].Ingredients[j].Price
-		}
-		recipes[i].Price = recipePrice
-		_, err = r.db.UpdateOne(ctx, GetRecipeByPackageId(*packageId), SetIngredientPrice(recipes[i]))
-	}
-
-	if err != nil {
-		log.Println(err.Error())
-		return http.StatusBadRequest, nil
-	}
-
-	return http.StatusOK, packageId
+	return err
 }

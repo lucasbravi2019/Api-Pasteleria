@@ -21,6 +21,10 @@ func EncodeJsonResponse(w http.ResponseWriter, statusCode int, body interface{})
 		response.Error = "Ocurrio un error al realizar la operacion"
 	}
 
+	if statusCode == http.StatusOK && body == nil {
+		body = "OK"
+	}
+
 	if body != nil {
 		response.Body = body
 		json.NewEncoder(w).Encode(response)

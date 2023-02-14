@@ -43,8 +43,8 @@ func (h *handler) DeletePackage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) AddPackageToIngredient(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.service.AddPackageToIngredient(r)
-	core.EncodeJsonResponse(w, statusCode, body)
+	statusCode := h.service.AddPackageToIngredient(r)
+	core.EncodeJsonResponse(w, statusCode, nil)
 }
 
 func (h *handler) RemovePackageFromIngredients(w http.ResponseWriter, r *http.Request) {

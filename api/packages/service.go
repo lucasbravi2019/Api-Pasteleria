@@ -17,18 +17,24 @@ type service struct {
 }
 
 type PackageService interface {
-	GetPackages() (int, []Package)
+	GetPackages() (int, *[]Package)
 	CreatePackage(r *http.Request) (int, *Package)
 	UpdatePackage(r *http.Request) (int, *Package)
-	DeletePackage(r *http.Request) (int, *Package)
-	AddPackageToIngredient(r *http.Request) (int, *ingredients.IngredientDTO)
+	DeletePackage(r *http.Request) (int, *primitive.ObjectID)
+	AddPackageToIngredient(r *http.Request) int
 	RemovePackageFromIngredients(r *http.Request) (int, *primitive.ObjectID)
 }
 
 var packageServiceInstance *service
 
-func (s *service) GetPackages() (int, []Package) {
-	return s.packageRepository.GetPackages()
+func (s *service) GetPackages() (int, *[]Package) {
+	packages := s.packageRepository.GetPackages()
+
+	if packages == nil {
+		return http.StatusInternalServerError, nil
+	}
+
+	return http.StatusOK, packages
 }
 
 func (s *service) CreatePackage(r *http.Request) (int, *Package) {
@@ -39,7 +45,20 @@ func (s *service) CreatePackage(r *http.Request) (int, *Package) {
 	if invalidBody {
 		return http.StatusBadRequest, nil
 	}
-	return s.packageRepository.CreatePackage(packageRequest)
+
+	id := s.packageRepository.CreatePackage(packageRequest)
+
+	if id == nil {
+		return http.StatusInternalServerError, nil
+	}
+
+	envase := s.packageRepository.GetPackageById(id)
+
+	if envase == nil {
+		return http.StatusNotFound, nil
+	}
+
+	return http.StatusCreated, envase
 }
 
 func (s *service) UpdatePackage(r *http.Request) (int, *Package) {
@@ -57,28 +76,60 @@ func (s *service) UpdatePackage(r *http.Request) (int, *Package) {
 		return http.StatusBadRequest, nil
 	}
 
-	return s.packageRepository.UpdatePackage(oid, packageRequest)
+	err := s.packageRepository.UpdatePackage(oid, packageRequest)
+
+	if err != nil {
+		return http.StatusInternalServerError, nil
+	}
+
+	envase := s.packageRepository.GetPackageById(oid)
+
+	if envase == nil {
+		return http.StatusNotFound, nil
+	}
+
+	return http.StatusOK, envase
 }
 
-func (s *service) DeletePackage(r *http.Request) (int, *Package) {
+func (s *service) DeletePackage(r *http.Request) (int, *primitive.ObjectID) {
 	oid := core.ConvertHexToObjectId(mux.Vars(r)["id"])
 
 	if oid == nil {
 		return http.StatusBadRequest, nil
 	}
-	_, envase := s.packageRepository.DeletePackage(oid)
+
+	err := s.packageRepository.DeletePackage(oid)
+
+	if err != nil {
+		return http.StatusInternalServerError, nil
+	}
 
 	var ingredientPackage *ingredients.IngredientPackageDTO = &ingredients.IngredientPackageDTO{
 		PackageOid: *oid,
 	}
-	s.ingredientRepository.RemovePackageFromIngredients(*ingredientPackage)
-	s.recipeRepository.RemoveIngredientByPackageId(oid)
-	s.recipeRepository.UpdateRecipesPrice()
 
-	return http.StatusOK, envase
+	err = s.ingredientRepository.RemovePackageFromIngredients(*ingredientPackage)
+
+	if err != nil {
+		return http.StatusInternalServerError, nil
+	}
+
+	err = s.recipeRepository.RemoveIngredientByPackageId(oid)
+
+	if err != nil {
+		return http.StatusInternalServerError, nil
+	}
+
+	err = s.recipeRepository.UpdateRecipesPrice()
+
+	if err != nil {
+		return http.StatusInternalServerError, nil
+	}
+
+	return http.StatusOK, oid
 }
 
-func (s *service) AddPackageToIngredient(r *http.Request) (int, *ingredients.IngredientDTO) {
+func (s *service) AddPackageToIngredient(r *http.Request) int {
 	ingredientOid := mux.Vars(r)["ingredientId"]
 	packageOid := mux.Vars(r)["packageId"]
 	ingredientId := core.ConvertHexToObjectId(ingredientOid)
@@ -89,10 +140,14 @@ func (s *service) AddPackageToIngredient(r *http.Request) (int, *ingredients.Ing
 	invalidBody := core.DecodeBody(r, priceDTO)
 
 	if invalidBody {
-		return http.StatusBadRequest, nil
+		return http.StatusBadRequest
 	}
 
-	_, envase := s.packageRepository.GetPackageById(packageId)
+	envase := s.packageRepository.GetPackageById(packageId)
+
+	if envase == nil {
+		return http.StatusNotFound
+	}
 
 	var ingredientPackage *ingredients.IngredientPackage = &ingredients.IngredientPackage{
 		ID:       envase.ID,
@@ -101,15 +156,27 @@ func (s *service) AddPackageToIngredient(r *http.Request) (int, *ingredients.Ing
 		Price:    priceDTO.Price,
 	}
 
-	return s.ingredientRepository.AddPackageToIngredient(ingredientId, packageId, ingredientPackage)
+	err := s.ingredientRepository.AddPackageToIngredient(ingredientId, packageId, ingredientPackage)
+
+	if err != nil {
+		return http.StatusInternalServerError
+	}
+
+	return http.StatusOK
 }
 
 func (s *service) RemovePackageFromIngredients(r *http.Request) (int, *primitive.ObjectID) {
-	packageOid := mux.Vars(r)["packageId"]
+	packageOid := core.ConvertHexToObjectId(mux.Vars(r)["packageId"])
 
 	var ingredientPackageDto *ingredients.IngredientPackageDTO = &ingredients.IngredientPackageDTO{
-		PackageOid: *core.ConvertHexToObjectId(packageOid),
+		PackageOid: *packageOid,
 	}
 
-	return s.ingredientRepository.RemovePackageFromIngredients(*ingredientPackageDto)
+	err := s.ingredientRepository.RemovePackageFromIngredients(*ingredientPackageDto)
+
+	if err != nil {
+		return http.StatusInternalServerError, nil
+	}
+
+	return http.StatusOK, packageOid
 }
