@@ -164,7 +164,12 @@ func (s *service) AddIngredientToRecipe(r *http.Request) int {
 		return http.StatusInternalServerError
 	}
 
-	s.recipeRepository.UpdateRecipeByIdPrice(recipeOid)
+	err = s.recipeRepository.UpdateRecipeByIdPrice(recipeOid)
+
+	if err != nil {
+		log.Println(err.Error())
+		return http.StatusInternalServerError
+	}
 
 	return http.StatusOK
 }
