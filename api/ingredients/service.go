@@ -196,11 +196,21 @@ func (s *service) ChangeIngredientPrice(r *http.Request) (int, *IngredientDTO) {
 		return http.StatusInternalServerError, nil
 	}
 
-	s.recipeRepository.UpdateIngredientPackagePrice(ingredientPackageOid, ingredientPackagePrice.Price)
+	ingredientUpdated := s.ingredientRepository.FindIngredientByPackageId(ingredientPackageOid)
+
+	if ingredientUpdated == nil {
+		return http.StatusInternalServerError, nil
+	}
 
 	recipes := s.recipeRepository.FindRecipesByPackageId(ingredientPackageOid)
 
 	if len(recipes) == 0 {
+		return http.StatusOK, ingredientUpdated
+	}
+
+	err = s.recipeRepository.UpdateIngredientPackagePrice(ingredientPackageOid, ingredientPackagePrice.Price)
+
+	if err != nil {
 		return http.StatusInternalServerError, nil
 	}
 
@@ -217,12 +227,6 @@ func (s *service) ChangeIngredientPrice(r *http.Request) (int, *IngredientDTO) {
 		if err != nil {
 			log.Println(err.Error())
 		}
-	}
-
-	ingredientUpdated := s.ingredientRepository.FindIngredientByPackageId(ingredientPackageOid)
-
-	if ingredientUpdated == nil {
-		return http.StatusInternalServerError, nil
 	}
 
 	return http.StatusOK, ingredientUpdated
