@@ -27,7 +27,7 @@ func RemoveIngredientFromRecipe(recipe RecipeIngredient) bson.M {
 }
 
 func SetRecipePrice() bson.A {
-	return bson.A{bson.D{{"$set", bson.D{{"price", bson.D{{"$sum", "$ingredients.price"}}}}}}}
+	return bson.A{bson.D{{"$set", bson.D{{"price", bson.D{{"$multiply", bson.A{bson.D{{"$sum", "$ingredients.price"}}, 3}}}}}}}}
 }
 
 func SetIngredientPackagePrice(price float64) bson.D {
