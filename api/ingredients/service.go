@@ -210,7 +210,7 @@ func (s *service) ChangeIngredientPrice(r *http.Request) (int, *IngredientDTO) {
 			recipes[i].Ingredients[j].Price = recipes[i].Ingredients[j].Quantity / recipes[i].Ingredients[j].Package.Quantity * recipes[i].Ingredients[j].Package.Price
 			recipePrice += recipes[i].Ingredients[j].Price
 		}
-		recipes[i].Price = recipePrice
+		recipes[i].Price = recipePrice * 3
 
 		err := s.recipeRepository.UpdateIngredientsPrice(ingredientPackageOid, recipes[i])
 
