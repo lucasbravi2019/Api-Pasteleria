@@ -7,6 +7,7 @@ import (
 	"github.com/lucasbravi2019/pasteleria/core"
 	"github.com/lucasbravi2019/pasteleria/dao"
 	"github.com/lucasbravi2019/pasteleria/dto"
+	"github.com/lucasbravi2019/pasteleria/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -30,7 +31,15 @@ func (s *RecipeService) GetAllRecipes() (int, *[]dto.RecipeDTO) {
 }
 
 func (s *RecipeService) GetRecipe(r *http.Request) (int, *dto.RecipeDTO) {
-	oid := core.ConvertHexToObjectId(mux.Vars(r)["id"])
+	recipeId := &dto.RecipeIdDTO{}
+
+	invalidBody := core.DecodeBody(r, recipeId)
+
+	if invalidBody {
+		return http.StatusBadRequest, nil
+	}
+
+	oid := core.ConvertHexToObjectId(recipeId.ID)
 
 	if oid == nil {
 		return http.StatusBadRequest, nil
@@ -54,34 +63,42 @@ func (s *RecipeService) CreateRecipe(r *http.Request) (int, *dto.RecipeDTO) {
 		return http.StatusBadRequest, nil
 	}
 
-	oid := s.RecipeDao.CreateRecipe(recipeName)
+	recipeEntity := &models.Recipe{
+		Name: recipeName.Name,
+	}
+
+	oid := s.RecipeDao.CreateRecipe(recipeEntity)
 
 	if oid == nil {
 		return http.StatusInternalServerError, nil
 	}
 
-	recipe := s.RecipeDao.FindRecipeByOID(oid)
+	recipeCreated := s.RecipeDao.FindRecipeByOID(oid)
 
-	if recipe == nil {
+	if recipeCreated == nil {
 		return http.StatusInternalServerError, nil
 	}
 
-	return http.StatusCreated, recipe
+	return http.StatusCreated, recipeCreated
 }
 
 func (s *RecipeService) UpdateRecipeName(r *http.Request) (int, *dto.RecipeDTO) {
-	oid := core.ConvertHexToObjectId(mux.Vars(r)["id"])
+	recipeName := &dto.RecipeNameDTO{}
+
+	invalidBody := core.DecodeBody(r, recipeName)
+
+	if invalidBody {
+		return http.StatusBadRequest, nil
+	}
+
+	oid := core.ConvertHexToObjectId(recipeName.ID)
 
 	if oid == nil {
 		return http.StatusBadRequest, nil
 	}
 
-	recipe := &dto.RecipeNameDTO{}
-
-	invalidBody := core.DecodeBody(r, recipe)
-
-	if invalidBody {
-		return http.StatusBadRequest, nil
+	recipe := &models.Recipe{
+		Name: recipeName.Name,
 	}
 
 	err := s.RecipeDao.UpdateRecipeName(oid, recipe)

@@ -13,6 +13,7 @@ type RecipeIngredientHandler struct {
 
 type RecipeIngredientHandlerInterface interface {
 	AddIngredientToRecipe(w http.ResponseWriter, r *http.Request)
+	RemoveIngredientFromRecipe(w http.ResponseWriter, r *http.Request)
 	GetRecipeIngredientRoutes() core.Routes
 }
 
@@ -23,11 +24,21 @@ func (h *RecipeIngredientHandler) AddIngredientToRecipe(w http.ResponseWriter, r
 	core.EncodeJsonResponse(w, statusCode, nil)
 }
 
+func (h *RecipeIngredientHandler) RemoveIngredientFromRecipe(w http.ResponseWriter, r *http.Request) {
+	statusCode, body := h.Service.RemoveIngredientFromRecipe(r)
+	core.EncodeJsonResponse(w, statusCode, body)
+}
+
 func (h *RecipeIngredientHandler) GetRecipeIngredientRoutes() core.Routes {
 	return core.Routes{
 		core.Route{
 			Path:        "/ingredients/{ingredientId}/recipes/{recipeId}",
 			HandlerFunc: h.AddIngredientToRecipe,
+			Method:      "PUT",
+		},
+		core.Route{
+			Path:        "/recipes/remove-ingredient",
+			HandlerFunc: h.RemoveIngredientFromRecipe,
 			Method:      "PUT",
 		},
 	}

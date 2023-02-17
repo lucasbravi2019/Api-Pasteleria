@@ -9,6 +9,7 @@ import (
 func ConvertHexToObjectId(id string) *primitive.ObjectID {
 	oid, err := primitive.ObjectIDFromHex(id)
 
+	log.Println("Object ID NO SE PORQUE ES INVALIDO")
 	if err != nil {
 		log.Println("Object ID invalid")
 		return nil

@@ -16,16 +16,16 @@ func GetRecipeById(oid primitive.ObjectID) bson.M {
 	return bson.M{"_id": oid}
 }
 
-func UpdateRecipeName(dto dto.RecipeNameDTO) bson.M {
-	return bson.M{"$set": bson.M{"name": dto.Name}}
+func UpdateRecipeName(recipe models.Recipe) bson.M {
+	return bson.M{"$set": bson.M{"name": recipe.Name}}
 }
 
 func AddIngredientToRecipe(recipe models.RecipeIngredient) bson.M {
 	return bson.M{"$addToSet": bson.M{"ingredients": recipe}}
 }
 
-func RemoveIngredientFromRecipe(recipe models.RecipeIngredient) bson.M {
-	return bson.M{"$pull": bson.M{"ingredients._id": recipe.ID}}
+func RemoveIngredientFromRecipe(recipe models.Recipe) bson.M {
+	return bson.M{"$set": recipe}
 }
 
 func SetRecipePrice() bson.A {
