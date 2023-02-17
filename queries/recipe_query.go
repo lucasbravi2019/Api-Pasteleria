@@ -1,6 +1,8 @@
-package recipes
+package queries
 
 import (
+	"github.com/lucasbravi2019/pasteleria/dto"
+	"github.com/lucasbravi2019/pasteleria/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -14,15 +16,15 @@ func GetRecipeById(oid primitive.ObjectID) bson.M {
 	return bson.M{"_id": oid}
 }
 
-func UpdateRecipeName(dto RecipeNameDTO) bson.M {
+func UpdateRecipeName(dto dto.RecipeNameDTO) bson.M {
 	return bson.M{"$set": bson.M{"name": dto.Name}}
 }
 
-func AddIngredientToRecipe(recipe RecipeIngredient) bson.M {
+func AddIngredientToRecipe(recipe models.RecipeIngredient) bson.M {
 	return bson.M{"$addToSet": bson.M{"ingredients": recipe}}
 }
 
-func RemoveIngredientFromRecipe(recipe RecipeIngredient) bson.M {
+func RemoveIngredientFromRecipe(recipe models.RecipeIngredient) bson.M {
 	return bson.M{"$pull": bson.M{"ingredients._id": recipe.ID}}
 }
 
@@ -34,7 +36,7 @@ func SetIngredientPackagePrice(price float64) bson.D {
 	return bson.D{{"$set", bson.D{{"ingredients.$[ingredient].package.price", price}}}}
 }
 
-func SetIngredientPrice(recipe RecipeDTO) bson.D {
+func SetRecipeIngredientPrice(recipe dto.RecipeDTO) bson.D {
 	return bson.D{{"$set", recipe}}
 }
 

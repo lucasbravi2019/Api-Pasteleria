@@ -1,16 +1,17 @@
-package packages
+package handlers
 
 import (
 	"net/http"
 
 	"github.com/lucasbravi2019/pasteleria/core"
+	"github.com/lucasbravi2019/pasteleria/services"
 )
 
-type handler struct {
-	service PackageService
+type PackageHandler struct {
+	Service services.PackageServiceInterface
 }
 
-type PackageHandler interface {
+type PackageHandlerInterface interface {
 	GetPackages(w http.ResponseWriter, r *http.Request)
 	CreatePackage(w http.ResponseWriter, r *http.Request)
 	UpdatePackage(w http.ResponseWriter, r *http.Request)
@@ -20,39 +21,39 @@ type PackageHandler interface {
 	GetPackageRoutes() []core.Route
 }
 
-var packageHandlerInstance *handler
+var PackageHandlerInstance *PackageHandler
 
-func (h *handler) GetPackages(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.service.GetPackages()
+func (h *PackageHandler) GetPackages(w http.ResponseWriter, r *http.Request) {
+	statusCode, body := h.Service.GetPackages()
 	core.EncodeJsonResponse(w, statusCode, body)
 }
 
-func (h *handler) CreatePackage(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.service.CreatePackage(r)
+func (h *PackageHandler) CreatePackage(w http.ResponseWriter, r *http.Request) {
+	statusCode, body := h.Service.CreatePackage(r)
 	core.EncodeJsonResponse(w, statusCode, body)
 }
 
-func (h *handler) UpdatePackage(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.service.UpdatePackage(r)
+func (h *PackageHandler) UpdatePackage(w http.ResponseWriter, r *http.Request) {
+	statusCode, body := h.Service.UpdatePackage(r)
 	core.EncodeJsonResponse(w, statusCode, body)
 }
 
-func (h *handler) DeletePackage(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.service.DeletePackage(r)
+func (h *PackageHandler) DeletePackage(w http.ResponseWriter, r *http.Request) {
+	statusCode, body := h.Service.DeletePackage(r)
 	core.EncodeJsonResponse(w, statusCode, body)
 }
 
-func (h *handler) AddPackageToIngredient(w http.ResponseWriter, r *http.Request) {
-	statusCode := h.service.AddPackageToIngredient(r)
+func (h *PackageHandler) AddPackageToIngredient(w http.ResponseWriter, r *http.Request) {
+	statusCode := h.Service.AddPackageToIngredient(r)
 	core.EncodeJsonResponse(w, statusCode, nil)
 }
 
-func (h *handler) RemovePackageFromIngredients(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.service.RemovePackageFromIngredients(r)
+func (h *PackageHandler) RemovePackageFromIngredients(w http.ResponseWriter, r *http.Request) {
+	statusCode, body := h.Service.RemovePackageFromIngredients(r)
 	core.EncodeJsonResponse(w, statusCode, body)
 }
 
-func (h *handler) GetPackageRoutes() core.Routes {
+func (h *PackageHandler) GetPackageRoutes() core.Routes {
 	return core.Routes{
 		core.Route{
 			Path:        "/packages",

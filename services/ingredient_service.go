@@ -1,4 +1,4 @@
-package ingredients
+package services
 
 import (
 	"errors"
@@ -7,35 +7,37 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/lucasbravi2019/pasteleria/api/recipes"
 	"github.com/lucasbravi2019/pasteleria/core"
+	"github.com/lucasbravi2019/pasteleria/dao"
+	"github.com/lucasbravi2019/pasteleria/dto"
+	"github.com/lucasbravi2019/pasteleria/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type service struct {
-	ingredientRepository IngredientRepository
-	recipeRepository     recipes.RecipeRepository
+type IngredientService struct {
+	IngredientDao dao.IngredientDao
+	RecipeDao     dao.RecipeDao
 }
 
-type IngredientService interface {
-	GetAllIngredients() (int, []IngredientDTO)
-	CreateIngredient(r *http.Request) (int, *IngredientDTO)
-	UpdateIngredient(r *http.Request) (int, *IngredientDTO)
+type IngredientServiceInterface interface {
+	GetAllIngredients() (int, []dto.IngredientDTO)
+	CreateIngredient(r *http.Request) (int, *dto.IngredientDTO)
+	UpdateIngredient(r *http.Request) (int, *dto.IngredientDTO)
 	DeleteIngredient(r *http.Request) (int, *primitive.ObjectID)
 	AddIngredientToRecipe(r *http.Request) int
-	ChangeIngredientPrice(r *http.Request) (int, *IngredientDTO)
+	ChangeIngredientPrice(r *http.Request) (int, *dto.IngredientDTO)
 }
 
-var ingredientServiceInstance *service
+var IngredientServiceInstance *IngredientService
 
-func (s *service) GetAllIngredients() (int, []IngredientDTO) {
-	ingredients := s.ingredientRepository.GetAllIngredients()
+func (s *IngredientService) GetAllIngredients() (int, []dto.IngredientDTO) {
+	ingredients := s.IngredientDao.GetAllIngredients()
 
 	return http.StatusOK, ingredients
 }
 
-func (s *service) CreateIngredient(r *http.Request) (int, *IngredientDTO) {
-	var ingredientDto *IngredientNameDTO = &IngredientNameDTO{}
+func (s *IngredientService) CreateIngredient(r *http.Request) (int, *dto.IngredientDTO) {
+	ingredientDto := &dto.IngredientNameDTO{}
 
 	invalidBody := core.DecodeBody(r, ingredientDto)
 
@@ -43,18 +45,18 @@ func (s *service) CreateIngredient(r *http.Request) (int, *IngredientDTO) {
 		return http.StatusBadRequest, nil
 	}
 
-	var ingredientEntity *Ingredient = &Ingredient{
+	ingredientEntity := &models.Ingredient{
 		Name:     ingredientDto.Name,
-		Packages: []IngredientPackage{},
+		Packages: []models.IngredientPackage{},
 	}
 
-	ingredientCreatedId := s.ingredientRepository.CreateIngredient(ingredientEntity)
+	ingredientCreatedId := s.IngredientDao.CreateIngredient(ingredientEntity)
 
 	if ingredientCreatedId == nil {
 		return http.StatusInternalServerError, nil
 	}
 
-	ingredientCreated := s.ingredientRepository.FindIngredientByOID(ingredientCreatedId)
+	ingredientCreated := s.IngredientDao.FindIngredientByOID(ingredientCreatedId)
 
 	if ingredientCreated == nil {
 		return http.StatusNotFound, nil
@@ -63,14 +65,14 @@ func (s *service) CreateIngredient(r *http.Request) (int, *IngredientDTO) {
 	return http.StatusCreated, ingredientCreated
 }
 
-func (s *service) UpdateIngredient(r *http.Request) (int, *IngredientDTO) {
+func (s *IngredientService) UpdateIngredient(r *http.Request) (int, *dto.IngredientDTO) {
 	oid := core.ConvertHexToObjectId(mux.Vars(r)["id"])
 
 	if oid == nil {
 		return http.StatusBadRequest, nil
 	}
 
-	var ingredient *IngredientNameDTO = &IngredientNameDTO{}
+	ingredient := &dto.IngredientNameDTO{}
 
 	invalidBody := core.DecodeBody(r, ingredient)
 
@@ -78,13 +80,13 @@ func (s *service) UpdateIngredient(r *http.Request) (int, *IngredientDTO) {
 		return http.StatusBadRequest, nil
 	}
 
-	err := s.ingredientRepository.UpdateIngredient(oid, ingredient)
+	err := s.IngredientDao.UpdateIngredient(oid, ingredient)
 
 	if err != nil {
 		return http.StatusInternalServerError, nil
 	}
 
-	ingredientUpdated := s.ingredientRepository.FindIngredientByOID(oid)
+	ingredientUpdated := s.IngredientDao.FindIngredientByOID(oid)
 
 	if ingredientUpdated == nil {
 		return http.StatusNotFound, nil
@@ -93,14 +95,14 @@ func (s *service) UpdateIngredient(r *http.Request) (int, *IngredientDTO) {
 	return http.StatusOK, ingredientUpdated
 }
 
-func (s *service) DeleteIngredient(r *http.Request) (int, *primitive.ObjectID) {
+func (s *IngredientService) DeleteIngredient(r *http.Request) (int, *primitive.ObjectID) {
 	oid := core.ConvertHexToObjectId(mux.Vars(r)["id"])
 
 	if oid == nil {
 		return http.StatusBadRequest, nil
 	}
 
-	err := s.ingredientRepository.DeleteIngredient(oid)
+	err := s.IngredientDao.DeleteIngredient(oid)
 
 	if err != nil {
 		return http.StatusInternalServerError, nil
@@ -109,7 +111,7 @@ func (s *service) DeleteIngredient(r *http.Request) (int, *primitive.ObjectID) {
 	return http.StatusOK, oid
 }
 
-func (s *service) AddIngredientToRecipe(r *http.Request) int {
+func (s *IngredientService) AddIngredientToRecipe(r *http.Request) int {
 	recipeOid := core.ConvertHexToObjectId(mux.Vars(r)["recipeId"])
 	ingredientOid := core.ConvertHexToObjectId(mux.Vars(r)["ingredientId"])
 
@@ -117,19 +119,19 @@ func (s *service) AddIngredientToRecipe(r *http.Request) int {
 		return http.StatusBadRequest
 	}
 
-	recipe := s.recipeRepository.FindRecipeByOID(recipeOid)
+	recipe := s.RecipeDao.FindRecipeByOID(recipeOid)
 
 	if recipe == nil {
 		return http.StatusNotFound
 	}
 
-	ingredientDTO := s.ingredientRepository.FindIngredientByOID(ingredientOid)
+	ingredientDTO := s.IngredientDao.FindIngredientByOID(ingredientOid)
 
 	if ingredientDTO == nil {
 		return http.StatusNotFound
 	}
 
-	var ingredientDetails *IngredientDetailsDTO = &IngredientDetailsDTO{}
+	ingredientDetails := &dto.IngredientDetailsDTO{}
 
 	invalidBody := core.DecodeBody(r, ingredientDetails)
 
@@ -145,11 +147,11 @@ func (s *service) AddIngredientToRecipe(r *http.Request) int {
 
 	envase := getIngredientPackage(ingredientDetails.Metric, ingredientDTO.Packages)
 
-	var recipeIngredient *recipes.RecipeIngredient = &recipes.RecipeIngredient{
+	recipeIngredient := &models.RecipeIngredient{
 		ID:       primitive.NewObjectID(),
 		Quantity: ingredientDetails.Quantity,
 		Name:     ingredientDTO.Name,
-		Package: recipes.RecipeIngredientPackage{
+		Package: models.RecipeIngredientPackage{
 			ID:       envase.ID,
 			Metric:   envase.Metric,
 			Quantity: envase.Quantity,
@@ -158,13 +160,13 @@ func (s *service) AddIngredientToRecipe(r *http.Request) int {
 		Price: float64(ingredientDetails.Quantity) / envase.Quantity * envase.Price,
 	}
 
-	err = s.recipeRepository.AddIngredientToRecipe(recipeOid, recipeIngredient)
+	err = s.RecipeDao.AddIngredientToRecipe(recipeOid, recipeIngredient)
 
 	if err != nil {
 		return http.StatusInternalServerError
 	}
 
-	err = s.recipeRepository.UpdateRecipeByIdPrice(recipeOid)
+	err = s.RecipeDao.UpdateRecipeByIdPrice(recipeOid)
 
 	if err != nil {
 		log.Println(err.Error())
@@ -174,7 +176,7 @@ func (s *service) AddIngredientToRecipe(r *http.Request) int {
 	return http.StatusOK
 }
 
-func (s *service) ChangeIngredientPrice(r *http.Request) (int, *IngredientDTO) {
+func (s *IngredientService) ChangeIngredientPrice(r *http.Request) (int, *dto.IngredientDTO) {
 	ingredientPackageId := mux.Vars(r)["id"]
 	ingredientPackageOid := core.ConvertHexToObjectId(ingredientPackageId)
 
@@ -182,7 +184,7 @@ func (s *service) ChangeIngredientPrice(r *http.Request) (int, *IngredientDTO) {
 		return http.StatusBadRequest, nil
 	}
 
-	var ingredientPackagePrice *IngredientPackagePriceDTO = &IngredientPackagePriceDTO{}
+	ingredientPackagePrice := &dto.IngredientPackagePriceDTO{}
 
 	invalidBody := core.DecodeBody(r, ingredientPackagePrice)
 
@@ -190,25 +192,25 @@ func (s *service) ChangeIngredientPrice(r *http.Request) (int, *IngredientDTO) {
 		return http.StatusBadRequest, nil
 	}
 
-	err := s.ingredientRepository.ChangeIngredientPrice(ingredientPackageOid, ingredientPackagePrice)
+	err := s.IngredientDao.ChangeIngredientPrice(ingredientPackageOid, ingredientPackagePrice)
 
 	if err != nil {
 		return http.StatusInternalServerError, nil
 	}
 
-	ingredientUpdated := s.ingredientRepository.FindIngredientByPackageId(ingredientPackageOid)
+	ingredientUpdated := s.IngredientDao.FindIngredientByPackageId(ingredientPackageOid)
 
 	if ingredientUpdated == nil {
 		return http.StatusInternalServerError, nil
 	}
 
-	recipes := s.recipeRepository.FindRecipesByPackageId(ingredientPackageOid)
+	recipes := s.RecipeDao.FindRecipesByPackageId(ingredientPackageOid)
 
 	if len(recipes) == 0 {
 		return http.StatusOK, ingredientUpdated
 	}
 
-	err = s.recipeRepository.UpdateIngredientPackagePrice(ingredientPackageOid, ingredientPackagePrice.Price)
+	err = s.RecipeDao.UpdateIngredientPackagePrice(ingredientPackageOid, ingredientPackagePrice.Price)
 
 	if err != nil {
 		return http.StatusInternalServerError, nil
@@ -222,7 +224,7 @@ func (s *service) ChangeIngredientPrice(r *http.Request) (int, *IngredientDTO) {
 		}
 		recipes[i].Price = recipePrice * 3
 
-		err := s.recipeRepository.UpdateIngredientsPrice(ingredientPackageOid, recipes[i])
+		err := s.RecipeDao.UpdateIngredientsPrice(ingredientPackageOid, recipes[i])
 
 		if err != nil {
 			log.Println(err.Error())
@@ -232,7 +234,7 @@ func (s *service) ChangeIngredientPrice(r *http.Request) (int, *IngredientDTO) {
 	return http.StatusOK, ingredientUpdated
 }
 
-func validate(ingredient *IngredientDTO, ingredientDetails *IngredientDetailsDTO) error {
+func validate(ingredient *dto.IngredientDTO, ingredientDetails *dto.IngredientDetailsDTO) error {
 	if !ingredientMetricMatches(ingredientDetails.Metric, ingredient.Packages) {
 		log.Println("La unidad de medida no coincide")
 		return errors.New("la unidad de medida no coincide")
@@ -245,7 +247,7 @@ func validate(ingredient *IngredientDTO, ingredientDetails *IngredientDetailsDTO
 	return nil
 }
 
-func ingredientMetricMatches(metric string, packages []PackageDTO) bool {
+func ingredientMetricMatches(metric string, packages []dto.PackageDTO) bool {
 	for _, pack := range packages {
 		if fmt.Sprintf("%g %s", pack.Quantity, pack.Metric) == metric {
 			return true
@@ -254,7 +256,7 @@ func ingredientMetricMatches(metric string, packages []PackageDTO) bool {
 	return false
 }
 
-func getIngredientPackage(metric string, packages []PackageDTO) *PackageDTO {
+func getIngredientPackage(metric string, packages []dto.PackageDTO) *dto.PackageDTO {
 	for _, pack := range packages {
 		if fmt.Sprintf("%g %s", pack.Quantity, pack.Metric) == metric {
 			return &pack
