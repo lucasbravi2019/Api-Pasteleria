@@ -1,17 +1,15 @@
-package ingredients
+package queries
 
 import (
 	"strings"
 
+	"github.com/lucasbravi2019/pasteleria/dto"
+	"github.com/lucasbravi2019/pasteleria/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
-
-func All() bson.M {
-	return bson.M{}
-}
 
 func GetIngredientById(oid primitive.ObjectID) bson.M {
 	return bson.M{"_id": oid}
@@ -23,7 +21,7 @@ func GetIngredientByPackageId(packageId primitive.ObjectID) bson.M {
 	}
 }
 
-func GetAggregateCreateIngredients(ingredient *IngredientNameDTO) mongo.Pipeline {
+func GetAggregateCreateIngredients(ingredient *dto.IngredientNameDTO) mongo.Pipeline {
 	project := bson.D{
 		{Key: "$project", Value: bson.D{
 			{Key: "name", Value: bson.D{
@@ -45,17 +43,17 @@ func GetIngredientWithoutExistingPackage(ingredientOid primitive.ObjectID, packa
 	return bson.D{{"_id", ingredientOid}, {"packages._id", bson.D{{"$ne", packageOid}}}}
 }
 
-func UpdateIngredientName(dto IngredientNameDTO) bson.M {
+func UpdateIngredientName(dto dto.IngredientNameDTO) bson.M {
 	return bson.M{"$set": bson.M{"name": dto.Name}}
 }
 
-func PushPackageIntoIngredient(envase IngredientPackage) bson.M {
+func PushPackageIntoIngredient(envase models.IngredientPackage) bson.M {
 	return bson.M{"$addToSet": bson.M{
 		"packages": envase,
 	}}
 }
 
-func PullPackageFromIngredients(envase IngredientPackageDTO) bson.M {
+func PullPackageFromIngredients(envase dto.IngredientPackageDTO) bson.M {
 	return bson.M{"$pull": bson.M{"packages": bson.M{"_id": envase.PackageOid}}}
 }
 

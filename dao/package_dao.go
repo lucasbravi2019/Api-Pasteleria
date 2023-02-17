@@ -1,37 +1,39 @@
-package packages
+package dao
 
 import (
 	"context"
 	"log"
 	"time"
 
+	"github.com/lucasbravi2019/pasteleria/models"
+	"github.com/lucasbravi2019/pasteleria/queries"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type repository struct {
-	db *mongo.Collection
+type PackageDao struct {
+	DB *mongo.Collection
 }
 
-type PackageRepository interface {
-	GetPackages() *[]Package
-	GetPackageById(oid *primitive.ObjectID) *Package
-	CreatePackage(body *Package) *primitive.ObjectID
-	UpdatePackage(oid *primitive.ObjectID, body *Package) error
+type PackageDaoInterface interface {
+	GetPackages() *[]models.Package
+	GetPackageById(oid *primitive.ObjectID) *models.Package
+	CreatePackage(body *models.Package) *primitive.ObjectID
+	UpdatePackage(oid *primitive.ObjectID, body *models.Package) error
 	DeletePackage(oid *primitive.ObjectID) error
 }
 
-var packageRepositoryInstance *repository
+var PackageDaoInstance *PackageDao
 
-func (r *repository) GetPackages() *[]Package {
+func (d *PackageDao) GetPackages() *[]models.Package {
 	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
 
 	defer cancel()
 
-	cursor, err := r.db.Find(ctx, bson.M{})
+	cursor, err := d.DB.Find(ctx, bson.M{})
 
-	var packages *[]Package = &[]Package{}
+	packages := &[]models.Package{}
 
 	if err != nil {
 		log.Println(err.Error())
@@ -47,12 +49,12 @@ func (r *repository) GetPackages() *[]Package {
 	return packages
 }
 
-func (r *repository) CreatePackage(body *Package) *primitive.ObjectID {
+func (d *PackageDao) CreatePackage(body *models.Package) *primitive.ObjectID {
 	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
 
 	defer cancel()
 
-	result, err := r.db.InsertOne(ctx, body)
+	result, err := d.DB.InsertOne(ctx, body)
 
 	if err != nil {
 		log.Println(err.Error())
@@ -68,12 +70,12 @@ func (r *repository) CreatePackage(body *Package) *primitive.ObjectID {
 	return &id
 }
 
-func (r *repository) UpdatePackage(oid *primitive.ObjectID, body *Package) error {
+func (d *PackageDao) UpdatePackage(oid *primitive.ObjectID, body *models.Package) error {
 	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
 
 	defer cancel()
 
-	_, err := r.db.UpdateOne(ctx, GetPackageById(*oid), UpdatePackageById(*body))
+	_, err := d.DB.UpdateOne(ctx, queries.GetPackageById(*oid), queries.UpdatePackageById(*body))
 
 	if err != nil {
 		log.Println(err.Error())
@@ -82,12 +84,12 @@ func (r *repository) UpdatePackage(oid *primitive.ObjectID, body *Package) error
 	return err
 }
 
-func (r *repository) DeletePackage(oid *primitive.ObjectID) error {
+func (d *PackageDao) DeletePackage(oid *primitive.ObjectID) error {
 	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
 
 	defer cancel()
 
-	_, err := r.db.DeleteOne(ctx, GetPackageById(*oid))
+	_, err := d.DB.DeleteOne(ctx, queries.GetPackageById(*oid))
 
 	if err != nil {
 		log.Println(err.Error())
@@ -96,13 +98,13 @@ func (r *repository) DeletePackage(oid *primitive.ObjectID) error {
 	return err
 }
 
-func (r *repository) GetPackageById(oid *primitive.ObjectID) *Package {
+func (d *PackageDao) GetPackageById(oid *primitive.ObjectID) *models.Package {
 	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
 	defer cancel()
 
-	var envase *Package = &Package{}
+	envase := &models.Package{}
 
-	err := r.db.FindOne(ctx, GetPackageById(*oid)).Decode(envase)
+	err := d.DB.FindOne(ctx, queries.GetPackageById(*oid)).Decode(envase)
 
 	if err != nil {
 		log.Println(err.Error())

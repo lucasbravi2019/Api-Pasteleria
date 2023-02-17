@@ -1,16 +1,17 @@
-package ingredients
+package handlers
 
 import (
 	"net/http"
 
 	"github.com/lucasbravi2019/pasteleria/core"
+	"github.com/lucasbravi2019/pasteleria/services"
 )
 
-type handler struct {
-	service IngredientService
+type IngredientHandler struct {
+	Service services.IngredientServiceInterface
 }
 
-type IngredientHandler interface {
+type IngredientHandlerInterface interface {
 	GetAllIngredients(w http.ResponseWriter, r *http.Request)
 	CreateIngredient(w http.ResponseWriter, r *http.Request)
 	UpdateIngredient(w http.ResponseWriter, r *http.Request)
@@ -22,39 +23,39 @@ type IngredientHandler interface {
 	GetIngredientRoutes() core.Routes
 }
 
-var ingredientHandlerInstance *handler
+var IngredientHandlerInstance *IngredientHandler
 
-func (h *handler) GetAllIngredients(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.service.GetAllIngredients()
+func (h *IngredientHandler) GetAllIngredients(w http.ResponseWriter, r *http.Request) {
+	statusCode, body := h.Service.GetAllIngredients()
 	core.EncodeJsonResponse(w, statusCode, body)
 }
 
-func (h *handler) CreateIngredient(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.service.CreateIngredient(r)
+func (h *IngredientHandler) CreateIngredient(w http.ResponseWriter, r *http.Request) {
+	statusCode, body := h.Service.CreateIngredient(r)
 	core.EncodeJsonResponse(w, statusCode, body)
 }
 
-func (h *handler) UpdateIngredient(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.service.UpdateIngredient(r)
+func (h *IngredientHandler) UpdateIngredient(w http.ResponseWriter, r *http.Request) {
+	statusCode, body := h.Service.UpdateIngredient(r)
 	core.EncodeJsonResponse(w, statusCode, body)
 }
 
-func (h *handler) DeleteIngredient(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.service.DeleteIngredient(r)
+func (h *IngredientHandler) DeleteIngredient(w http.ResponseWriter, r *http.Request) {
+	statusCode, body := h.Service.DeleteIngredient(r)
 	core.EncodeJsonResponse(w, statusCode, body)
 }
 
-func (h *handler) AddIngredientToRecipe(w http.ResponseWriter, r *http.Request) {
-	statusCode := h.service.AddIngredientToRecipe(r)
+func (h *IngredientHandler) AddIngredientToRecipe(w http.ResponseWriter, r *http.Request) {
+	statusCode := h.Service.AddIngredientToRecipe(r)
 	core.EncodeJsonResponse(w, statusCode, nil)
 }
 
-func (h *handler) ChangeIngredientPrice(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.service.ChangeIngredientPrice(r)
+func (h *IngredientHandler) ChangeIngredientPrice(w http.ResponseWriter, r *http.Request) {
+	statusCode, body := h.Service.ChangeIngredientPrice(r)
 	core.EncodeJsonResponse(w, statusCode, body)
 }
 
-func (h *handler) GetIngredientRoutes() core.Routes {
+func (h *IngredientHandler) GetIngredientRoutes() core.Routes {
 	return core.Routes{
 		core.Route{
 			Path:        "/ingredients",

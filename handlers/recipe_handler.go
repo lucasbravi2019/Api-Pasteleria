@@ -1,53 +1,53 @@
-package recipes
+package handlers
 
 import (
 	"net/http"
 
 	"github.com/lucasbravi2019/pasteleria/core"
+	"github.com/lucasbravi2019/pasteleria/services"
 )
 
-type recipeHandler struct {
-	service RecipeService
+type RecipeHandler struct {
+	Service services.RecipeService
 }
 
-var recipeHandlerInstance *recipeHandler
-
-type RecipeHandler interface {
+type RecipeHandlerInterface interface {
 	GetAllRecipes(w http.ResponseWriter, r *http.Request)
 	GetRecipe(w http.ResponseWriter, r *http.Request)
 	CreateRecipe(w http.ResponseWriter, r *http.Request)
 	UpdateRecipeName(w http.ResponseWriter, r *http.Request)
 	DeleteRecipe(w http.ResponseWriter, r *http.Request)
-
 	GetRecipeRoutes() core.Routes
 }
 
-func (h *recipeHandler) GetAllRecipes(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.service.GetAllRecipes()
+var RecipeHandlerInstance *RecipeHandler
+
+func (h *RecipeHandler) GetAllRecipes(w http.ResponseWriter, r *http.Request) {
+	statusCode, body := h.Service.GetAllRecipes()
 	core.EncodeJsonResponse(w, statusCode, body)
 }
 
-func (h *recipeHandler) GetRecipe(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.service.GetRecipe(r)
+func (h *RecipeHandler) GetRecipe(w http.ResponseWriter, r *http.Request) {
+	statusCode, body := h.Service.GetRecipe(r)
 	core.EncodeJsonResponse(w, statusCode, body)
 }
 
-func (h *recipeHandler) CreateRecipe(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.service.CreateRecipe(r)
+func (h *RecipeHandler) CreateRecipe(w http.ResponseWriter, r *http.Request) {
+	statusCode, body := h.Service.CreateRecipe(r)
 	core.EncodeJsonResponse(w, statusCode, body)
 }
 
-func (h *recipeHandler) UpdateRecipeName(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.service.UpdateRecipeName(r)
+func (h *RecipeHandler) UpdateRecipeName(w http.ResponseWriter, r *http.Request) {
+	statusCode, body := h.Service.UpdateRecipeName(r)
 	core.EncodeJsonResponse(w, statusCode, body)
 }
 
-func (h *recipeHandler) DeleteRecipe(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.service.DeleteRecipe(r)
+func (h *RecipeHandler) DeleteRecipe(w http.ResponseWriter, r *http.Request) {
+	statusCode, body := h.Service.DeleteRecipe(r)
 	core.EncodeJsonResponse(w, statusCode, body)
 }
 
-func (h *recipeHandler) GetRecipeRoutes() core.Routes {
+func (h *RecipeHandler) GetRecipeRoutes() core.Routes {
 	return core.Routes{
 		core.Route{
 			Path:        "/recipes",

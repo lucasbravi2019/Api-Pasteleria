@@ -6,10 +6,8 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/lucasbravi2019/pasteleria/api/ingredients"
-	"github.com/lucasbravi2019/pasteleria/api/packages"
-	"github.com/lucasbravi2019/pasteleria/api/recipes"
 	"github.com/lucasbravi2019/pasteleria/core"
+	"github.com/lucasbravi2019/pasteleria/factory"
 	"github.com/lucasbravi2019/pasteleria/middleware"
 )
 
@@ -36,9 +34,9 @@ func RegisterRoutes(routes core.Routes) {
 }
 
 func StartApi() {
-	RegisterRoutes(recipes.GetRecipeHandlerInstance().GetRecipeRoutes())
-	RegisterRoutes(ingredients.GetIngredientHandlerInstance().GetIngredientRoutes())
-	RegisterRoutes(packages.GetPackageHandlerInstance().GetPackageRoutes())
+	RegisterRoutes(factory.GetRecipeHandlerInstance().GetRecipeRoutes())
+	RegisterRoutes(factory.GetIngredientHandlerInstance().GetIngredientRoutes())
+	RegisterRoutes(factory.GetPackageHandlerInstance().GetPackageRoutes())
 
 	credentials := handlers.AllowCredentials()
 	methods := handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE"})
