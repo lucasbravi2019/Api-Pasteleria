@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/lucasbravi2019/pasteleria/dto"
+	"github.com/lucasbravi2019/pasteleria/models"
 	"github.com/lucasbravi2019/pasteleria/queries"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -19,7 +20,7 @@ type RecipeDaoInterface interface {
 	FindAllRecipes() *[]dto.RecipeDTO
 	FindRecipeByOID(oid *primitive.ObjectID) *dto.RecipeDTO
 	FindRecipesByPackageId(oid *primitive.ObjectID) []dto.RecipeDTO
-	CreateRecipe(recipe *dto.RecipeNameDTO) *primitive.ObjectID
+	CreateRecipe(recipe *models.Recipe) *primitive.ObjectID
 	UpdateRecipeName(oid *primitive.ObjectID, recipeName *dto.RecipeNameDTO) error
 
 	DeleteRecipe(oid *primitive.ObjectID) error
@@ -91,7 +92,7 @@ func (d *RecipeDao) FindRecipesByPackageId(packageId *primitive.ObjectID) []dto.
 	return *recipes
 }
 
-func (d *RecipeDao) CreateRecipe(recipe *dto.RecipeNameDTO) *primitive.ObjectID {
+func (d *RecipeDao) CreateRecipe(recipe *models.Recipe) *primitive.ObjectID {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -111,11 +112,11 @@ func (d *RecipeDao) CreateRecipe(recipe *dto.RecipeNameDTO) *primitive.ObjectID 
 	return &id
 }
 
-func (d *RecipeDao) UpdateRecipeName(oid *primitive.ObjectID, recipeName *dto.RecipeNameDTO) error {
+func (d *RecipeDao) UpdateRecipeName(oid *primitive.ObjectID, recipe *models.Recipe) error {
 	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
 	defer cancel()
 
-	_, err := d.DB.UpdateOne(ctx, queries.GetRecipeById(*oid), queries.UpdateRecipeName(*recipeName))
+	_, err := d.DB.UpdateOne(ctx, queries.GetRecipeById(*oid), queries.UpdateRecipeName(*recipe))
 
 	if err != nil {
 		log.Println(err.Error())

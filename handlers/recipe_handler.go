@@ -60,19 +60,19 @@ func (h *RecipeHandler) GetRecipeRoutes() core.Routes {
 			Method:      "POST",
 		},
 		core.Route{
-			Path:        "/recipes/{id}",
+			Path:        "/recipes/update-name",
 			HandlerFunc: h.UpdateRecipeName,
 			Method:      "PUT",
 		},
 		core.Route{
-			Path:        "/recipes/{id}",
+			Path:        "/recipes/find-one",
 			HandlerFunc: h.GetRecipe,
 			Method:      "GET",
 		},
 		core.Route{
-			Path:        "/recipes/{id}",
+			Path:        "/recipes/delete-one/{id}",
 			HandlerFunc: h.DeleteRecipe,
-			Method:      "DELETE",
+			Method:      "PUT",
 		},
 	}
 }

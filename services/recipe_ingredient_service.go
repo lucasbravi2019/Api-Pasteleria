@@ -8,6 +8,7 @@ import (
 	"github.com/lucasbravi2019/pasteleria/core"
 	"github.com/lucasbravi2019/pasteleria/dao"
 	"github.com/lucasbravi2019/pasteleria/dto"
+	"github.com/lucasbravi2019/pasteleria/mapper"
 	"github.com/lucasbravi2019/pasteleria/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -16,10 +17,12 @@ type RecipeIngredientService struct {
 	RecipeDao           dao.RecipeDao
 	IngredientDao       dao.IngredientDao
 	RecipeIngredientDao dao.RecipeIngredientDao
+	RecipeMapper        mapper.RecipeMapper
 }
 
 type RecipeIngredientServiceInterface interface {
 	AddIngredientToRecipe(r *http.Request) int
+	RemoveIngredientFromRecipe(r *http.Request) (int, *dto.RecipeDTO)
 }
 
 var RecipeIngredientServiceInstance *RecipeIngredientService
@@ -87,4 +90,51 @@ func (s *RecipeIngredientService) AddIngredientToRecipe(r *http.Request) int {
 	}
 
 	return http.StatusOK
+}
+
+func (s *RecipeIngredientService) RemoveIngredientFromRecipe(r *http.Request) (int, *dto.RecipeDTO) {
+	ids := dto.RecipeIngredientIdDTO{}
+
+	invalidBody := core.DecodeBody(r, &ids)
+	log.Println(ids)
+
+	if invalidBody {
+		return http.StatusBadRequest, nil
+	}
+
+	recipeId := core.ConvertHexToObjectId(ids.RecipeId)
+	ingredientId := core.ConvertHexToObjectId(ids.IngredientId)
+
+	if recipeId == nil || ingredientId == nil {
+		return http.StatusInternalServerError, nil
+	}
+
+	originalRecipe := s.RecipeDao.FindRecipeByOID(recipeId)
+
+	if originalRecipe == nil {
+		return http.StatusNotFound, nil
+	}
+
+	for i := 0; i < len(originalRecipe.Ingredients); i++ {
+		if originalRecipe.Ingredients[i].ID == *ingredientId {
+			originalRecipe.Ingredients = append(originalRecipe.Ingredients[:i], originalRecipe.Ingredients[i+1:]...)
+		}
+	}
+
+	recipeEntity := s.RecipeMapper.RecipeDTOToRecipe(originalRecipe)
+
+	err := s.RecipeIngredientDao.RemoveIngredientFromRecipe(recipeId, recipeEntity)
+
+	if err != nil {
+		return http.StatusInternalServerError, nil
+	}
+
+	err = s.RecipeDao.UpdateRecipesPrice()
+
+	if err != nil {
+		log.Println(err.Error())
+		return http.StatusInternalServerError, nil
+	}
+
+	return http.StatusOK, originalRecipe
 }
