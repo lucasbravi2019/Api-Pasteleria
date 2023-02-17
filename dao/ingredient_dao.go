@@ -14,8 +14,6 @@ import (
 
 type IngredientDao struct {
 	IngredientCollection *mongo.Collection
-	PackageCollection    *mongo.Collection
-	RecipeCollection     *mongo.Collection
 }
 
 type IngredientDaoInterface interface {
@@ -26,8 +24,6 @@ type IngredientDaoInterface interface {
 	CreateIngredient(ingredient *models.Ingredient) *primitive.ObjectID
 	UpdateIngredient(oid *primitive.ObjectID, dto *dto.IngredientNameDTO) error
 	DeleteIngredient(oid *primitive.ObjectID) error
-	AddPackageToIngredient(ingredientOid *primitive.ObjectID, packageOid *primitive.ObjectID, envase *models.IngredientPackage) error
-	RemovePackageFromIngredients(dto dto.IngredientPackageDTO) error
 	ChangeIngredientPrice(packageOid *primitive.ObjectID, priceDTO *dto.IngredientPackagePriceDTO) error
 }
 
@@ -122,33 +118,6 @@ func (d *IngredientDao) DeleteIngredient(oid *primitive.ObjectID) error {
 	defer cancel()
 
 	_, err := d.IngredientCollection.DeleteOne(ctx, queries.GetIngredientById(*oid))
-
-	if err != nil {
-		log.Println(err.Error())
-	}
-
-	return err
-}
-
-func (d *IngredientDao) AddPackageToIngredient(ingredientOid *primitive.ObjectID, packageOid *primitive.ObjectID, envase *models.IngredientPackage) error {
-	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
-	defer cancel()
-
-	_, err := d.IngredientCollection.UpdateOne(ctx, queries.GetIngredientWithoutExistingPackage(*ingredientOid, *packageOid),
-		queries.PushPackageIntoIngredient(*envase))
-
-	if err != nil {
-		log.Println(err.Error())
-	}
-
-	return err
-}
-
-func (d *IngredientDao) RemovePackageFromIngredients(dto dto.IngredientPackageDTO) error {
-	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
-	defer cancel()
-
-	_, err := d.IngredientCollection.UpdateMany(ctx, queries.GetIngredientByPackageId(dto.PackageOid), queries.PullPackageFromIngredients(dto))
 
 	if err != nil {
 		log.Println(err.Error())

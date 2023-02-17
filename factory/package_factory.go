@@ -19,9 +19,10 @@ func GetPackageHandlerInstance() *handlers.PackageHandler {
 func GetPackageServiceInstance() *services.PackageService {
 	if services.PackageServiceInstance == nil {
 		services.PackageServiceInstance = &services.PackageService{
-			PackageDao:    *GetPackageDaoInstance(),
-			IngredientDao: *GetIngredientDaoInstance(),
-			RecipeDao:     *GetRecipeDaoInstance(),
+			PackageDao:           *GetPackageDaoInstance(),
+			IngredientPackageDao: *GetIngredientPackageDaoInstance(),
+			RecipeDao:            *GetRecipeDaoInstance(),
+			RecipeIngredientDao:  *GetRecipeIngredientDaoInstance(),
 		}
 	}
 	return services.PackageServiceInstance

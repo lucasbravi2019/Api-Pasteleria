@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/lucasbravi2019/pasteleria/dto"
-	"github.com/lucasbravi2019/pasteleria/models"
 	"github.com/lucasbravi2019/pasteleria/queries"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -22,13 +21,11 @@ type RecipeDaoInterface interface {
 	FindRecipesByPackageId(oid *primitive.ObjectID) []dto.RecipeDTO
 	CreateRecipe(recipe *dto.RecipeNameDTO) *primitive.ObjectID
 	UpdateRecipeName(oid *primitive.ObjectID, recipeName *dto.RecipeNameDTO) error
-	AddIngredientToRecipe(oid *primitive.ObjectID, recipe *models.RecipeIngredient) error
-	RemoveIngredientFromRecipe(oid *primitive.ObjectID, recipe *models.RecipeIngredient) error
+
 	DeleteRecipe(oid *primitive.ObjectID) error
-	RemoveIngredientByPackageId(packageId *primitive.ObjectID) error
+
 	UpdateRecipeByIdPrice(recipeId *primitive.ObjectID) error
-	UpdateIngredientPackagePrice(packageId *primitive.ObjectID, price float64) error
-	UpdateIngredientsPrice(packageId *primitive.ObjectID, recipe dto.RecipeDTO) error
+
 	UpdateRecipesPrice() error
 }
 
@@ -127,50 +124,11 @@ func (d *RecipeDao) UpdateRecipeName(oid *primitive.ObjectID, recipeName *dto.Re
 	return err
 }
 
-func (d *RecipeDao) AddIngredientToRecipe(oid *primitive.ObjectID, recipe *models.RecipeIngredient) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
-
-	_, err := d.DB.UpdateOne(ctx, queries.GetRecipeById(*oid), queries.AddIngredientToRecipe(*recipe))
-
-	if err != nil {
-		log.Println(err.Error())
-	}
-
-	return err
-}
-
-func (d *RecipeDao) RemoveIngredientFromRecipe(oid *primitive.ObjectID, recipe *models.RecipeIngredient) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
-
-	_, err := d.DB.UpdateOne(ctx, queries.GetRecipeById(*oid), queries.RemoveIngredientFromRecipe(*recipe))
-
-	if err != nil {
-		log.Println(err.Error())
-	}
-
-	return err
-}
-
 func (d *RecipeDao) DeleteRecipe(oid *primitive.ObjectID) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	_, err := d.DB.DeleteOne(ctx, queries.GetRecipeById(*oid))
-
-	if err != nil {
-		log.Println(err.Error())
-	}
-
-	return err
-}
-
-func (d *RecipeDao) RemoveIngredientByPackageId(packageId *primitive.ObjectID) error {
-	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
-	defer cancel()
-
-	_, err := d.DB.UpdateMany(ctx, queries.GetRecipeByPackageId(*packageId), queries.RemovePackageFromRecipes(*packageId))
 
 	if err != nil {
 		log.Println(err.Error())
@@ -197,33 +155,6 @@ func (d *RecipeDao) UpdateRecipesPrice() error {
 	defer cancel()
 
 	_, err := d.DB.UpdateMany(ctx, queries.All(), queries.SetRecipePrice())
-
-	if err != nil {
-		log.Println(err.Error())
-	}
-
-	return err
-}
-
-func (d *RecipeDao) UpdateIngredientPackagePrice(packageId *primitive.ObjectID, price float64) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
-
-	_, err := d.DB.UpdateMany(ctx, queries.GetRecipeByPackageId(*packageId), queries.SetIngredientPackagePrice(price),
-		queries.GetArrayFiltersForIngredientsByPackageId(*packageId))
-
-	if err != nil {
-		log.Println(err.Error())
-	}
-
-	return err
-}
-
-func (d *RecipeDao) UpdateIngredientsPrice(packageId *primitive.ObjectID, recipe dto.RecipeDTO) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
-
-	_, err := d.DB.UpdateOne(ctx, queries.GetRecipeByPackageId(*packageId), queries.SetRecipeIngredientPrice(recipe))
 
 	if err != nil {
 		log.Println(err.Error())

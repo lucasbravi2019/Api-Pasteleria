@@ -19,8 +19,9 @@ func GetIngredientHandlerInstance() *handlers.IngredientHandler {
 func GetIngredientServiceInstance() *services.IngredientService {
 	if services.IngredientServiceInstance == nil {
 		services.IngredientServiceInstance = &services.IngredientService{
-			IngredientDao: *GetIngredientDaoInstance(),
-			RecipeDao:     *GetRecipeDaoInstance(),
+			IngredientDao:       *GetIngredientDaoInstance(),
+			RecipeDao:           *GetRecipeDaoInstance(),
+			RecipeIngredientDao: *GetRecipeIngredientDaoInstance(),
 		}
 	}
 	return services.IngredientServiceInstance
@@ -30,8 +31,6 @@ func GetIngredientDaoInstance() *dao.IngredientDao {
 	if dao.IngredientDaoInstance == nil {
 		dao.IngredientDaoInstance = &dao.IngredientDao{
 			IngredientCollection: core.GetDatabaseConnection().Collection("ingredients"),
-			RecipeCollection:     core.GetDatabaseConnection().Collection("recipes"),
-			PackageCollection:    core.GetDatabaseConnection().Collection("packages"),
 		}
 	}
 	return dao.IngredientDaoInstance

@@ -12,9 +12,10 @@ import (
 )
 
 type PackageService struct {
-	PackageDao    dao.PackageDao
-	IngredientDao dao.IngredientDao
-	RecipeDao     dao.RecipeDao
+	PackageDao           dao.PackageDao
+	IngredientPackageDao dao.IngredientPackageDao
+	RecipeDao            dao.RecipeDao
+	RecipeIngredientDao  dao.RecipeIngredientDao
 }
 
 type PackageServiceInterface interface {
@@ -22,8 +23,6 @@ type PackageServiceInterface interface {
 	CreatePackage(r *http.Request) (int, *models.Package)
 	UpdatePackage(r *http.Request) (int, *models.Package)
 	DeletePackage(r *http.Request) (int, *primitive.ObjectID)
-	AddPackageToIngredient(r *http.Request) int
-	RemovePackageFromIngredients(r *http.Request) (int, *primitive.ObjectID)
 }
 
 var PackageServiceInstance *PackageService
@@ -109,13 +108,13 @@ func (s *PackageService) DeletePackage(r *http.Request) (int, *primitive.ObjectI
 		PackageOid: *oid,
 	}
 
-	err = s.IngredientDao.RemovePackageFromIngredients(*ingredientPackage)
+	err = s.IngredientPackageDao.RemovePackageFromIngredients(*ingredientPackage)
 
 	if err != nil {
 		return http.StatusInternalServerError, nil
 	}
 
-	err = s.RecipeDao.RemoveIngredientByPackageId(oid)
+	err = s.RecipeIngredientDao.RemoveIngredientByPackageId(oid)
 
 	if err != nil {
 		return http.StatusInternalServerError, nil
@@ -128,56 +127,4 @@ func (s *PackageService) DeletePackage(r *http.Request) (int, *primitive.ObjectI
 	}
 
 	return http.StatusOK, oid
-}
-
-func (s *PackageService) AddPackageToIngredient(r *http.Request) int {
-	ingredientOid := mux.Vars(r)["ingredientId"]
-	packageOid := mux.Vars(r)["packageId"]
-	ingredientId := core.ConvertHexToObjectId(ingredientOid)
-	packageId := core.ConvertHexToObjectId(packageOid)
-
-	priceDTO := &dto.IngredientPackagePriceDTO{}
-
-	invalidBody := core.DecodeBody(r, priceDTO)
-
-	if invalidBody {
-		return http.StatusBadRequest
-	}
-
-	envase := s.PackageDao.GetPackageById(packageId)
-
-	if envase == nil {
-		return http.StatusNotFound
-	}
-
-	ingredientPackage := &models.IngredientPackage{
-		ID:       envase.ID,
-		Metric:   envase.Metric,
-		Quantity: envase.Quantity,
-		Price:    priceDTO.Price,
-	}
-
-	err := s.IngredientDao.AddPackageToIngredient(ingredientId, packageId, ingredientPackage)
-
-	if err != nil {
-		return http.StatusInternalServerError
-	}
-
-	return http.StatusOK
-}
-
-func (s *PackageService) RemovePackageFromIngredients(r *http.Request) (int, *primitive.ObjectID) {
-	packageOid := core.ConvertHexToObjectId(mux.Vars(r)["packageId"])
-
-	ingredientPackageDto := &dto.IngredientPackageDTO{
-		PackageOid: *packageOid,
-	}
-
-	err := s.IngredientDao.RemovePackageFromIngredients(*ingredientPackageDto)
-
-	if err != nil {
-		return http.StatusInternalServerError, nil
-	}
-
-	return http.StatusOK, packageOid
 }

@@ -37,6 +37,8 @@ func StartApi() {
 	RegisterRoutes(factory.GetRecipeHandlerInstance().GetRecipeRoutes())
 	RegisterRoutes(factory.GetIngredientHandlerInstance().GetIngredientRoutes())
 	RegisterRoutes(factory.GetPackageHandlerInstance().GetPackageRoutes())
+	RegisterRoutes(factory.GetIngredientPackageHandlerInstance().GetIngredientPackageRoutes())
+	RegisterRoutes(factory.GetRecipeIngredientHandlerInstance().GetRecipeIngredientRoutes())
 
 	credentials := handlers.AllowCredentials()
 	methods := handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE"})
