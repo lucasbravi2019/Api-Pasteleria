@@ -16,9 +16,6 @@ type IngredientHandlerInterface interface {
 	CreateIngredient(w http.ResponseWriter, r *http.Request)
 	UpdateIngredient(w http.ResponseWriter, r *http.Request)
 	DeleteIngredient(w http.ResponseWriter, r *http.Request)
-	AddIngredientToRecipe(w http.ResponseWriter, r *http.Request)
-	AddPackageToIngredient(w http.ResponseWriter, r *http.Request)
-	RemovePackageFromIngredients(w http.ResponseWriter, r *http.Request)
 	ChangeIngredientPrice(w http.ResponseWriter, r *http.Request)
 	GetIngredientRoutes() core.Routes
 }
@@ -43,11 +40,6 @@ func (h *IngredientHandler) UpdateIngredient(w http.ResponseWriter, r *http.Requ
 func (h *IngredientHandler) DeleteIngredient(w http.ResponseWriter, r *http.Request) {
 	statusCode, body := h.Service.DeleteIngredient(r)
 	core.EncodeJsonResponse(w, statusCode, body)
-}
-
-func (h *IngredientHandler) AddIngredientToRecipe(w http.ResponseWriter, r *http.Request) {
-	statusCode := h.Service.AddIngredientToRecipe(r)
-	core.EncodeJsonResponse(w, statusCode, nil)
 }
 
 func (h *IngredientHandler) ChangeIngredientPrice(w http.ResponseWriter, r *http.Request) {
@@ -81,11 +73,6 @@ func (h *IngredientHandler) GetIngredientRoutes() core.Routes {
 			Path:        "/ingredients/{id}",
 			HandlerFunc: h.DeleteIngredient,
 			Method:      "DELETE",
-		},
-		core.Route{
-			Path:        "/ingredients/{ingredientId}/recipes/{recipeId}",
-			HandlerFunc: h.AddIngredientToRecipe,
-			Method:      "PUT",
 		},
 	}
 }

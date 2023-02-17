@@ -16,8 +16,6 @@ type PackageHandlerInterface interface {
 	CreatePackage(w http.ResponseWriter, r *http.Request)
 	UpdatePackage(w http.ResponseWriter, r *http.Request)
 	DeletePackage(w http.ResponseWriter, r *http.Request)
-	AddPackageToIngredient(w http.ResponseWriter, r *http.Request)
-	RemovePackageFromIngredients(w http.ResponseWriter, r *http.Request)
 	GetPackageRoutes() []core.Route
 }
 
@@ -43,16 +41,6 @@ func (h *PackageHandler) DeletePackage(w http.ResponseWriter, r *http.Request) {
 	core.EncodeJsonResponse(w, statusCode, body)
 }
 
-func (h *PackageHandler) AddPackageToIngredient(w http.ResponseWriter, r *http.Request) {
-	statusCode := h.Service.AddPackageToIngredient(r)
-	core.EncodeJsonResponse(w, statusCode, nil)
-}
-
-func (h *PackageHandler) RemovePackageFromIngredients(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.Service.RemovePackageFromIngredients(r)
-	core.EncodeJsonResponse(w, statusCode, body)
-}
-
 func (h *PackageHandler) GetPackageRoutes() core.Routes {
 	return core.Routes{
 		core.Route{
@@ -73,16 +61,6 @@ func (h *PackageHandler) GetPackageRoutes() core.Routes {
 		core.Route{
 			Path:        "/packages/{id}",
 			HandlerFunc: h.DeletePackage,
-			Method:      "DELETE",
-		},
-		core.Route{
-			Path:        "/packages/{packageId}/ingredients/{ingredientId}",
-			HandlerFunc: h.AddPackageToIngredient,
-			Method:      "PUT",
-		},
-		core.Route{
-			Path:        "/packages/{id}/ingredients",
-			HandlerFunc: h.RemovePackageFromIngredients,
 			Method:      "DELETE",
 		},
 	}
