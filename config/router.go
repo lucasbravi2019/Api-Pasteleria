@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+
 	"github.com/lucasbravi2019/pasteleria/core"
 	"github.com/lucasbravi2019/pasteleria/factory"
 	"github.com/lucasbravi2019/pasteleria/middleware"
