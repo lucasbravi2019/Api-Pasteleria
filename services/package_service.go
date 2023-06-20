@@ -3,7 +3,7 @@ package services
 import (
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 	"github.com/lucasbravi2019/pasteleria/core"
 	"github.com/lucasbravi2019/pasteleria/dao"
 	"github.com/lucasbravi2019/pasteleria/dto"
@@ -19,89 +19,89 @@ type PackageService struct {
 }
 
 type PackageServiceInterface interface {
-	GetPackages() (int, *[]models.Package)
-	CreatePackage(r *http.Request) (int, *models.Package)
-	UpdatePackage(r *http.Request) (int, *models.Package)
-	DeletePackage(r *http.Request) (int, *primitive.ObjectID)
+	GetPackages() (int, *[]models.Package, error)
+	CreatePackage(c *gin.Context) (int, *models.Package, error)
+	UpdatePackage(c *gin.Context) (int, *models.Package, error)
+	DeletePackage(c *gin.Context) (int, *primitive.ObjectID, error)
 }
 
 var PackageServiceInstance *PackageService
 
-func (s *PackageService) GetPackages() (int, *[]models.Package) {
-	packages := s.PackageDao.GetPackages()
-
-	if packages == nil {
-		return http.StatusInternalServerError, nil
-	}
-
-	return http.StatusOK, packages
-}
-
-func (s *PackageService) CreatePackage(r *http.Request) (int, *models.Package) {
-	packageRequest := &models.Package{}
-
-	invalidBody := core.DecodeBody(r, packageRequest)
-
-	if invalidBody {
-		return http.StatusBadRequest, nil
-	}
-
-	id := s.PackageDao.CreatePackage(packageRequest)
-
-	if id == nil {
-		return http.StatusInternalServerError, nil
-	}
-
-	envase := s.PackageDao.GetPackageById(id)
-
-	if envase == nil {
-		return http.StatusNotFound, nil
-	}
-
-	return http.StatusCreated, envase
-}
-
-func (s *PackageService) UpdatePackage(r *http.Request) (int, *models.Package) {
-	oid := core.ConvertHexToObjectId(mux.Vars(r)["id"])
-
-	if oid == nil {
-		return http.StatusBadRequest, nil
-	}
-
-	packageRequest := &models.Package{}
-
-	invalidBody := core.DecodeBody(r, packageRequest)
-
-	if invalidBody {
-		return http.StatusBadRequest, nil
-	}
-
-	err := s.PackageDao.UpdatePackage(oid, packageRequest)
+func (s *PackageService) GetPackages() (int, *[]models.Package, error) {
+	packages, err := s.PackageDao.GetPackages()
 
 	if err != nil {
-		return http.StatusInternalServerError, nil
+		return http.StatusInternalServerError, nil, err
 	}
 
-	envase := s.PackageDao.GetPackageById(oid)
-
-	if envase == nil {
-		return http.StatusNotFound, nil
-	}
-
-	return http.StatusOK, envase
+	return http.StatusOK, packages, nil
 }
 
-func (s *PackageService) DeletePackage(r *http.Request) (int, *primitive.ObjectID) {
-	oid := core.ConvertHexToObjectId(mux.Vars(r)["id"])
+func (s *PackageService) CreatePackage(c *gin.Context) (int, *models.Package, error) {
+	packageRequest := &models.Package{}
 
-	if oid == nil {
-		return http.StatusBadRequest, nil
-	}
-
-	err := s.PackageDao.DeletePackage(oid)
+	err := core.DecodeBody(c, packageRequest)
 
 	if err != nil {
-		return http.StatusInternalServerError, nil
+		return http.StatusBadRequest, nil, err
+	}
+
+	id, err := s.PackageDao.CreatePackage(packageRequest)
+
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	}
+
+	envase, err := s.PackageDao.GetPackageById(id)
+
+	if err != nil {
+		return http.StatusNotFound, nil, err
+	}
+
+	return http.StatusCreated, envase, nil
+}
+
+func (s *PackageService) UpdatePackage(c *gin.Context) (int, *models.Package, error) {
+	oid, err := core.ConvertUrlVarToObjectId("packageId", c)
+
+	if err != nil {
+		return http.StatusBadRequest, nil, err
+	}
+
+	packageRequest := &models.Package{}
+
+	err = core.DecodeBody(c, packageRequest)
+
+	if err != nil {
+		return http.StatusBadRequest, nil, err
+	}
+
+	err = s.PackageDao.UpdatePackage(oid, packageRequest)
+
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	}
+
+	envase, err := s.PackageDao.GetPackageById(oid)
+
+	if err != nil {
+		return http.StatusNotFound, nil, err
+	}
+
+	return http.StatusOK, envase, nil
+}
+
+func (s *PackageService) DeletePackage(c *gin.Context) (int, *primitive.ObjectID, error) {
+	oid, err := core.ConvertUrlVarToObjectId("packageId", c)
+
+	if err != nil {
+		return http.StatusBadRequest, nil, err
+	}
+
+	err = s.PackageDao.DeletePackage(oid)
+
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
 	}
 
 	ingredientPackage := &dto.IngredientPackageDTO{
@@ -111,20 +111,20 @@ func (s *PackageService) DeletePackage(r *http.Request) (int, *primitive.ObjectI
 	err = s.IngredientPackageDao.RemovePackageFromIngredients(*ingredientPackage)
 
 	if err != nil {
-		return http.StatusInternalServerError, nil
+		return http.StatusInternalServerError, nil, err
 	}
 
 	err = s.RecipeIngredientDao.RemoveIngredientByPackageId(oid)
 
 	if err != nil {
-		return http.StatusInternalServerError, nil
+		return http.StatusInternalServerError, nil, err
 	}
 
 	err = s.RecipeDao.UpdateRecipesPrice()
 
 	if err != nil {
-		return http.StatusInternalServerError, nil
+		return http.StatusInternalServerError, nil, err
 	}
 
-	return http.StatusOK, oid
+	return http.StatusOK, oid, nil
 }

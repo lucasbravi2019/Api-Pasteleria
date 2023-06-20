@@ -1,8 +1,7 @@
 package handlers
 
 import (
-	"net/http"
-
+	"github.com/gin-gonic/gin"
 	"github.com/lucasbravi2019/pasteleria/core"
 	"github.com/lucasbravi2019/pasteleria/services"
 )
@@ -12,33 +11,33 @@ type PackageHandler struct {
 }
 
 type PackageHandlerInterface interface {
-	GetPackages(w http.ResponseWriter, r *http.Request)
-	CreatePackage(w http.ResponseWriter, r *http.Request)
-	UpdatePackage(w http.ResponseWriter, r *http.Request)
-	DeletePackage(w http.ResponseWriter, r *http.Request)
+	GetPackages(c *gin.Context)
+	CreatePackage(c *gin.Context)
+	UpdatePackage(c *gin.Context)
+	DeletePackage(c *gin.Context)
 	GetPackageRoutes() []core.Route
 }
 
 var PackageHandlerInstance *PackageHandler
 
-func (h *PackageHandler) GetPackages(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.Service.GetPackages()
-	core.EncodeJsonResponse(w, statusCode, body)
+func (h *PackageHandler) GetPackages(c *gin.Context) {
+	statusCode, body, err := h.Service.GetPackages()
+	core.EncodeJsonResponse(c, statusCode, body, err)
 }
 
-func (h *PackageHandler) CreatePackage(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.Service.CreatePackage(r)
-	core.EncodeJsonResponse(w, statusCode, body)
+func (h *PackageHandler) CreatePackage(c *gin.Context) {
+	statusCode, body, err := h.Service.CreatePackage(c)
+	core.EncodeJsonResponse(c, statusCode, body, err)
 }
 
-func (h *PackageHandler) UpdatePackage(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.Service.UpdatePackage(r)
-	core.EncodeJsonResponse(w, statusCode, body)
+func (h *PackageHandler) UpdatePackage(c *gin.Context) {
+	statusCode, body, err := h.Service.UpdatePackage(c)
+	core.EncodeJsonResponse(c, statusCode, body, err)
 }
 
-func (h *PackageHandler) DeletePackage(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.Service.DeletePackage(r)
-	core.EncodeJsonResponse(w, statusCode, body)
+func (h *PackageHandler) DeletePackage(c *gin.Context) {
+	statusCode, body, err := h.Service.DeletePackage(c)
+	core.EncodeJsonResponse(c, statusCode, body, err)
 }
 
 func (h *PackageHandler) GetPackageRoutes() core.Routes {
@@ -54,12 +53,12 @@ func (h *PackageHandler) GetPackageRoutes() core.Routes {
 			Method:      "POST",
 		},
 		core.Route{
-			Path:        "/packages/{id}",
+			Path:        "/packages/:packageId",
 			HandlerFunc: h.UpdatePackage,
 			Method:      "PUT",
 		},
 		core.Route{
-			Path:        "/packages/{id}",
+			Path:        "/packages/:packageId",
 			HandlerFunc: h.DeletePackage,
 			Method:      "DELETE",
 		},

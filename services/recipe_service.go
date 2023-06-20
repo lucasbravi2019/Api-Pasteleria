@@ -1,9 +1,10 @@
 package services
 
 import (
+	"log"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 	"github.com/lucasbravi2019/pasteleria/core"
 	"github.com/lucasbravi2019/pasteleria/dao"
 	"github.com/lucasbravi2019/pasteleria/dto"
@@ -16,118 +17,118 @@ type RecipeService struct {
 }
 
 type RecipeServiceInterface interface {
-	GetAllRecipes() (int, *[]dto.RecipeDTO)
-	GetRecipe(r *http.Request) (int, *dto.RecipeDTO)
-	CreateRecipe(r *http.Request) (int, *dto.RecipeDTO)
-	UpdateRecipeName(r *http.Request) (int, *dto.RecipeDTO)
-	DeleteRecipe(r *http.Request) (int, *primitive.ObjectID)
+	GetAllRecipes() (int, *[]dto.RecipeDTO, error)
+	GetRecipe(c *gin.Context) (int, *dto.RecipeDTO, error)
+	CreateRecipe(c *gin.Context) (int, *dto.RecipeDTO, error)
+	UpdateRecipeName(c *gin.Context) (int, *dto.RecipeDTO, error)
+	DeleteRecipe(c *gin.Context) (int, *primitive.ObjectID, error)
 }
 
 var RecipeServiceInstance *RecipeService
 
-func (s *RecipeService) GetAllRecipes() (int, *[]dto.RecipeDTO) {
-	recipes := s.RecipeDao.FindAllRecipes()
-	return http.StatusOK, recipes
+func (s *RecipeService) GetAllRecipes() (int, *[]dto.RecipeDTO, error) {
+	recipes, err := s.RecipeDao.FindAllRecipes()
+
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	}
+
+	return http.StatusOK, recipes, nil
 }
 
-func (s *RecipeService) GetRecipe(r *http.Request) (int, *dto.RecipeDTO) {
-	recipeId := &dto.RecipeIdDTO{}
+func (s *RecipeService) GetRecipe(c *gin.Context) (int, *dto.RecipeDTO, error) {
+	recipeId, err := core.ConvertUrlParamToObjectId("id", c)
 
-	invalidBody := core.DecodeBody(r, recipeId)
-
-	if invalidBody {
-		return http.StatusBadRequest, nil
+	if err != nil {
+		return http.StatusBadRequest, nil, err
 	}
 
-	oid := core.ConvertHexToObjectId(recipeId.ID)
+	recipe, err := s.RecipeDao.FindRecipeByOID(recipeId)
 
-	if oid == nil {
-		return http.StatusBadRequest, nil
+	if err != nil {
+		return http.StatusNotFound, nil, err
 	}
 
-	recipe := s.RecipeDao.FindRecipeByOID(oid)
-
-	if recipe == nil {
-		return http.StatusNotFound, nil
-	}
-
-	return http.StatusOK, recipe
+	return http.StatusOK, recipe, nil
 }
 
-func (s *RecipeService) CreateRecipe(r *http.Request) (int, *dto.RecipeDTO) {
+func (s *RecipeService) CreateRecipe(c *gin.Context) (int, *dto.RecipeDTO, error) {
 	recipeName := &dto.RecipeNameDTO{}
 
-	invalidBody := core.DecodeBody(r, recipeName)
+	err := core.DecodeBody(c, recipeName)
 
-	if invalidBody {
-		return http.StatusBadRequest, nil
+	if err != nil {
+		return http.StatusBadRequest, nil, err
 	}
 
 	recipeEntity := &models.Recipe{
-		Name: recipeName.Name,
+		Name:        recipeName.Name,
+		Ingredients: []models.RecipeIngredient{},
 	}
 
-	oid := s.RecipeDao.CreateRecipe(recipeEntity)
+	oid, err := s.RecipeDao.CreateRecipe(recipeEntity)
 
-	if oid == nil {
-		return http.StatusInternalServerError, nil
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
 	}
 
-	recipeCreated := s.RecipeDao.FindRecipeByOID(oid)
+	recipeCreated, err := s.RecipeDao.FindRecipeByOID(oid)
 
-	if recipeCreated == nil {
-		return http.StatusInternalServerError, nil
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
 	}
 
-	return http.StatusCreated, recipeCreated
+	return http.StatusCreated, recipeCreated, nil
 }
 
-func (s *RecipeService) UpdateRecipeName(r *http.Request) (int, *dto.RecipeDTO) {
+func (s *RecipeService) UpdateRecipeName(c *gin.Context) (int, *dto.RecipeDTO, error) {
 	recipeName := &dto.RecipeNameDTO{}
 
-	invalidBody := core.DecodeBody(r, recipeName)
+	err := core.DecodeBody(c, recipeName)
 
-	if invalidBody {
-		return http.StatusBadRequest, nil
+	if err != nil {
+		return http.StatusBadRequest, nil, err
 	}
 
-	oid := core.ConvertHexToObjectId(recipeName.ID)
+	oid, err := core.ConvertToObjectId(recipeName.ID)
 
-	if oid == nil {
-		return http.StatusBadRequest, nil
+	if err != nil {
+		return http.StatusBadRequest, nil, err
 	}
 
 	recipe := &models.Recipe{
 		Name: recipeName.Name,
 	}
 
-	err := s.RecipeDao.UpdateRecipeName(oid, recipe)
+	err = s.RecipeDao.UpdateRecipeName(oid, recipe)
 
 	if err != nil {
-		return http.StatusInternalServerError, nil
+		return http.StatusInternalServerError, nil, err
 	}
 
-	recipeUpdated := s.RecipeDao.FindRecipeByOID(oid)
+	recipeUpdated, err := s.RecipeDao.FindRecipeByOID(oid)
 
-	if recipeUpdated == nil {
-		return http.StatusInternalServerError, nil
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
 	}
 
-	return http.StatusOK, recipeUpdated
+	return http.StatusOK, recipeUpdated, nil
 }
 
-func (s *RecipeService) DeleteRecipe(r *http.Request) (int, *primitive.ObjectID) {
-	oid := core.ConvertHexToObjectId(mux.Vars(r)["id"])
-
-	if oid == nil {
-		return http.StatusBadRequest, nil
-	}
-
-	err := s.RecipeDao.DeleteRecipe(oid)
+func (s *RecipeService) DeleteRecipe(c *gin.Context) (int, *primitive.ObjectID, error) {
+	oid, err := core.ConvertUrlVarToObjectId("id", c)
 
 	if err != nil {
-		return http.StatusInternalServerError, nil
+		return http.StatusBadRequest, nil, err
 	}
 
-	return http.StatusOK, oid
+	log.Println(oid)
+
+	err = s.RecipeDao.DeleteRecipe(oid)
+
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	}
+
+	return http.StatusOK, oid, nil
 }

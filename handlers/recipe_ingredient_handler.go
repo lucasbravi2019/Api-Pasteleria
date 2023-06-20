@@ -1,8 +1,7 @@
 package handlers
 
 import (
-	"net/http"
-
+	"github.com/gin-gonic/gin"
 	"github.com/lucasbravi2019/pasteleria/core"
 	"github.com/lucasbravi2019/pasteleria/services"
 )
@@ -12,27 +11,27 @@ type RecipeIngredientHandler struct {
 }
 
 type RecipeIngredientHandlerInterface interface {
-	AddIngredientToRecipe(w http.ResponseWriter, r *http.Request)
-	RemoveIngredientFromRecipe(w http.ResponseWriter, r *http.Request)
+	AddIngredientToRecipe(c *gin.Context)
+	RemoveIngredientFromRecipe(c *gin.Context)
 	GetRecipeIngredientRoutes() core.Routes
 }
 
 var RecipeIngredientHandlerInstance *RecipeIngredientHandler
 
-func (h *RecipeIngredientHandler) AddIngredientToRecipe(w http.ResponseWriter, r *http.Request) {
-	statusCode := h.Service.AddIngredientToRecipe(r)
-	core.EncodeJsonResponse(w, statusCode, nil)
+func (h *RecipeIngredientHandler) AddIngredientToRecipe(c *gin.Context) {
+	statusCode, err := h.Service.AddIngredientToRecipe(c)
+	core.EncodeJsonResponse(c, statusCode, nil, err)
 }
 
-func (h *RecipeIngredientHandler) RemoveIngredientFromRecipe(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.Service.RemoveIngredientFromRecipe(r)
-	core.EncodeJsonResponse(w, statusCode, body)
+func (h *RecipeIngredientHandler) RemoveIngredientFromRecipe(c *gin.Context) {
+	statusCode, body, err := h.Service.RemoveIngredientFromRecipe(c)
+	core.EncodeJsonResponse(c, statusCode, body, err)
 }
 
 func (h *RecipeIngredientHandler) GetRecipeIngredientRoutes() core.Routes {
 	return core.Routes{
 		core.Route{
-			Path:        "/ingredients/{ingredientId}/recipes/{recipeId}",
+			Path:        "/ingredients/:ingredientId/recipes/:recipeId",
 			HandlerFunc: h.AddIngredientToRecipe,
 			Method:      "PUT",
 		},
