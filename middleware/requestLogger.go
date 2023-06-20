@@ -5,31 +5,31 @@ import (
 	"encoding/json"
 	"io"
 	"log"
-	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
-func RequestLoggerMiddleware(fn func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
+func RequestLoggerMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
 		var jsonRequest *json.RawMessage = &json.RawMessage{}
 
-		err := json.NewDecoder(r.Body).Decode(jsonRequest)
+		err := json.NewDecoder(c.Request.Body).Decode(jsonRequest)
 		if err != nil && err.Error() != "EOF" {
 			log.Println(err.Error())
 		}
-		r.Body.Close()
+		c.Request.Body.Close()
 
 		body, err := jsonRequest.MarshalJSON()
 		if err != nil {
 			log.Println(err)
 		}
 
-		r.Body = io.NopCloser(bytes.NewBuffer(body))
+		c.Request.Body = io.NopCloser(bytes.NewBuffer(body))
 
-		log.Printf("URL Request: %s: %s%s\n", r.Method, r.Host, r.URL.Path)
+		log.Printf("URL Request: %s: %s%s\n", c.Request.Method, c.Request.Host, c.Request.URL.Path)
 		stringBody := string(body)
 		if stringBody != "" {
 			log.Println(stringBody)
 		}
-		fn(w, r)
 	}
 }

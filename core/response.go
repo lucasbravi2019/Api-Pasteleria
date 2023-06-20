@@ -1,8 +1,7 @@
 package core
 
 import (
-	"encoding/json"
-	"net/http"
+	"github.com/gin-gonic/gin"
 )
 
 type Response struct {
@@ -10,23 +9,16 @@ type Response struct {
 	Body  interface{} `json:"body"`
 }
 
-func EncodeJsonResponse(w http.ResponseWriter, statusCode int, body interface{}) {
-	w.Header().Add("Content-type", "application/json")
-	w.WriteHeader(statusCode)
+func EncodeJsonResponse(c *gin.Context, statusCode int, body interface{}, err error) {
 	var response *Response = &Response{}
 
-	if statusCode == http.StatusInternalServerError ||
-		statusCode == http.StatusBadRequest ||
-		statusCode == http.StatusNotFound {
-		response.Error = "Ocurrio un error al realizar la operacion"
+	if err != nil {
+		response.Error = err.Error()
+		c.JSON(statusCode, response)
+		return
 	}
 
-	if statusCode == http.StatusOK && body == nil {
-		body = "OK"
-	}
+	response.Body = body
 
-	if body != nil {
-		response.Body = body
-		json.NewEncoder(w).Encode(response)
-	}
+	c.JSON(statusCode, response)
 }

@@ -2,48 +2,53 @@ package config
 
 import (
 	"log"
-	"net/http"
 
-	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
-	"github.com/lucasbravi2019/pasteleria/api/ingredients"
-	"github.com/lucasbravi2019/pasteleria/api/packages"
-	"github.com/lucasbravi2019/pasteleria/api/recipes"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+
 	"github.com/lucasbravi2019/pasteleria/core"
+	"github.com/lucasbravi2019/pasteleria/factory"
 	"github.com/lucasbravi2019/pasteleria/middleware"
 )
 
-var apiRouterInstance *mux.Router
+var apiRouterInstance *gin.Engine
 
-func GetRouter() *mux.Router {
+func initRouter() *gin.Engine {
 	if apiRouterInstance == nil {
-		apiRouterInstance = mux.NewRouter()
+		apiRouterInstance = gin.Default()
 	}
 	return apiRouterInstance
 }
 
-func RegisterRoutes(routes core.Routes) {
-	router := GetRouter()
+func registerRoutes(routes core.Routes) {
 	for _, route := range routes {
-		router.
-			Path(route.Path).
-			HandlerFunc(
-				middleware.RequestLoggerMiddleware(
-					middleware.DatabaseCheckMiddleware(
-						route.HandlerFunc))).
-			Methods(route.Method)
+		apiRouterInstance.Handle(route.Method, route.Path, route.HandlerFunc)
 	}
 }
 
+func corsConfig() {
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{"*"}
+	apiRouterInstance.Use(cors.New(config))
+}
+
+func registerMiddleware(middleware gin.HandlerFunc) {
+	apiRouterInstance.Use(middleware)
+}
+
 func StartApi() {
-	RegisterRoutes(recipes.GetRecipeHandlerInstance().GetRecipeRoutes())
-	RegisterRoutes(ingredients.GetIngredientHandlerInstance().GetIngredientRoutes())
-	RegisterRoutes(packages.GetPackageHandlerInstance().GetPackageRoutes())
+	initRouter()
 
-	credentials := handlers.AllowCredentials()
-	methods := handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE"})
-	ttl := handlers.MaxAge(3600)
-	origins := handlers.AllowedOrigins([]string{"*"})
+	corsConfig()
 
-	log.Fatal(http.ListenAndServe(":8080", handlers.CORS(credentials, methods, ttl, origins)(GetRouter())))
+	registerMiddleware(middleware.DatabaseCheckMiddleware())
+	registerMiddleware(middleware.RequestLoggerMiddleware())
+
+	registerRoutes(factory.GetRecipeHandlerInstance().GetRecipeRoutes())
+	registerRoutes(factory.GetIngredientHandlerInstance().GetIngredientRoutes())
+	registerRoutes(factory.GetPackageHandlerInstance().GetPackageRoutes())
+	registerRoutes(factory.GetIngredientPackageHandlerInstance().GetIngredientPackageRoutes())
+	registerRoutes(factory.GetRecipeIngredientHandlerInstance().GetRecipeIngredientRoutes())
+
+	log.Fatal(apiRouterInstance.Run(":8080"))
 }
