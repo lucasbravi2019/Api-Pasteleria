@@ -3,7 +3,7 @@ package services
 import (
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 	"github.com/lucasbravi2019/pasteleria/core"
 	"github.com/lucasbravi2019/pasteleria/dao"
 	"github.com/lucasbravi2019/pasteleria/dto"
@@ -17,30 +17,37 @@ type IngredientPackageService struct {
 }
 
 type IngredientPackageServiceInterface interface {
-	AddPackageToIngredient(r *http.Request) int
-	RemovePackageFromIngredients(r *http.Request) (int, *primitive.ObjectID)
+	AddPackageToIngredient(c *gin.Context) (int, error)
+	RemovePackageFromIngredients(c *gin.Context) (int, *primitive.ObjectID, error)
 }
 
 var IngredientPackageServiceInstance *IngredientPackageService
 
-func (s *IngredientPackageService) AddPackageToIngredient(r *http.Request) int {
-	ingredientOid := mux.Vars(r)["ingredientId"]
-	packageOid := mux.Vars(r)["packageId"]
-	ingredientId := core.ConvertHexToObjectId(ingredientOid)
-	packageId := core.ConvertHexToObjectId(packageOid)
+func (s *IngredientPackageService) AddPackageToIngredient(c *gin.Context) (int, error) {
+	ingredientId, err := core.ConvertUrlVarToObjectId("ingredientId", c)
+
+	if err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	packageId, err := core.ConvertUrlVarToObjectId("packageId", c)
+
+	if err != nil {
+		return http.StatusBadRequest, err
+	}
 
 	priceDTO := &dto.IngredientPackagePriceDTO{}
 
-	invalidBody := core.DecodeBody(r, priceDTO)
+	err = core.DecodeBody(c, priceDTO)
 
-	if invalidBody {
-		return http.StatusBadRequest
+	if err != nil {
+		return http.StatusBadRequest, err
 	}
 
-	envase := s.PackageDao.GetPackageById(packageId)
+	envase, err := s.PackageDao.GetPackageById(packageId)
 
-	if envase == nil {
-		return http.StatusNotFound
+	if err != nil {
+		return http.StatusNotFound, err
 	}
 
 	ingredientPackage := &models.IngredientPackage{
@@ -50,27 +57,31 @@ func (s *IngredientPackageService) AddPackageToIngredient(r *http.Request) int {
 		Price:    priceDTO.Price,
 	}
 
-	err := s.IngredientPackageDao.AddPackageToIngredient(ingredientId, packageId, ingredientPackage)
+	err = s.IngredientPackageDao.AddPackageToIngredient(ingredientId, packageId, ingredientPackage)
 
 	if err != nil {
-		return http.StatusInternalServerError
+		return http.StatusInternalServerError, err
 	}
 
-	return http.StatusOK
+	return http.StatusOK, nil
 }
 
-func (s *IngredientPackageService) RemovePackageFromIngredients(r *http.Request) (int, *primitive.ObjectID) {
-	packageOid := core.ConvertHexToObjectId(mux.Vars(r)["packageId"])
+func (s *IngredientPackageService) RemovePackageFromIngredients(c *gin.Context) (int, *primitive.ObjectID, error) {
+	packageOid, err := core.ConvertUrlVarToObjectId("packageId", c)
+
+	if err != nil {
+		return http.StatusBadRequest, nil, err
+	}
 
 	ingredientPackageDto := &dto.IngredientPackageDTO{
 		PackageOid: *packageOid,
 	}
 
-	err := s.IngredientPackageDao.RemovePackageFromIngredients(*ingredientPackageDto)
+	err = s.IngredientPackageDao.RemovePackageFromIngredients(*ingredientPackageDto)
 
 	if err != nil {
-		return http.StatusInternalServerError, nil
+		return http.StatusInternalServerError, nil, err
 	}
 
-	return http.StatusOK, packageOid
+	return http.StatusOK, packageOid, nil
 }

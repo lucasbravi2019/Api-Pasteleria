@@ -20,6 +20,10 @@ func UpdateRecipeName(recipe models.Recipe) bson.M {
 	return bson.M{"$set": bson.M{"name": recipe.Name}}
 }
 
+func UpdateRecipe(recipe models.Recipe) bson.M {
+	return bson.M{"$set": recipe}
+}
+
 func AddIngredientToRecipe(recipe models.RecipeIngredient) bson.M {
 	return bson.M{"$addToSet": bson.M{"ingredients": recipe}}
 }

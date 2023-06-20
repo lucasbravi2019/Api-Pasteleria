@@ -4,13 +4,12 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 	"github.com/lucasbravi2019/pasteleria/core"
 	"github.com/lucasbravi2019/pasteleria/dao"
 	"github.com/lucasbravi2019/pasteleria/dto"
 	"github.com/lucasbravi2019/pasteleria/mapper"
 	"github.com/lucasbravi2019/pasteleria/models"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type RecipeIngredientService struct {
@@ -21,50 +20,55 @@ type RecipeIngredientService struct {
 }
 
 type RecipeIngredientServiceInterface interface {
-	AddIngredientToRecipe(r *http.Request) int
-	RemoveIngredientFromRecipe(r *http.Request) (int, *dto.RecipeDTO)
+	AddIngredientToRecipe(c *gin.Context) (int, error)
+	RemoveIngredientFromRecipe(c *gin.Context) (int, *dto.RecipeDTO, error)
 }
 
 var RecipeIngredientServiceInstance *RecipeIngredientService
 
-func (s *RecipeIngredientService) AddIngredientToRecipe(r *http.Request) int {
-	recipeOid := core.ConvertHexToObjectId(mux.Vars(r)["recipeId"])
-	ingredientOid := core.ConvertHexToObjectId(mux.Vars(r)["ingredientId"])
+func (s *RecipeIngredientService) AddIngredientToRecipe(c *gin.Context) (int, error) {
+	recipeOid, err := core.ConvertUrlVarToObjectId("recipeId", c)
 
-	if recipeOid == nil || ingredientOid == nil {
-		return http.StatusBadRequest
+	if err != nil {
+		return http.StatusBadRequest, err
 	}
 
-	recipe := s.RecipeDao.FindRecipeByOID(recipeOid)
+	ingredientOid, err := core.ConvertUrlVarToObjectId("ingredientId", c)
 
-	if recipe == nil {
-		return http.StatusNotFound
+	if err != nil {
+		return http.StatusBadRequest, err
 	}
 
-	ingredientDTO := s.IngredientDao.FindIngredientByOID(ingredientOid)
+	_, err = s.RecipeDao.FindRecipeByOID(recipeOid)
 
-	if ingredientDTO == nil {
-		return http.StatusNotFound
+	if err != nil {
+		return http.StatusNotFound, err
+	}
+
+	ingredientDTO, err := s.IngredientDao.FindIngredientByOID(ingredientOid)
+
+	if err != nil {
+		return http.StatusNotFound, err
 	}
 
 	ingredientDetails := &dto.IngredientDetailsDTO{}
 
-	invalidBody := core.DecodeBody(r, ingredientDetails)
-
-	if invalidBody {
-		return http.StatusBadRequest
-	}
-
-	err := validate(ingredientDTO, ingredientDetails)
+	err = core.DecodeBody(c, ingredientDetails)
 
 	if err != nil {
-		return http.StatusBadRequest
+		return http.StatusBadRequest, err
+	}
+
+	err = validate(ingredientDTO, ingredientDetails)
+
+	if err != nil {
+		return http.StatusBadRequest, err
 	}
 
 	envase := getIngredientPackage(ingredientDetails.Metric, ingredientDTO.Packages)
 
 	recipeIngredient := &models.RecipeIngredient{
-		ID:       primitive.NewObjectID(),
+		ID:       ingredientDTO.ID,
 		Quantity: ingredientDetails.Quantity,
 		Name:     ingredientDTO.Name,
 		Package: models.RecipeIngredientPackage{
@@ -79,40 +83,44 @@ func (s *RecipeIngredientService) AddIngredientToRecipe(r *http.Request) int {
 	err = s.RecipeIngredientDao.AddIngredientToRecipe(recipeOid, recipeIngredient)
 
 	if err != nil {
-		return http.StatusInternalServerError
+		return http.StatusInternalServerError, err
 	}
 
 	err = s.RecipeDao.UpdateRecipeByIdPrice(recipeOid)
 
 	if err != nil {
 		log.Println(err.Error())
-		return http.StatusInternalServerError
+		return http.StatusInternalServerError, err
 	}
 
-	return http.StatusOK
+	return http.StatusOK, nil
 }
 
-func (s *RecipeIngredientService) RemoveIngredientFromRecipe(r *http.Request) (int, *dto.RecipeDTO) {
+func (s *RecipeIngredientService) RemoveIngredientFromRecipe(c *gin.Context) (int, *dto.RecipeDTO, error) {
 	ids := dto.RecipeIngredientIdDTO{}
 
-	invalidBody := core.DecodeBody(r, &ids)
-	log.Println(ids)
+	err := core.DecodeBody(c, &ids)
 
-	if invalidBody {
-		return http.StatusBadRequest, nil
+	if err != nil {
+		return http.StatusBadRequest, nil, err
 	}
 
-	recipeId := core.ConvertHexToObjectId(ids.RecipeId)
-	ingredientId := core.ConvertHexToObjectId(ids.IngredientId)
+	recipeId, err := core.ConvertToObjectId(ids.RecipeId)
 
-	if recipeId == nil || ingredientId == nil {
-		return http.StatusInternalServerError, nil
+	if err != nil {
+		return http.StatusBadRequest, nil, err
 	}
 
-	originalRecipe := s.RecipeDao.FindRecipeByOID(recipeId)
+	ingredientId, err := core.ConvertToObjectId(ids.IngredientId)
 
-	if originalRecipe == nil {
-		return http.StatusNotFound, nil
+	if err != nil {
+		return http.StatusBadRequest, nil, err
+	}
+
+	originalRecipe, err := s.RecipeDao.FindRecipeByOID(recipeId)
+
+	if err != nil {
+		return http.StatusNotFound, nil, err
 	}
 
 	for i := 0; i < len(originalRecipe.Ingredients); i++ {
@@ -123,18 +131,18 @@ func (s *RecipeIngredientService) RemoveIngredientFromRecipe(r *http.Request) (i
 
 	recipeEntity := s.RecipeMapper.RecipeDTOToRecipe(originalRecipe)
 
-	err := s.RecipeIngredientDao.RemoveIngredientFromRecipe(recipeId, recipeEntity)
+	err = s.RecipeIngredientDao.RemoveIngredientFromRecipe(recipeId, recipeEntity)
 
 	if err != nil {
-		return http.StatusInternalServerError, nil
+		return http.StatusInternalServerError, nil, err
 	}
 
 	err = s.RecipeDao.UpdateRecipesPrice()
 
 	if err != nil {
 		log.Println(err.Error())
-		return http.StatusInternalServerError, nil
+		return http.StatusInternalServerError, nil, err
 	}
 
-	return http.StatusOK, originalRecipe
+	return http.StatusOK, originalRecipe, nil
 }

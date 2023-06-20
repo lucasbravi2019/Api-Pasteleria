@@ -1,8 +1,7 @@
 package handlers
 
 import (
-	"net/http"
-
+	"github.com/gin-gonic/gin"
 	"github.com/lucasbravi2019/pasteleria/core"
 	"github.com/lucasbravi2019/pasteleria/services"
 )
@@ -12,39 +11,39 @@ type IngredientHandler struct {
 }
 
 type IngredientHandlerInterface interface {
-	GetAllIngredients(w http.ResponseWriter, r *http.Request)
-	CreateIngredient(w http.ResponseWriter, r *http.Request)
-	UpdateIngredient(w http.ResponseWriter, r *http.Request)
-	DeleteIngredient(w http.ResponseWriter, r *http.Request)
-	ChangeIngredientPrice(w http.ResponseWriter, r *http.Request)
+	GetAllIngredients(c *gin.Context)
+	CreateIngredient(c *gin.Context)
+	UpdateIngredient(c *gin.Context)
+	DeleteIngredient(c *gin.Context)
+	ChangeIngredientPrice(c *gin.Context)
 	GetIngredientRoutes() core.Routes
 }
 
 var IngredientHandlerInstance *IngredientHandler
 
-func (h *IngredientHandler) GetAllIngredients(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.Service.GetAllIngredients()
-	core.EncodeJsonResponse(w, statusCode, body)
+func (h *IngredientHandler) GetAllIngredients(c *gin.Context) {
+	statusCode, body, err := h.Service.GetAllIngredients()
+	core.EncodeJsonResponse(c, statusCode, body, err)
 }
 
-func (h *IngredientHandler) CreateIngredient(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.Service.CreateIngredient(r)
-	core.EncodeJsonResponse(w, statusCode, body)
+func (h *IngredientHandler) CreateIngredient(c *gin.Context) {
+	statusCode, body, err := h.Service.CreateIngredient(c)
+	core.EncodeJsonResponse(c, statusCode, body, err)
 }
 
-func (h *IngredientHandler) UpdateIngredient(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.Service.UpdateIngredient(r)
-	core.EncodeJsonResponse(w, statusCode, body)
+func (h *IngredientHandler) UpdateIngredient(c *gin.Context) {
+	statusCode, body, err := h.Service.UpdateIngredient(c)
+	core.EncodeJsonResponse(c, statusCode, body, err)
 }
 
-func (h *IngredientHandler) DeleteIngredient(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.Service.DeleteIngredient(r)
-	core.EncodeJsonResponse(w, statusCode, body)
+func (h *IngredientHandler) DeleteIngredient(c *gin.Context) {
+	statusCode, body, err := h.Service.DeleteIngredient(c)
+	core.EncodeJsonResponse(c, statusCode, body, err)
 }
 
-func (h *IngredientHandler) ChangeIngredientPrice(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.Service.ChangeIngredientPrice(r)
-	core.EncodeJsonResponse(w, statusCode, body)
+func (h *IngredientHandler) ChangeIngredientPrice(c *gin.Context) {
+	statusCode, body, err := h.Service.ChangeIngredientPrice(c)
+	core.EncodeJsonResponse(c, statusCode, body, err)
 }
 
 func (h *IngredientHandler) GetIngredientRoutes() core.Routes {
@@ -60,17 +59,17 @@ func (h *IngredientHandler) GetIngredientRoutes() core.Routes {
 			Method:      "POST",
 		},
 		core.Route{
-			Path:        "/ingredients/{id}",
+			Path:        "/ingredients/:ingredientId",
 			HandlerFunc: h.UpdateIngredient,
 			Method:      "PUT",
 		},
 		core.Route{
-			Path:        "/ingredients/{id}/price",
+			Path:        "/ingredients/:ingredientId/price",
 			HandlerFunc: h.ChangeIngredientPrice,
 			Method:      "PUT",
 		},
 		core.Route{
-			Path:        "/ingredients/{id}",
+			Path:        "/ingredients/:ingredientId",
 			HandlerFunc: h.DeleteIngredient,
 			Method:      "DELETE",
 		},

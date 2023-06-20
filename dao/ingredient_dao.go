@@ -18,10 +18,10 @@ type IngredientDao struct {
 
 type IngredientDaoInterface interface {
 	GetAllIngredients() []dto.IngredientDTO
-	FindIngredientByOID(oid *primitive.ObjectID) *dto.IngredientDTO
-	FindIngredientByPackageId(packageId *primitive.ObjectID) *dto.IngredientDTO
+	FindIngredientByOID(oid *primitive.ObjectID) (*dto.IngredientDTO, error)
+	FindIngredientByPackageId(packageId *primitive.ObjectID) (*dto.IngredientDTO, error)
 	ValidateExistingIngredient(ingredientName *dto.IngredientNameDTO) error
-	CreateIngredient(ingredient *models.Ingredient) *primitive.ObjectID
+	CreateIngredient(ingredient *models.Ingredient) (*primitive.ObjectID, error)
 	UpdateIngredient(oid *primitive.ObjectID, dto *dto.IngredientNameDTO) error
 	DeleteIngredient(oid *primitive.ObjectID) error
 	ChangeIngredientPrice(packageOid *primitive.ObjectID, priceDTO *dto.IngredientPackagePriceDTO) error
@@ -54,7 +54,7 @@ func (d *IngredientDao) GetAllIngredients() []dto.IngredientDTO {
 	return *ingredients
 }
 
-func (d *IngredientDao) FindIngredientByOID(oid *primitive.ObjectID) *dto.IngredientDTO {
+func (d *IngredientDao) FindIngredientByOID(oid *primitive.ObjectID) (*dto.IngredientDTO, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -64,13 +64,13 @@ func (d *IngredientDao) FindIngredientByOID(oid *primitive.ObjectID) *dto.Ingred
 
 	if err != nil {
 		log.Println(err.Error())
-		return nil
+		return nil, err
 	}
 
-	return ingredient
+	return ingredient, nil
 }
 
-func (d *IngredientDao) FindIngredientByPackageId(packageId *primitive.ObjectID) *dto.IngredientDTO {
+func (d *IngredientDao) FindIngredientByPackageId(packageId *primitive.ObjectID) (*dto.IngredientDTO, error) {
 	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
 	defer cancel()
 
@@ -79,13 +79,13 @@ func (d *IngredientDao) FindIngredientByPackageId(packageId *primitive.ObjectID)
 	err := d.IngredientCollection.FindOne(ctx, queries.GetIngredientByPackageId(*packageId)).Decode(ingredient)
 
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
-	return ingredient
+	return ingredient, err
 }
 
-func (d *IngredientDao) CreateIngredient(ingredient *models.Ingredient) *primitive.ObjectID {
+func (d *IngredientDao) CreateIngredient(ingredient *models.Ingredient) (*primitive.ObjectID, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -93,11 +93,12 @@ func (d *IngredientDao) CreateIngredient(ingredient *models.Ingredient) *primiti
 
 	if err != nil {
 		log.Println(err.Error())
+		return nil, err
 	}
 
 	id := insertResult.InsertedID.(primitive.ObjectID)
 
-	return &id
+	return &id, nil
 }
 
 func (d *IngredientDao) UpdateIngredient(oid *primitive.ObjectID, dto *dto.IngredientNameDTO) error {

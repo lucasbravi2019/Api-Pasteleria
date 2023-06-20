@@ -6,11 +6,11 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-func Validate(obj interface{}) bool {
+func Validate(obj interface{}) error {
 	validationErrors := validator.New().Struct(obj)
 	if validationErrors != nil {
 		log.Println("Error de validacion\n" + validationErrors.Error())
-		return true
+		return validationErrors
 	}
-	return false
+	return nil
 }

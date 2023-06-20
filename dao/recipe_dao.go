@@ -18,21 +18,20 @@ type RecipeDao struct {
 
 type RecipeDaoInterface interface {
 	FindAllRecipes() *[]dto.RecipeDTO
-	FindRecipeByOID(oid *primitive.ObjectID) *dto.RecipeDTO
-	FindRecipesByPackageId(oid *primitive.ObjectID) []dto.RecipeDTO
-	CreateRecipe(recipe *models.Recipe) *primitive.ObjectID
+	FindRecipeByOID(oid *primitive.ObjectID) (*dto.RecipeDTO, error)
+	FindRecipesByPackageId(oid *primitive.ObjectID) ([]dto.RecipeDTO, error)
+	CreateRecipe(recipe *models.Recipe) (*primitive.ObjectID, error)
 	UpdateRecipeName(oid *primitive.ObjectID, recipeName *dto.RecipeNameDTO) error
-
 	DeleteRecipe(oid *primitive.ObjectID) error
-
 	UpdateRecipeByIdPrice(recipeId *primitive.ObjectID) error
-
 	UpdateRecipesPrice() error
+	GetRecipesByIngredientId(oid *primitive.ObjectID) (*[]models.Recipe, error)
+	UpdateRecipes(recipes *[]models.Recipe) error
 }
 
 var RecipeDaoInstance *RecipeDao
 
-func (d *RecipeDao) FindAllRecipes() *[]dto.RecipeDTO {
+func (d *RecipeDao) FindAllRecipes() (*[]dto.RecipeDTO, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -42,19 +41,20 @@ func (d *RecipeDao) FindAllRecipes() *[]dto.RecipeDTO {
 
 	if err != nil {
 		log.Println(err.Error())
-		return recipes
+		return recipes, err
 	}
 
 	err = cursor.All(ctx, recipes)
 
 	if err != nil {
 		log.Println(err.Error())
+		return recipes, err
 	}
 
-	return recipes
+	return recipes, nil
 }
 
-func (d *RecipeDao) FindRecipeByOID(oid *primitive.ObjectID) *dto.RecipeDTO {
+func (d *RecipeDao) FindRecipeByOID(oid *primitive.ObjectID) (*dto.RecipeDTO, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -64,13 +64,13 @@ func (d *RecipeDao) FindRecipeByOID(oid *primitive.ObjectID) *dto.RecipeDTO {
 
 	if err != nil {
 		log.Println(err.Error())
-		return nil
+		return nil, err
 	}
 
-	return recipe
+	return recipe, nil
 }
 
-func (d *RecipeDao) FindRecipesByPackageId(packageId *primitive.ObjectID) []dto.RecipeDTO {
+func (d *RecipeDao) FindRecipesByPackageId(packageId *primitive.ObjectID) ([]dto.RecipeDTO, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -80,19 +80,20 @@ func (d *RecipeDao) FindRecipesByPackageId(packageId *primitive.ObjectID) []dto.
 
 	if err != nil {
 		log.Println(err.Error())
-		return *recipes
+		return nil, err
 	}
 
-	err = cursor.All(ctx, &recipes)
+	err = cursor.All(ctx, recipes)
 
 	if err != nil {
 		log.Println(err.Error())
+		return nil, err
 	}
 
-	return *recipes
+	return *recipes, nil
 }
 
-func (d *RecipeDao) CreateRecipe(recipe *models.Recipe) *primitive.ObjectID {
+func (d *RecipeDao) CreateRecipe(recipe *models.Recipe) (*primitive.ObjectID, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -100,16 +101,12 @@ func (d *RecipeDao) CreateRecipe(recipe *models.Recipe) *primitive.ObjectID {
 
 	if err != nil {
 		log.Println(err.Error())
-		return nil
-	}
-
-	if result.InsertedID == nil {
-		return nil
+		return nil, err
 	}
 
 	id := result.InsertedID.(primitive.ObjectID)
 
-	return &id
+	return &id, nil
 }
 
 func (d *RecipeDao) UpdateRecipeName(oid *primitive.ObjectID, recipe *models.Recipe) error {
@@ -162,4 +159,40 @@ func (d *RecipeDao) UpdateRecipesPrice() error {
 	}
 
 	return err
+}
+
+func (d *RecipeDao) GetRecipesByIngredientId(oid *primitive.ObjectID) (*[]models.Recipe, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	cur, err := d.DB.Find(ctx, queries.GetRecipeByIngredientId(*oid))
+
+	if err != nil {
+		return nil, err
+	}
+
+	recipes := &[]models.Recipe{}
+
+	err = cur.All(ctx, recipes)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return recipes, nil
+}
+
+func (d *RecipeDao) UpdateRecipes(recipes []models.Recipe) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	for i := 0; i < len(recipes); i++ {
+		_, err := d.DB.UpdateOne(ctx, queries.GetRecipeById(recipes[i].ID), queries.UpdateRecipe(recipes[i]))
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
