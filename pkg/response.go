@@ -9,16 +9,18 @@ type Response struct {
 	Body  interface{} `json:"body"`
 }
 
-func EncodeJsonResponse(w gin.ResponseWriter, statusCode int, body interface{}, err error) {
-	w.Header().Add("Content-type", "application/json")
-	w.WriteHeader(statusCode)
-	var response *Response = &Response{}
+func EncodeJsonResponse(c *gin.Context, statusCode int, body interface{}, err error) {
+	response := &Response{}
 
 	if err != nil {
 		response.Error = err.Error()
-		w.WriteHeader(statusCode)
+		c.JSON(statusCode, response)
 		return
 	}
 
-	response.Body = body
+	if body != nil {
+		response.Body = body
+	}
+
+	c.JSON(statusCode, response)
 }

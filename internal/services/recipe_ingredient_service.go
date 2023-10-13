@@ -17,15 +17,15 @@ type RecipeIngredientService struct {
 }
 
 type RecipeIngredientServiceInterface interface {
-	AddIngredientToRecipe(r *http.Request) (int, error)
-	RemoveIngredientFromRecipe(r *http.Request) (int, *dto.RecipeDTO, error)
+	AddIngredientToRecipe(ctx *gin.Context) (int, interface{}, error)
+	RemoveIngredientFromRecipe(ctx *gin.Context) (int, *dto.RecipeDTO, error)
 }
 
 var RecipeIngredientServiceInstance *RecipeIngredientService
 
-func (s *RecipeIngredientService) AddIngredientToRecipe(r *http.Request) (int, error) {
+func (s *RecipeIngredientService) AddIngredientToRecipe(ctx *gin.Context) (int, interface{}, error) {
 
-	return http.StatusOK, nil
+	return http.StatusOK, nil, nil
 }
 
 func (s *RecipeIngredientService) RemoveIngredientFromRecipe(c *gin.Context) (int, *dto.RecipeDTO, error) {

@@ -11,6 +11,16 @@ import (
 	"github.com/lucasbravi2019/pasteleria/pkg"
 )
 
+var (
+	Recipe_FindAll    = "recipe.findAll"
+	Recipe_FindById   = "recipe.findById"
+	Recipe_Create     = "recipe.create"
+	Recipe_UpdateName = "recipe.updateName"
+	Recipe_DeleteById = "recipe.deleteById"
+)
+
+const QUERIES_PATH = "db/queries"
+
 var queries map[string]string = make(map[string]string)
 
 type XMLQueries struct {
@@ -25,9 +35,10 @@ type XMLQuery struct {
 }
 
 func GetQueryByName(queryName string) string {
-	query := queries[queryName]
-	if query == "" {
-		log.Fatal("query not found for query name: ", queryName)
+	query, err := findQueryByName(queryName)
+
+	if err != nil {
+		return pkg.STRING_EMPTY
 	}
 
 	return strings.TrimSpace(query)
@@ -39,7 +50,7 @@ func QueryLoader() {
 	}
 }
 
-func FindQueryByName(queryName string) (string, error) {
+func findQueryByName(queryName string) (string, error) {
 	query := queries[queryName]
 
 	if query == pkg.STRING_EMPTY {

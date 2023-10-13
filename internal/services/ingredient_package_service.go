@@ -3,8 +3,8 @@ package services
 import (
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/lucasbravi2019/pasteleria/internal/dao"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type IngredientPackageService struct {
@@ -13,18 +13,18 @@ type IngredientPackageService struct {
 }
 
 type IngredientPackageServiceInterface interface {
-	AddPackageToIngredient(r *http.Request) (int, error)
-	RemovePackageFromIngredients(r *http.Request) (int, *primitive.ObjectID, error)
+	AddPackageToIngredient(ctx *gin.Context) (int, interface{}, error)
+	RemovePackageFromIngredients(ctx *gin.Context) (int, interface{}, error)
 }
 
 var IngredientPackageServiceInstance *IngredientPackageService
 
-func (s *IngredientPackageService) AddPackageToIngredient(r *http.Request) (int, error) {
+func (s *IngredientPackageService) AddPackageToIngredient(ctx *gin.Context) (int, interface{}, error) {
 
-	return http.StatusOK, nil
+	return http.StatusOK, nil, nil
 }
 
-func (s *IngredientPackageService) RemovePackageFromIngredients(ctx *http.Request) (int, *primitive.ObjectID, error) {
+func (s *IngredientPackageService) RemovePackageFromIngredients(ctx *gin.Context) (int, interface{}, error) {
 
 	return http.StatusOK, nil, nil
 }

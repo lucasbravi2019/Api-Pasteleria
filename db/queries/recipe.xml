@@ -1,11 +1,17 @@
 <queries>
     <query id="recipe.findAll">
-        select * from recipes
+        select * from recipe
     </query>
     <query id="recipe.findById">
-        select * from recipes where recipe_id = ?
+        select * from recipe where id = @p1
     </query>
     <query id="recipe.create">
-        insert into recipe (name) values (?)
+        insert into recipe (name) values (@p1)
+    </query>
+    <query id="recipe.updateName">
+        update recipe set name = @p1 where id = @p2
+    </query>
+    <query id="recipe.deleteById">
+        delete from recipe where id = @p1
     </query>
 </queries>

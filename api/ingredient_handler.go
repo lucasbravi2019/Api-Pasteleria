@@ -22,28 +22,28 @@ type IngredientHandlerInterface interface {
 var IngredientHandlerInstance *IngredientHandler
 
 func (h *IngredientHandler) GetAllIngredients(ctx *gin.Context) {
-	statusCode, body := h.Service.GetAllIngredients()
-	pkg.EncodeJsonResponse(ctx.Writer, statusCode, body, nil)
+	statusCode, body, err := h.Service.GetAllIngredients()
+	pkg.EncodeJsonResponse(ctx, statusCode, body, err)
 }
 
 func (h *IngredientHandler) CreateIngredient(ctx *gin.Context) {
-	statusCode := h.Service.CreateIngredient(ctx.Request)
-	pkg.EncodeJsonResponse(ctx.Writer, statusCode, nil, nil)
+	statusCode, body, err := h.Service.CreateIngredient(ctx)
+	pkg.EncodeJsonResponse(ctx, statusCode, body, err)
 }
 
 func (h *IngredientHandler) UpdateIngredient(ctx *gin.Context) {
-	statusCode := h.Service.UpdateIngredient(ctx.Request)
-	pkg.EncodeJsonResponse(ctx.Writer, statusCode, nil, nil)
+	statusCode, body, err := h.Service.UpdateIngredient(ctx)
+	pkg.EncodeJsonResponse(ctx, statusCode, body, err)
 }
 
 func (h *IngredientHandler) DeleteIngredient(ctx *gin.Context) {
-	statusCode := h.Service.DeleteIngredient(ctx.Request)
-	pkg.EncodeJsonResponse(ctx.Writer, statusCode, nil, nil)
+	statusCode, body, err := h.Service.DeleteIngredient(ctx)
+	pkg.EncodeJsonResponse(ctx, statusCode, body, err)
 }
 
 func (h *IngredientHandler) ChangeIngredientPrice(ctx *gin.Context) {
-	statusCode := h.Service.ChangeIngredientPrice(ctx.Request)
-	pkg.EncodeJsonResponse(ctx.Writer, statusCode, nil, nil)
+	statusCode, body, err := h.Service.ChangeIngredientPrice(ctx)
+	pkg.EncodeJsonResponse(ctx, statusCode, body, err)
 }
 
 func (h *IngredientHandler) GetIngredientRoutes() pkg.Routes {

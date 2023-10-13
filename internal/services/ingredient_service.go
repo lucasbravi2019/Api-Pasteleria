@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/lucasbravi2019/pasteleria/internal/dao"
 	"github.com/lucasbravi2019/pasteleria/internal/dto"
 )
@@ -17,99 +18,39 @@ type IngredientService struct {
 }
 
 type IngredientServiceInterface interface {
-	GetAllIngredients() (int, *[]dto.IngredientDTO)
-	CreateIngredient(r *http.Request) int
-	UpdateIngredient(r *http.Request) int
-	DeleteIngredient(r *http.Request) int
-	ChangeIngredientPrice(r *http.Request) int
+	GetAllIngredients() (int, *[]dto.IngredientDTO, error)
+	CreateIngredient(ctx *gin.Context) (int, interface{}, error)
+	UpdateIngredient(ctx *gin.Context) (int, interface{}, error)
+	DeleteIngredient(ctx *gin.Context) (int, interface{}, error)
+	ChangeIngredientPrice(ctx *gin.Context) (int, interface{}, error)
 }
 
 var IngredientServiceInstance *IngredientService
 
-func (s *IngredientService) GetAllIngredients() (int, *[]dto.IngredientDTO) {
+func (s *IngredientService) GetAllIngredients() (int, *[]dto.IngredientDTO, error) {
 	ingredients := s.IngredientDao.GetAllIngredients()
 
-	return http.StatusOK, ingredients
+	return http.StatusOK, ingredients, nil
 }
 
-func (s *IngredientService) CreateIngredient(r *http.Request) int {
+func (s *IngredientService) CreateIngredient(ctx *gin.Context) (int, interface{}, error) {
 
-	return http.StatusCreated
+	return http.StatusCreated, nil, nil
 }
 
-func (s *IngredientService) UpdateIngredient(r *http.Request) int {
+func (s *IngredientService) UpdateIngredient(ctx *gin.Context) (int, interface{}, error) {
 
-	return http.StatusOK
+	return http.StatusOK, nil, nil
 }
 
-func (s *IngredientService) DeleteIngredient(r *http.Request) int {
+func (s *IngredientService) DeleteIngredient(ctx *gin.Context) (int, interface{}, error) {
 
-	return http.StatusOK
+	return http.StatusOK, nil, nil
 }
 
-func (s *IngredientService) ChangeIngredientPrice(r *http.Request) int {
-	// ingredientPackageId := mux.Vars(r)["id"]
-	// ingredientPackageOid := core.ConvertHexToObjectId(ingredientPackageId)
+func (s *IngredientService) ChangeIngredientPrice(ctx *gin.Context) (int, interface{}, error) {
 
-	// if ingredientPackageOid == nil {
-	// 	return http.StatusBadRequest
-	// }
-
-	// ingredientPackagePrice := &dto.IngredientPackagePriceDTO{}
-
-	// invalidBody := core.DecodeBody(r, ingredientPackagePrice)
-
-	// if invalidBody {
-	// 	return http.StatusBadRequest
-	// }
-
-	// err := s.IngredientDao.ChangeIngredientPrice(ingredientPackageOid, ingredientPackagePrice)
-
-	// if err != nil {
-	// 	return http.StatusInternalServerError
-	// }
-
-	// err = s.IngredientDao.ChangeIngredientPrice(ingredientPackageOid, ingredientPackagePrice)
-
-	// if ingredientUpdated == nil {
-	// 	return http.StatusInternalServerError
-	// }
-
-	// ingredientUpdated, err := s.IngredientDao.FindIngredientByPackageId(ingredientPackageOid)
-
-	// if len(recipes) == 0 {
-	// 	return http.StatusOK
-	// }
-
-	// err = s.RecipeIngredientDao.UpdateIngredientPackagePrice(ingredientPackageOid, ingredientPackagePrice.Price)
-
-	// if err != nil {
-	// 	return http.StatusInternalServerError
-	// }
-
-	// for i := 0; i < len(recipes); i++ {
-	// 	var recipePrice float64 = 0
-	// 	for j := 0; j < len(recipes[i].Ingredients); j++ {
-	// 		if recipes[i].Ingredients[j].ID == ingredientUpdated.ID {
-	// 			ingredientPackage := packagesById[recipes[i].Ingredients[j].Package.ID]
-
-	// 			recipes[i].Ingredients[j].Package = ingredientPackage
-	// 			ingredientQuantityPercent := recipes[i].Ingredients[j].Quantity / recipes[i].Ingredients[j].Package.Quantity
-	// 			recipes[i].Ingredients[j].Price = ingredientQuantityPercent * recipes[i].Ingredients[j].Package.Price
-	// 		}
-	// 		recipePrice += recipes[i].Ingredients[j].Price
-	// 	}
-	// 	recipes[i].Price = recipePrice * 3
-
-	// 	err := s.RecipeIngredientDao.UpdateIngredientsPrice(ingredientPackageOid, recipes[i])
-
-	// 	if err != nil {
-	// 		log.Println(err.Error())
-	// 		return http.StatusInternalServerError, nil, err
-	// 	}
-	// }
-
-	return http.StatusOK
+	return http.StatusOK, nil, nil
 }
 
 func validate(ingredient *dto.IngredientDTO, ingredientDetails *dto.IngredientDetailsDTO) error {

@@ -18,8 +18,8 @@ type RecipeIngredientHandlerInterface interface {
 var RecipeIngredientHandlerInstance *RecipeIngredientHandler
 
 func (h *RecipeIngredientHandler) AddIngredientToRecipe(ctx *gin.Context) {
-	statusCode, err := h.Service.AddIngredientToRecipe(ctx.Request)
-	pkg.EncodeJsonResponse(ctx.Writer, statusCode, nil, err)
+	statusCode, body, err := h.Service.AddIngredientToRecipe(ctx)
+	pkg.EncodeJsonResponse(ctx, statusCode, body, err)
 }
 
 func (h *RecipeIngredientHandler) GetRecipeIngredientRoutes() pkg.Routes {

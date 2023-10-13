@@ -20,7 +20,7 @@ type XMLTable struct {
 	SQL       string   `xml:",chardata"`
 }
 
-const PATH = "bin/tables.xml"
+const PATH = "cmd/migration/tables.xml"
 
 func MigrationLoader() {
 	err := godotenv.Load()

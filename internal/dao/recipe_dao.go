@@ -3,13 +3,16 @@ package dao
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/lucasbravi2019/pasteleria/db"
 	"github.com/lucasbravi2019/pasteleria/internal/dto"
 	"github.com/lucasbravi2019/pasteleria/internal/mapper"
 	"github.com/lucasbravi2019/pasteleria/internal/models"
+	"github.com/lucasbravi2019/pasteleria/pkg"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -19,11 +22,11 @@ type RecipeDao struct {
 
 type RecipeDaoInterface interface {
 	FindAllRecipes() *[]dto.RecipeDTO
-	FindRecipeByOID(oid *primitive.ObjectID) (*dto.RecipeDTO, error)
+	FindRecipeById(id int64) (*models.Recipe, error)
 	FindRecipesByPackageId(oid *primitive.ObjectID) ([]dto.RecipeDTO, error)
-	CreateRecipe(recipe *models.Recipe) (*primitive.ObjectID, error)
+	CreateRecipe(recipe *dto.RecipeNameDTO) error
 	UpdateRecipeName(oid *primitive.ObjectID, recipeName *dto.RecipeNameDTO) error
-	DeleteRecipe(oid *primitive.ObjectID) error
+	DeleteRecipe(id *int64) error
 	UpdateRecipeByIdPrice(recipeId *primitive.ObjectID) error
 	UpdateRecipesPrice() error
 	GetRecipesByIngredientId(oid *primitive.ObjectID) (*[]models.Recipe, error)
@@ -32,101 +35,89 @@ type RecipeDaoInterface interface {
 
 var RecipeDaoInstance *RecipeDao
 
-func (d *RecipeDao) FindAllRecipes() *[]dto.RecipeDTO {
+func (d *RecipeDao) FindAllRecipes() *[]models.Recipe {
 	_, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-	_, err := db.FindQueryByName(db.Recipe_FindAll)
+	query := db.GetQueryByName(db.Recipe_FindAll)
 
-	rows, err := d.DB.Query("")
+	if query == pkg.STRING_EMPTY {
+		log.Println("Query not found")
+		return nil
+	}
+	log.Println(query)
+	rows, err := d.DB.Query(query)
+	defer rows.Close()
 
 	if err != nil {
 		log.Println(err)
 		return nil
 	}
-	defer rows.Close()
 
-	return mapper.ToRecipeDTOList(rows)
+	return mapper.ToRecipeList(rows)
 }
 
-func (d *RecipeDao) FindRecipeByOID(oid *primitive.ObjectID) *dto.RecipeDTO {
-	_, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+func (d *RecipeDao) FindRecipeById(id int64) *models.Recipe {
+	query := db.GetQueryByName(db.Recipe_FindById)
 
-	defer cancel()
-
-	rows, err := d.DB.Query("")
-
-	if err != nil {
+	if query == pkg.STRING_EMPTY {
+		log.Println("Query not found")
 		return nil
 	}
 
-	return mapper.ToRecipeDTO(rows)
+	row := d.DB.QueryRow(query, id)
+
+	return mapper.ToRecipe(row)
 }
 
 func (d *RecipeDao) FindRecipesByPackageId(packageId *primitive.ObjectID) []dto.RecipeDTO {
 	_, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	rows, err := d.DB.Query("")
+	_, err := d.DB.Query("")
 
 	if err != nil {
 		return nil
 	}
 
-	return *mapper.ToRecipeDTOList(rows)
+	return nil
 }
 
 func (d *RecipeDao) CreateRecipe(recipe *dto.RecipeNameDTO) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
-	tx, err := d.DB.Begin()
-
-	if err != nil {
-		return err
-	}
-
-	defer tx.Rollback()
-
 	query := db.GetQueryByName(db.Recipe_Create)
 
-	log.Println(query)
-	log.Println(recipe.Name)
-
-	res, err := tx.ExecContext(ctx, "insert into recipe ('name') values (?)", recipe.Name)
-
-	if err != nil {
-		return err
-	}
-
-	err = tx.Commit()
-	log.Println(res.LastInsertId())
-	log.Println(res.RowsAffected())
-	return err
-}
-
-func (d *RecipeDao) UpdateRecipeName(oid *primitive.ObjectID, recipeName *dto.RecipeNameDTO) error {
-	_, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
-	defer cancel()
-
-	_, err := d.DB.Query("")
-
-	if err != nil {
-		log.Println(err.Error())
-	}
+	_, err := d.DB.Exec(query, recipe.Name)
 
 	return err
 }
 
-func (d *RecipeDao) DeleteRecipe(oid *primitive.ObjectID) error {
-	_, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
+func (d *RecipeDao) UpdateRecipeName(id *int64, recipe *dto.RecipeNameDTO) error {
+	query := db.GetQueryByName(db.Recipe_UpdateName)
 
-	_, err := d.DB.Query("")
-
-	if err != nil {
-		log.Println(err.Error())
+	if query == pkg.STRING_EMPTY {
+		return errors.New("query not found")
 	}
 
+	_, err := d.DB.Exec(query, recipe.Name, id)
+
 	return err
+}
+
+func (d *RecipeDao) DeleteRecipe(id *int64) error {
+	query := db.GetQueryByName(db.Recipe_DeleteById)
+
+	if query == pkg.STRING_EMPTY {
+		return errors.New("query not found")
+	}
+
+	res, _ := d.DB.Exec(query, id)
+
+	rowsAffected, err := res.RowsAffected()
+
+	if err != nil || rowsAffected == 0 {
+		return errors.New("rows affected: " + strconv.FormatInt(rowsAffected, 10))
+	}
+
+	return nil
 }
 
 func (d *RecipeDao) UpdateRecipeByIdPrice(recipeId *primitive.ObjectID) error {

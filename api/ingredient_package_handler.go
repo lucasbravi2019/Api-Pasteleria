@@ -19,13 +19,13 @@ type IngredientPackageHandlerInterface interface {
 var IngredientPackageHandlerInstance *IngredientPackageHandler
 
 func (h *IngredientPackageHandler) AddPackageToIngredient(ctx *gin.Context) {
-	statusCode, err := h.Service.AddPackageToIngredient(ctx.Request)
-	pkg.EncodeJsonResponse(ctx.Writer, statusCode, nil, err)
+	statusCode, body, err := h.Service.AddPackageToIngredient(ctx)
+	pkg.EncodeJsonResponse(ctx, statusCode, body, err)
 }
 
 func (h *IngredientPackageHandler) RemovePackageFromIngredients(ctx *gin.Context) {
-	statusCode, body, err := h.Service.RemovePackageFromIngredients(ctx.Request)
-	pkg.EncodeJsonResponse(ctx.Writer, statusCode, body, err)
+	statusCode, body, err := h.Service.RemovePackageFromIngredients(ctx)
+	pkg.EncodeJsonResponse(ctx, statusCode, body, err)
 }
 
 func (h *IngredientPackageHandler) GetIngredientPackageRoutes() pkg.Routes {

@@ -22,22 +22,22 @@ var PackageHandlerInstance *PackageHandler
 
 func (h *PackageHandler) GetPackages(ctx *gin.Context) {
 	statusCode, body, err := h.Service.GetPackages()
-	pkg.EncodeJsonResponse(ctx.Writer, statusCode, body, err)
+	pkg.EncodeJsonResponse(ctx, statusCode, body, err)
 }
 
 func (h *PackageHandler) CreatePackage(ctx *gin.Context) {
-	statusCode := h.Service.CreatePackage(ctx.Request)
-	pkg.EncodeJsonResponse(ctx.Writer, statusCode, nil, nil)
+	statusCode, body, err := h.Service.CreatePackage(ctx)
+	pkg.EncodeJsonResponse(ctx, statusCode, body, err)
 }
 
 func (h *PackageHandler) UpdatePackage(ctx *gin.Context) {
-	statusCode := h.Service.UpdatePackage(ctx.Request)
-	pkg.EncodeJsonResponse(ctx.Writer, statusCode, nil, nil)
+	statusCode, body, err := h.Service.UpdatePackage(ctx)
+	pkg.EncodeJsonResponse(ctx, statusCode, body, err)
 }
 
 func (h *PackageHandler) DeletePackage(ctx *gin.Context) {
-	statusCode := h.Service.DeletePackage(ctx.Request)
-	pkg.EncodeJsonResponse(ctx.Writer, statusCode, nil, nil)
+	statusCode, body, err := h.Service.DeletePackage(ctx)
+	pkg.EncodeJsonResponse(ctx, statusCode, body, err)
 }
 
 func (h *PackageHandler) GetPackageRoutes() pkg.Routes {

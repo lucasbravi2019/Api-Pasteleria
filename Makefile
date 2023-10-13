@@ -5,9 +5,8 @@ build:
 	go build -o bin/pasteleria.exe cmd/api/main.go
 
 migrate: 
-	go build -o bin/migrate cmd/migration/main.go
-	copy cmd\migration\tables.xml bin\tables.xml
-	./bin/migrate
+	go build -o bin/migrate.exe cmd/migration/main.go
+	.\bin\migrate
 
 drop:
 	go build -o bin/drop cmd/drop/main.go

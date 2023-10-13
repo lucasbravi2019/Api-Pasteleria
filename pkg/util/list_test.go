@@ -17,16 +17,17 @@ func TestToList(t *testing.T) {
 }
 
 func TestAdd(t *testing.T) {
+	list := []int{}
 	expected := []int{1, 2, 4}
-	result := Add([]int{}, 1, 2, 3)
+	Add(&list, 1, 2, 3)
 
 	expectedSize := len(expected)
-	resultSize := len(result)
+	resultSize := len(list)
 	AssertEquals(t, expectedSize, resultSize)
 
 	for i := 0; i < resultSize; i++ {
 		expectedValue := expected[i]
-		resultValue := result[i]
+		resultValue := list[i]
 
 		AssertEquals(t, expectedValue, resultValue)
 	}

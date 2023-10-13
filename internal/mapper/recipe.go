@@ -2,91 +2,77 @@ package mapper
 
 import (
 	"database/sql"
+	"log"
 
 	"github.com/lucasbravi2019/pasteleria/internal/dto"
 	"github.com/lucasbravi2019/pasteleria/internal/models"
 	"github.com/lucasbravi2019/pasteleria/pkg/util"
 )
 
-func ToRecipeList(rows *sql.Rows) []models.Recipe {
-	recipes := make(map[int]models.Recipe)
-
+func ToRecipeList(rows *sql.Rows) *[]models.Recipe {
+	recipes := util.NewList[models.Recipe]()
 	for rows.Next() {
 		var id int
 		var name string
-		var ingredient int
 		var price float64
 
-		if err := rows.Scan(&id, &name, &ingredient, &price); err != nil {
+		err := rows.Scan(&id, &name, &price)
+
+		if err != nil {
+			log.Println(err)
 			return nil
 		}
 
-		recipe := recipes[id]
-
-		if recipe.ID != 0 {
-			util.Add(recipe.Ingredients, models.RecipeIngredient{ID: ingredient})
-		} else {
-			recipes[id] = models.Recipe{
-				ID:          id,
-				Name:        name,
-				Price:       price,
-				Ingredients: util.ToList(models.RecipeIngredient{ID: ingredient}),
-			}
+		recipe := models.Recipe{
+			ID:    id,
+			Name:  name,
+			Price: price,
 		}
 
+		util.Add(&recipes, recipe)
 	}
 
-	var recipesMapped []models.Recipe
-
-	for _, v := range recipes {
-		util.Add(recipesMapped, v)
-	}
-
-	return recipesMapped
+	return &recipes
 }
 
-func ToRecipe(rows *sql.Rows) *models.Recipe {
-	recipes := make(map[int]models.Recipe)
+func ToRecipe(row *sql.Row) *models.Recipe {
+	var id int
+	var name string
+	var price float64
 
-	var recipeId int
-	for rows.Next() {
-		var id int
-		var name string
-		var ingredient int
-		var price float64
+	err := row.Scan(&id, &name, &price)
 
-		if err := rows.Scan(&id, &name, &ingredient, &price); err != nil {
-			return nil
-		}
-
-		recipeId = id
-		recipe := recipes[id]
-
-		if recipe.ID != 0 {
-			util.Add(recipe.Ingredients, models.RecipeIngredient{ID: ingredient})
-		} else {
-			recipes[id] = models.Recipe{
-				ID:          id,
-				Name:        name,
-				Price:       price,
-				Ingredients: util.ToList(models.RecipeIngredient{ID: ingredient}),
-			}
-		}
-
-	}
-
-	if recipeId == 0 {
+	if err != nil {
+		log.Println(err)
 		return nil
 	}
-
-	recipe := recipes[recipeId]
-	return &recipe
+	return &models.Recipe{
+		ID:    id,
+		Name:  name,
+		Price: price,
+	}
 }
 
-func ToRecipeDTO(rows *sql.Rows) *dto.RecipeDTO {
-	return nil
+func ToRecipeDTO(recipe models.Recipe) *dto.RecipeDTO {
+	return &dto.RecipeDTO{
+		ID:    recipe.ID,
+		Name:  recipe.Name,
+		Price: recipe.Price,
+	}
 }
 
-func ToRecipeDTOList(rows *sql.Rows) *[]dto.RecipeDTO {
-	return nil
+func ToRecipeDTOList(recipes *[]models.Recipe) *[]dto.RecipeDTO {
+	dtos := util.NewList[dto.RecipeDTO]()
+
+	for _, recipe := range *recipes {
+		dto := dto.RecipeDTO{
+			ID:    recipe.ID,
+			Name:  recipe.Name,
+			Price: recipe.Price,
+		}
+
+		util.Add(&dtos, dto)
+	}
+
+	return &dtos
 }

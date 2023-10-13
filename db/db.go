@@ -9,14 +9,6 @@ import (
 	_ "github.com/denisenkom/go-mssqldb"
 )
 
-var (
-	Recipe_FindAll  = "recipe.findAll"
-	Recipe_FindById = "recipe.findById"
-	Recipe_Create   = "recipe.create"
-)
-
-const QUERIES_PATH = "db/queries"
-
 var databaseConnection *sql.DB
 
 func GetDatabaseConnection() *sql.DB {

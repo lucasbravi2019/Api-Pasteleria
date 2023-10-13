@@ -3,6 +3,7 @@ package services
 import (
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/lucasbravi2019/pasteleria/internal/dao"
 	"github.com/lucasbravi2019/pasteleria/internal/models"
 )
@@ -16,9 +17,9 @@ type PackageService struct {
 
 type PackageServiceInterface interface {
 	GetPackages() (int, *[]models.Package, error)
-	CreatePackage(r *http.Request) int
-	UpdatePackage(r *http.Request) int
-	DeletePackage(r *http.Request) int
+	CreatePackage(ctx *gin.Context) (int, interface{}, error)
+	UpdatePackage(ctx *gin.Context) (int, interface{}, error)
+	DeletePackage(ctx *gin.Context) (int, interface{}, error)
 }
 
 var PackageServiceInstance *PackageService
@@ -28,17 +29,17 @@ func (s *PackageService) GetPackages() (int, *[]models.Package, error) {
 	return http.StatusOK, nil, nil
 }
 
-func (s *PackageService) CreatePackage(r *http.Request) int {
+func (s *PackageService) CreatePackage(ctx *gin.Context) (int, interface{}, error) {
 
-	return http.StatusCreated
+	return http.StatusCreated, nil, nil
 }
 
-func (s *PackageService) UpdatePackage(r *http.Request) int {
+func (s *PackageService) UpdatePackage(ctx *gin.Context) (int, interface{}, error) {
 
-	return http.StatusOK
+	return http.StatusOK, nil, nil
 }
 
-func (s *PackageService) DeletePackage(r *http.Request) int {
+func (s *PackageService) DeletePackage(ctx *gin.Context) (int, interface{}, error) {
 
-	return http.StatusOK
+	return http.StatusOK, nil, nil
 }

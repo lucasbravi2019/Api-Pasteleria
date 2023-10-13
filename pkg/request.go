@@ -21,8 +21,8 @@ func DecodeBody(c *gin.Context, storeVar any) error {
 func GetUrlVars(c *gin.Context, param string) (string, error) {
 	urlParam := c.Param(param)
 
-	if urlParam == "" {
-		return "", errors.New("url var not found")
+	if urlParam == STRING_EMPTY {
+		return STRING_EMPTY, errors.New("url var not found")
 	}
 
 	return urlParam, nil
@@ -31,8 +31,8 @@ func GetUrlVars(c *gin.Context, param string) (string, error) {
 func GetUrlParams(c *gin.Context, param string) (string, error) {
 	urlParam := c.Query(param)
 
-	if urlParam == "" {
-		return "", errors.New("url param not found")
+	if urlParam == STRING_EMPTY {
+		return STRING_EMPTY, errors.New("url param not found")
 	}
 
 	return urlParam, nil
