@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 	"github.com/lucasbravi2019/pasteleria/core"
 	"github.com/lucasbravi2019/pasteleria/dao"
 	"github.com/lucasbravi2019/pasteleria/dto"
@@ -32,13 +32,13 @@ var IngredientServiceInstance *IngredientService
 func (s *IngredientService) GetAllIngredients() (int, *[]dto.IngredientDTO) {
 	ingredients := s.IngredientDao.GetAllIngredients()
 
-	return http.StatusOK, ingredients
+	return http.StatusOK, ingredients, nil
 }
 
 func (s *IngredientService) CreateIngredient(r *http.Request) int {
 	ingredientDto := &dto.IngredientNameDTO{}
 
-	invalidBody := core.DecodeBody(r, ingredientDto)
+	err := core.DecodeBody(c, ingredientDto)
 
 	if invalidBody {
 		return http.StatusBadRequest
@@ -122,13 +122,13 @@ func (s *IngredientService) ChangeIngredientPrice(r *http.Request) int {
 		return http.StatusInternalServerError
 	}
 
-	ingredientUpdated := s.IngredientDao.FindIngredientByPackageId(ingredientPackageOid)
+	err = s.IngredientDao.ChangeIngredientPrice(ingredientPackageOid, ingredientPackagePrice)
 
 	if ingredientUpdated == nil {
 		return http.StatusInternalServerError
 	}
 
-	recipes := s.RecipeDao.FindRecipesByPackageId(ingredientPackageOid)
+	ingredientUpdated, err := s.IngredientDao.FindIngredientByPackageId(ingredientPackageOid)
 
 	if len(recipes) == 0 {
 		return http.StatusOK
@@ -143,7 +143,13 @@ func (s *IngredientService) ChangeIngredientPrice(r *http.Request) int {
 	for i := 0; i < len(recipes); i++ {
 		var recipePrice float64 = 0
 		for j := 0; j < len(recipes[i].Ingredients); j++ {
-			recipes[i].Ingredients[j].Price = recipes[i].Ingredients[j].Quantity / recipes[i].Ingredients[j].Package.Quantity * recipes[i].Ingredients[j].Package.Price
+			if recipes[i].Ingredients[j].ID == ingredientUpdated.ID {
+				ingredientPackage := packagesById[recipes[i].Ingredients[j].Package.ID]
+
+				recipes[i].Ingredients[j].Package = ingredientPackage
+				ingredientQuantityPercent := recipes[i].Ingredients[j].Quantity / recipes[i].Ingredients[j].Package.Quantity
+				recipes[i].Ingredients[j].Price = ingredientQuantityPercent * recipes[i].Ingredients[j].Package.Price
+			}
 			recipePrice += recipes[i].Ingredients[j].Price
 		}
 		recipes[i].Price = recipePrice * 3
@@ -152,6 +158,7 @@ func (s *IngredientService) ChangeIngredientPrice(r *http.Request) int {
 
 		if err != nil {
 			log.Println(err.Error())
+			return http.StatusInternalServerError, nil, err
 		}
 	}
 

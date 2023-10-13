@@ -59,17 +59,17 @@ func (h *IngredientHandler) GetIngredientRoutes() core.Routes {
 			Method:      "POST",
 		},
 		core.Route{
-			Path:        "/ingredients/{id}",
+			Path:        "/ingredients/:ingredientId",
 			HandlerFunc: h.UpdateIngredient,
 			Method:      "PUT",
 		},
 		core.Route{
-			Path:        "/ingredients/{id}/price",
+			Path:        "/ingredients/:ingredientId/price",
 			HandlerFunc: h.ChangeIngredientPrice,
 			Method:      "PUT",
 		},
 		core.Route{
-			Path:        "/ingredients/{id}",
+			Path:        "/ingredients/:ingredientId",
 			HandlerFunc: h.DeleteIngredient,
 			Method:      "DELETE",
 		},

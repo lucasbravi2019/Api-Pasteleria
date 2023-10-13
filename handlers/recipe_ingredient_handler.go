@@ -25,8 +25,13 @@ func (h *RecipeIngredientHandler) AddIngredientToRecipe(ctx *gin.Context) {
 func (h *RecipeIngredientHandler) GetRecipeIngredientRoutes() core.Routes {
 	return core.Routes{
 		core.Route{
-			Path:        "/ingredients/{ingredientId}/recipes/{recipeId}",
+			Path:        "/ingredients/:ingredientId/recipes/:recipeId",
 			HandlerFunc: h.AddIngredientToRecipe,
+			Method:      "PUT",
+		},
+		core.Route{
+			Path:        "/recipes/remove-ingredient",
+			HandlerFunc: h.RemoveIngredientFromRecipe,
 			Method:      "PUT",
 		},
 	}

@@ -31,12 +31,12 @@ func (h *IngredientPackageHandler) RemovePackageFromIngredients(ctx *gin.Context
 func (h *IngredientPackageHandler) GetIngredientPackageRoutes() core.Routes {
 	return core.Routes{
 		core.Route{
-			Path:        "/packages/{packageId}/ingredients/{ingredientId}",
+			Path:        "/packages/:packageId/ingredients/:ingredientId",
 			HandlerFunc: h.AddPackageToIngredient,
 			Method:      "PUT",
 		},
 		core.Route{
-			Path:        "/packages/{id}/ingredients",
+			Path:        "/packages/:packageId/ingredients",
 			HandlerFunc: h.RemovePackageFromIngredients,
 			Method:      "DELETE",
 		},

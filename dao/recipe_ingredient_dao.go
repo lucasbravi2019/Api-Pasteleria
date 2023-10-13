@@ -17,7 +17,7 @@ type RecipeIngredientDao struct {
 
 type RecipeIngredientDaoInterface interface {
 	AddIngredientToRecipe(oid *primitive.ObjectID, recipe *models.RecipeIngredient) error
-	RemoveIngredientFromRecipe(oid *primitive.ObjectID, recipe *models.RecipeIngredient) error
+	RemoveIngredientFromRecipe(oid *primitive.ObjectID, recipe *models.Recipe) error
 	RemoveIngredientByPackageId(packageId *primitive.ObjectID) error
 	UpdateIngredientPackagePrice(packageId *primitive.ObjectID, price float64) error
 	UpdateIngredientsPrice(packageId *primitive.ObjectID, recipe dto.RecipeDTO) error
@@ -38,8 +38,13 @@ func (d *RecipeIngredientDao) AddIngredientToRecipe(oid *primitive.ObjectID, rec
 	return err
 }
 
+<<<<<<< HEAD
 func (d *RecipeIngredientDao) RemoveIngredientFromRecipe(oid *primitive.ObjectID, recipe *models.RecipeIngredient) error {
 	_, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+=======
+func (d *RecipeIngredientDao) RemoveIngredientFromRecipe(oid *primitive.ObjectID, recipe *models.Recipe) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+>>>>>>> 9e63822ae2f7c13e69bf82f4c317e471e2a1be2e
 	defer cancel()
 
 	_, err := d.DB.Query("")

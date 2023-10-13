@@ -24,25 +24,14 @@ type RecipeServiceInterface interface {
 
 var RecipeServiceInstance *RecipeService
 
-func (s *RecipeService) GetAllRecipes() (int, *[]dto.RecipeDTO) {
-	recipes := s.RecipeDao.FindAllRecipes()
-	return http.StatusOK, recipes
-}
+func (s *RecipeService) GetAllRecipes() (int, *[]dto.RecipeDTO, error) {
+	recipes, err := s.RecipeDao.FindAllRecipes()
 
-func (s *RecipeService) GetRecipe(r *http.Request) (int, *dto.RecipeDTO) {
-	oid := core.ConvertHexToObjectId(mux.Vars(r)["id"])
-
-	if oid == nil {
-		return http.StatusBadRequest, nil
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
 	}
 
-	recipe := s.RecipeDao.FindRecipeByOID(oid)
-
-	if recipe == nil {
-		return http.StatusNotFound, nil
-	}
-
-	return http.StatusOK, recipe
+	return http.StatusOK, recipes, nil
 }
 
 func (s *RecipeService) CreateRecipe(r *http.Request) error {

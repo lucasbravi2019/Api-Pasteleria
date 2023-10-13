@@ -4,6 +4,7 @@ import (
 	"github.com/lucasbravi2019/pasteleria/core"
 	"github.com/lucasbravi2019/pasteleria/dao"
 	"github.com/lucasbravi2019/pasteleria/handlers"
+	"github.com/lucasbravi2019/pasteleria/mapper"
 	"github.com/lucasbravi2019/pasteleria/services"
 )
 
@@ -22,6 +23,7 @@ func GetRecipeIngredientServiceInstance() *services.RecipeIngredientService {
 			RecipeDao:           *GetRecipeDaoInstance(),
 			IngredientDao:       *GetIngredientDaoInstance(),
 			RecipeIngredientDao: *GetRecipeIngredientDaoInstance(),
+			RecipeMapper:        *GetRecipeMapperInstance(),
 		}
 	}
 	return services.RecipeIngredientServiceInstance
@@ -34,4 +36,11 @@ func GetRecipeIngredientDaoInstance() *dao.RecipeIngredientDao {
 		}
 	}
 	return dao.RecipeIngredientDaoInstance
+}
+
+func GetRecipeMapperInstance() *mapper.RecipeMapper {
+	if mapper.RecipeMapperInstance == nil {
+		mapper.RecipeMapperInstance = &mapper.RecipeMapper{}
+	}
+	return mapper.RecipeMapperInstance
 }

@@ -12,7 +12,6 @@ func DatabaseCheckMiddleware() gin.HandlerFunc {
 		err := core.CheckDatabaseHealth()
 		if err != nil {
 			log.Println(err)
-			return
 		}
 	}
 }

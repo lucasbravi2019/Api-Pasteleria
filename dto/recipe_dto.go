@@ -25,5 +25,10 @@ type PackageDTO struct {
 }
 
 type RecipeNameDTO struct {
+	ID   string `json:"id,omitempty"`
 	Name string `json:"name" validate:"required"`
+}
+
+type RecipeIdDTO struct {
+	ID string `json:"id" validate:"required"`
 }

@@ -3,7 +3,7 @@ package services
 import (
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 	"github.com/lucasbravi2019/pasteleria/core"
 	"github.com/lucasbravi2019/pasteleria/dao"
 	"github.com/lucasbravi2019/pasteleria/dto"
@@ -26,20 +26,20 @@ type PackageServiceInterface interface {
 
 var PackageServiceInstance *PackageService
 
-func (s *PackageService) GetPackages() (int, *[]models.Package) {
-	packages := s.PackageDao.GetPackages()
+func (s *PackageService) GetPackages() (int, *[]models.Package, error) {
+	packages, err := s.PackageDao.GetPackages()
 
-	if packages == nil {
-		return http.StatusInternalServerError, nil
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
 	}
 
-	return http.StatusOK, packages
+	return http.StatusOK, packages, nil
 }
 
 func (s *PackageService) CreatePackage(r *http.Request) int {
 	packageRequest := &models.Package{}
 
-	invalidBody := core.DecodeBody(r, packageRequest)
+	err := core.DecodeBody(c, packageRequest)
 
 	if invalidBody {
 		return http.StatusBadRequest
@@ -71,7 +71,7 @@ func (s *PackageService) UpdatePackage(r *http.Request) int {
 		return http.StatusInternalServerError
 	}
 
-	envase := s.PackageDao.GetPackageById(oid)
+	err = s.PackageDao.UpdatePackage(oid, packageRequest)
 
 	if envase == nil {
 		return http.StatusNotFound

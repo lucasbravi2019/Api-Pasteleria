@@ -53,12 +53,12 @@ func (h *PackageHandler) GetPackageRoutes() core.Routes {
 			Method:      "POST",
 		},
 		core.Route{
-			Path:        "/packages/{id}",
+			Path:        "/packages/:packageId",
 			HandlerFunc: h.UpdatePackage,
 			Method:      "PUT",
 		},
 		core.Route{
-			Path:        "/packages/{id}",
+			Path:        "/packages/:packageId",
 			HandlerFunc: h.DeletePackage,
 			Method:      "DELETE",
 		},
