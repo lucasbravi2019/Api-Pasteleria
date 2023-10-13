@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
-	"github.com/lucasbravi2019/pasteleria/core"
+	"github.com/lucasbravi2019/pasteleria/db"
 )
 
 type XMLTables struct {
@@ -49,7 +49,7 @@ func processXmlFile(filePath string) error {
 		return err
 	}
 
-	db := core.GetDatabaseConnection()
+	db := db.GetDatabaseConnection()
 	for _, table := range xmlTables.List {
 		_, err := db.Exec(table.SQL)
 		if err != nil {
