@@ -31,7 +31,7 @@ func GetPackageServiceInstance() *services.PackageService {
 func GetPackageDaoInstance() *dao.PackageDao {
 	if dao.PackageDaoInstance == nil {
 		dao.PackageDaoInstance = &dao.PackageDao{
-			DB: core.GetDatabaseConnection().Collection("packages"),
+			DB: core.GetDatabaseConnection(),
 		}
 	}
 	return dao.PackageDaoInstance

@@ -2,22 +2,22 @@ package dao
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"time"
 
 	"github.com/lucasbravi2019/pasteleria/dto"
+	"github.com/lucasbravi2019/pasteleria/mapper"
 	"github.com/lucasbravi2019/pasteleria/models"
-	"github.com/lucasbravi2019/pasteleria/queries"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type IngredientDao struct {
-	IngredientCollection *mongo.Collection
+	DB *sql.DB
 }
 
 type IngredientDaoInterface interface {
-	GetAllIngredients() []dto.IngredientDTO
+	GetAllIngredients() *[]dto.IngredientDTO
 	FindIngredientByOID(oid *primitive.ObjectID) *dto.IngredientDTO
 	FindIngredientByPackageId(packageId *primitive.ObjectID) *dto.IngredientDTO
 	ValidateExistingIngredient(ingredientName *dto.IngredientNameDTO) error
@@ -29,95 +29,74 @@ type IngredientDaoInterface interface {
 
 var IngredientDaoInstance *IngredientDao
 
-func (d *IngredientDao) GetAllIngredients() []dto.IngredientDTO {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+func (d *IngredientDao) GetAllIngredients() *[]dto.IngredientDTO {
+	_, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	results, err := d.IngredientCollection.Find(ctx, queries.All())
+	rows, err := d.DB.Query("")
 
 	if err != nil {
 		log.Println(err.Error())
 	}
 
-	ingredients := &[]dto.IngredientDTO{}
-
-	err = results.All(ctx, ingredients)
-
-	if err != nil {
-		log.Println(err.Error())
-	}
-
-	if len(*ingredients) < 1 {
-		return []dto.IngredientDTO{}
-	}
-
-	return *ingredients
+	return mapper.ToIngredientDTOList(rows)
 }
 
 func (d *IngredientDao) FindIngredientByOID(oid *primitive.ObjectID) *dto.IngredientDTO {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	_, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	ingredient := &dto.IngredientDTO{}
-
-	err := d.IngredientCollection.FindOne(ctx, queries.GetIngredientById(*oid)).Decode(ingredient)
+	rows, err := d.DB.Query("")
 
 	if err != nil {
-		log.Println(err.Error())
 		return nil
 	}
 
-	return ingredient
+	return mapper.ToIngredientDTO(rows)
 }
 
 func (d *IngredientDao) FindIngredientByPackageId(packageId *primitive.ObjectID) *dto.IngredientDTO {
-	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
+	_, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
 	defer cancel()
 
-	ingredient := &dto.IngredientDTO{}
-
-	err := d.IngredientCollection.FindOne(ctx, queries.GetIngredientByPackageId(*packageId)).Decode(ingredient)
+	rows, err := d.DB.Query("")
 
 	if err != nil {
 		return nil
 	}
 
-	return ingredient
+	return mapper.ToIngredientDTO(rows)
 }
 
-func (d *IngredientDao) CreateIngredient(ingredient *models.Ingredient) *primitive.ObjectID {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+func (d *IngredientDao) CreateIngredient(ingredient *models.Ingredient) {
+	_, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	insertResult, err := d.IngredientCollection.InsertOne(ctx, *ingredient)
+	_, err := d.DB.Query("")
 
 	if err != nil {
 		log.Println(err.Error())
 	}
-
-	id := insertResult.InsertedID.(primitive.ObjectID)
-
-	return &id
 }
 
 func (d *IngredientDao) UpdateIngredient(oid *primitive.ObjectID, dto *dto.IngredientNameDTO) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	_, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	_, err := d.IngredientCollection.UpdateOne(ctx, queries.GetIngredientById(*oid), queries.UpdateIngredientName(*dto))
+	_, err := d.DB.Query("")
 
 	if err != nil {
-		log.Println(err.Error())
+		return err
 	}
 
 	return err
 }
 
 func (d *IngredientDao) DeleteIngredient(oid *primitive.ObjectID) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	_, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	_, err := d.IngredientCollection.DeleteOne(ctx, queries.GetIngredientById(*oid))
+	_, err := d.DB.Query("")
 
 	if err != nil {
 		log.Println(err.Error())
@@ -128,41 +107,13 @@ func (d *IngredientDao) DeleteIngredient(oid *primitive.ObjectID) error {
 
 func (d *IngredientDao) ChangeIngredientPrice(packageOid *primitive.ObjectID, priceDTO *dto.IngredientPackagePriceDTO) error {
 
-	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
+	_, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
 	defer cancel()
 
-	_, err := d.IngredientCollection.UpdateOne(ctx, queries.GetIngredientByPackageId(*packageOid), queries.SetIngredientPrice(priceDTO.Price),
-		queries.GetArrayFilterForPackageId(*packageOid))
+	_, err := d.DB.Query("")
 
 	if err != nil {
 		log.Println(err.Error())
-		return err
-	}
-
-	return nil
-}
-
-func (d *IngredientDao) ValidateExistingIngredient(ingredientName *dto.IngredientNameDTO) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
-
-	cursor, err := d.IngredientCollection.Aggregate(ctx, queries.GetAggregateCreateIngredients(ingredientName))
-
-	if err != nil {
-		log.Println(err.Error())
-		return err
-	}
-
-	ingredientsDuplicated := &[]dto.IngredientDTO{}
-
-	err = cursor.All(ctx, ingredientsDuplicated)
-
-	if err != nil {
-		log.Println(err.Error())
-		return err
-	}
-
-	if len(*ingredientsDuplicated) > 0 {
 		return err
 	}
 

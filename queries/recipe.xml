@@ -1,0 +1,11 @@
+<queries>
+    <query id="recipe.findAll">
+        select * from recipes
+    </query>
+    <query id="recipe.findById">
+        select * from recipes where recipe_id = ?
+    </query>
+    <query id="recipe.create">
+        insert into recipe (name) values (?)
+    </query>
+</queries>

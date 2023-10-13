@@ -1,8 +1,7 @@
 package handlers
 
 import (
-	"net/http"
-
+	"github.com/gin-gonic/gin"
 	"github.com/lucasbravi2019/pasteleria/core"
 	"github.com/lucasbravi2019/pasteleria/services"
 )
@@ -12,39 +11,39 @@ type IngredientHandler struct {
 }
 
 type IngredientHandlerInterface interface {
-	GetAllIngredients(w http.ResponseWriter, r *http.Request)
-	CreateIngredient(w http.ResponseWriter, r *http.Request)
-	UpdateIngredient(w http.ResponseWriter, r *http.Request)
-	DeleteIngredient(w http.ResponseWriter, r *http.Request)
-	ChangeIngredientPrice(w http.ResponseWriter, r *http.Request)
+	GetAllIngredients(ctx *gin.Context)
+	CreateIngredient(ctx *gin.Context)
+	UpdateIngredient(ctx *gin.Context)
+	DeleteIngredient(ctx *gin.Context)
+	ChangeIngredientPrice(ctx *gin.Context)
 	GetIngredientRoutes() core.Routes
 }
 
 var IngredientHandlerInstance *IngredientHandler
 
-func (h *IngredientHandler) GetAllIngredients(w http.ResponseWriter, r *http.Request) {
+func (h *IngredientHandler) GetAllIngredients(ctx *gin.Context) {
 	statusCode, body := h.Service.GetAllIngredients()
-	core.EncodeJsonResponse(w, statusCode, body)
+	core.EncodeJsonResponse(ctx.Writer, statusCode, body, nil)
 }
 
-func (h *IngredientHandler) CreateIngredient(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.Service.CreateIngredient(r)
-	core.EncodeJsonResponse(w, statusCode, body)
+func (h *IngredientHandler) CreateIngredient(ctx *gin.Context) {
+	statusCode := h.Service.CreateIngredient(ctx.Request)
+	core.EncodeJsonResponse(ctx.Writer, statusCode, nil, nil)
 }
 
-func (h *IngredientHandler) UpdateIngredient(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.Service.UpdateIngredient(r)
-	core.EncodeJsonResponse(w, statusCode, body)
+func (h *IngredientHandler) UpdateIngredient(ctx *gin.Context) {
+	statusCode := h.Service.UpdateIngredient(ctx.Request)
+	core.EncodeJsonResponse(ctx.Writer, statusCode, nil, nil)
 }
 
-func (h *IngredientHandler) DeleteIngredient(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.Service.DeleteIngredient(r)
-	core.EncodeJsonResponse(w, statusCode, body)
+func (h *IngredientHandler) DeleteIngredient(ctx *gin.Context) {
+	statusCode := h.Service.DeleteIngredient(ctx.Request)
+	core.EncodeJsonResponse(ctx.Writer, statusCode, nil, nil)
 }
 
-func (h *IngredientHandler) ChangeIngredientPrice(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.Service.ChangeIngredientPrice(r)
-	core.EncodeJsonResponse(w, statusCode, body)
+func (h *IngredientHandler) ChangeIngredientPrice(ctx *gin.Context) {
+	statusCode := h.Service.ChangeIngredientPrice(ctx.Request)
+	core.EncodeJsonResponse(ctx.Writer, statusCode, nil, nil)
 }
 
 func (h *IngredientHandler) GetIngredientRoutes() core.Routes {

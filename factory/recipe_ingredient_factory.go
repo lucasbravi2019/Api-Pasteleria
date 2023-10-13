@@ -30,7 +30,7 @@ func GetRecipeIngredientServiceInstance() *services.RecipeIngredientService {
 func GetRecipeIngredientDaoInstance() *dao.RecipeIngredientDao {
 	if dao.RecipeIngredientDaoInstance == nil {
 		dao.RecipeIngredientDaoInstance = &dao.RecipeIngredientDao{
-			DB: core.GetDatabaseConnection().Collection("recipes"),
+			DB: core.GetDatabaseConnection(),
 		}
 	}
 	return dao.RecipeIngredientDaoInstance

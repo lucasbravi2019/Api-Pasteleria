@@ -8,7 +8,6 @@ import (
 	"github.com/lucasbravi2019/pasteleria/dao"
 	"github.com/lucasbravi2019/pasteleria/dto"
 	"github.com/lucasbravi2019/pasteleria/models"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type PackageService struct {
@@ -20,9 +19,9 @@ type PackageService struct {
 
 type PackageServiceInterface interface {
 	GetPackages() (int, *[]models.Package)
-	CreatePackage(r *http.Request) (int, *models.Package)
-	UpdatePackage(r *http.Request) (int, *models.Package)
-	DeletePackage(r *http.Request) (int, *primitive.ObjectID)
+	CreatePackage(r *http.Request) int
+	UpdatePackage(r *http.Request) int
+	DeletePackage(r *http.Request) int
 }
 
 var PackageServiceInstance *PackageService
@@ -37,35 +36,25 @@ func (s *PackageService) GetPackages() (int, *[]models.Package) {
 	return http.StatusOK, packages
 }
 
-func (s *PackageService) CreatePackage(r *http.Request) (int, *models.Package) {
+func (s *PackageService) CreatePackage(r *http.Request) int {
 	packageRequest := &models.Package{}
 
 	invalidBody := core.DecodeBody(r, packageRequest)
 
 	if invalidBody {
-		return http.StatusBadRequest, nil
+		return http.StatusBadRequest
 	}
 
-	id := s.PackageDao.CreatePackage(packageRequest)
+	s.PackageDao.CreatePackage(packageRequest)
 
-	if id == nil {
-		return http.StatusInternalServerError, nil
-	}
-
-	envase := s.PackageDao.GetPackageById(id)
-
-	if envase == nil {
-		return http.StatusNotFound, nil
-	}
-
-	return http.StatusCreated, envase
+	return http.StatusCreated
 }
 
-func (s *PackageService) UpdatePackage(r *http.Request) (int, *models.Package) {
+func (s *PackageService) UpdatePackage(r *http.Request) int {
 	oid := core.ConvertHexToObjectId(mux.Vars(r)["id"])
 
 	if oid == nil {
-		return http.StatusBadRequest, nil
+		return http.StatusBadRequest
 	}
 
 	packageRequest := &models.Package{}
@@ -73,35 +62,35 @@ func (s *PackageService) UpdatePackage(r *http.Request) (int, *models.Package) {
 	invalidBody := core.DecodeBody(r, packageRequest)
 
 	if invalidBody {
-		return http.StatusBadRequest, nil
+		return http.StatusBadRequest
 	}
 
 	err := s.PackageDao.UpdatePackage(oid, packageRequest)
 
 	if err != nil {
-		return http.StatusInternalServerError, nil
+		return http.StatusInternalServerError
 	}
 
 	envase := s.PackageDao.GetPackageById(oid)
 
 	if envase == nil {
-		return http.StatusNotFound, nil
+		return http.StatusNotFound
 	}
 
-	return http.StatusOK, envase
+	return http.StatusOK
 }
 
-func (s *PackageService) DeletePackage(r *http.Request) (int, *primitive.ObjectID) {
+func (s *PackageService) DeletePackage(r *http.Request) int {
 	oid := core.ConvertHexToObjectId(mux.Vars(r)["id"])
 
 	if oid == nil {
-		return http.StatusBadRequest, nil
+		return http.StatusBadRequest
 	}
 
 	err := s.PackageDao.DeletePackage(oid)
 
 	if err != nil {
-		return http.StatusInternalServerError, nil
+		return http.StatusInternalServerError
 	}
 
 	ingredientPackage := &dto.IngredientPackageDTO{
@@ -111,20 +100,20 @@ func (s *PackageService) DeletePackage(r *http.Request) (int, *primitive.ObjectI
 	err = s.IngredientPackageDao.RemovePackageFromIngredients(*ingredientPackage)
 
 	if err != nil {
-		return http.StatusInternalServerError, nil
+		return http.StatusInternalServerError
 	}
 
 	err = s.RecipeIngredientDao.RemoveIngredientByPackageId(oid)
 
 	if err != nil {
-		return http.StatusInternalServerError, nil
+		return http.StatusInternalServerError
 	}
 
 	err = s.RecipeDao.UpdateRecipesPrice()
 
 	if err != nil {
-		return http.StatusInternalServerError, nil
+		return http.StatusInternalServerError
 	}
 
-	return http.StatusOK, oid
+	return http.StatusOK
 }

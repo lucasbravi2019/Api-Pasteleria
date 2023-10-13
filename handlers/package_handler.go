@@ -1,8 +1,7 @@
 package handlers
 
 import (
-	"net/http"
-
+	"github.com/gin-gonic/gin"
 	"github.com/lucasbravi2019/pasteleria/core"
 	"github.com/lucasbravi2019/pasteleria/services"
 )
@@ -12,33 +11,33 @@ type PackageHandler struct {
 }
 
 type PackageHandlerInterface interface {
-	GetPackages(w http.ResponseWriter, r *http.Request)
-	CreatePackage(w http.ResponseWriter, r *http.Request)
-	UpdatePackage(w http.ResponseWriter, r *http.Request)
-	DeletePackage(w http.ResponseWriter, r *http.Request)
+	GetPackages(ctx *gin.Context)
+	CreatePackage(ctx *gin.Context)
+	UpdatePackage(ctx *gin.Context)
+	DeletePackage(ctx *gin.Context)
 	GetPackageRoutes() []core.Route
 }
 
 var PackageHandlerInstance *PackageHandler
 
-func (h *PackageHandler) GetPackages(w http.ResponseWriter, r *http.Request) {
+func (h *PackageHandler) GetPackages(ctx *gin.Context) {
 	statusCode, body := h.Service.GetPackages()
-	core.EncodeJsonResponse(w, statusCode, body)
+	core.EncodeJsonResponse(ctx.Writer, statusCode, body, nil)
 }
 
-func (h *PackageHandler) CreatePackage(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.Service.CreatePackage(r)
-	core.EncodeJsonResponse(w, statusCode, body)
+func (h *PackageHandler) CreatePackage(ctx *gin.Context) {
+	statusCode := h.Service.CreatePackage(ctx.Request)
+	core.EncodeJsonResponse(ctx.Writer, statusCode, nil, nil)
 }
 
-func (h *PackageHandler) UpdatePackage(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.Service.UpdatePackage(r)
-	core.EncodeJsonResponse(w, statusCode, body)
+func (h *PackageHandler) UpdatePackage(ctx *gin.Context) {
+	statusCode := h.Service.UpdatePackage(ctx.Request)
+	core.EncodeJsonResponse(ctx.Writer, statusCode, nil, nil)
 }
 
-func (h *PackageHandler) DeletePackage(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.Service.DeletePackage(r)
-	core.EncodeJsonResponse(w, statusCode, body)
+func (h *PackageHandler) DeletePackage(ctx *gin.Context) {
+	statusCode := h.Service.DeletePackage(ctx.Request)
+	core.EncodeJsonResponse(ctx.Writer, statusCode, nil, nil)
 }
 
 func (h *PackageHandler) GetPackageRoutes() core.Routes {

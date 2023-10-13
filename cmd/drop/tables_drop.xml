@@ -1,0 +1,17 @@
+<tables>
+    <table id="recipe_ingredient">
+        if object_id('recipe_ingredient', 'u') is not null drop table recipe_ingredient 
+    </table>
+    <table id="ingredient_package">
+        if object_id('ingredient_package', 'u') is not null drop table ingredient_package 
+    </table>
+    <table id="package">
+        if object_id('package', 'u') is not null drop table package 
+    </table>
+    <table id="ingredient">
+        if object_id('ingredient', 'u') is not null drop table ingredient 
+    </table>
+    <table id="recipe">
+        if object_id('recipe', 'u') is not null drop table recipe 
+    </table>
+</tables>

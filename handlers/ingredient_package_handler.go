@@ -1,8 +1,7 @@
 package handlers
 
 import (
-	"net/http"
-
+	"github.com/gin-gonic/gin"
 	"github.com/lucasbravi2019/pasteleria/core"
 	"github.com/lucasbravi2019/pasteleria/services"
 )
@@ -12,21 +11,21 @@ type IngredientPackageHandler struct {
 }
 
 type IngredientPackageHandlerInterface interface {
-	AddPackageToIngredient(w http.ResponseWriter, r *http.Request)
-	RemovePackageFromIngredients(w http.ResponseWriter, r *http.Request)
+	AddPackageToIngredient(ctx *gin.Context)
+	RemovePackageFromIngredients(ctx *gin.Context)
 	GetIngredientPackageRoutes() []core.Route
 }
 
 var IngredientPackageHandlerInstance *IngredientPackageHandler
 
-func (h *IngredientPackageHandler) AddPackageToIngredient(w http.ResponseWriter, r *http.Request) {
-	statusCode := h.Service.AddPackageToIngredient(r)
-	core.EncodeJsonResponse(w, statusCode, nil)
+func (h *IngredientPackageHandler) AddPackageToIngredient(ctx *gin.Context) {
+	statusCode := h.Service.AddPackageToIngredient(ctx.Request)
+	core.EncodeJsonResponse(ctx.Writer, statusCode, nil, nil)
 }
 
-func (h *IngredientPackageHandler) RemovePackageFromIngredients(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.Service.RemovePackageFromIngredients(r)
-	core.EncodeJsonResponse(w, statusCode, body)
+func (h *IngredientPackageHandler) RemovePackageFromIngredients(ctx *gin.Context) {
+	statusCode, body := h.Service.RemovePackageFromIngredients(ctx.Request)
+	core.EncodeJsonResponse(ctx.Writer, statusCode, body, nil)
 }
 
 func (h *IngredientPackageHandler) GetIngredientPackageRoutes() core.Routes {

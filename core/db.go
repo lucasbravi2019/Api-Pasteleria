@@ -1,30 +1,33 @@
 package core
 
 import (
-	"context"
 	"log"
+	"os"
 
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"database/sql"
+
+	_ "github.com/denisenkom/go-mssqldb"
 )
 
-var databaseConnection *mongo.Database
+var databaseConnection *sql.DB
 
-func GetDatabaseConnection() *mongo.Database {
-	if databaseConnection == nil {
-		conn, err := mongo.Connect(context.TODO(), options.Client().ApplyURI("mongodb://localhost:27017"))
+func GetDatabaseConnection() *sql.DB {
+	if databaseConnection != nil {
+		return databaseConnection
+	}
 
-		if err != nil {
-			log.Fatal("La conexion a la base de datos no pudo realizarse")
-		}
+	connString := os.Getenv("CONNECTION_STRING")
 
-		err = conn.Ping(context.TODO(), nil)
+	db, err := sql.Open("sqlserver", connString)
 
-		if err != nil {
-			log.Fatal("La conexion a la base de datos no responde")
-		}
+	if err != nil {
+		log.Fatal(err)
+	}
 
-		databaseConnection = conn.Database("pasteleria")
+	databaseConnection = db
+
+	if err := CheckDatabaseHealth(); err != nil {
+		log.Fatal(err)
 	}
 
 	return databaseConnection
@@ -32,5 +35,5 @@ func GetDatabaseConnection() *mongo.Database {
 
 func CheckDatabaseHealth() error {
 	log.Println("Checking database health")
-	return GetDatabaseConnection().Client().Ping(context.TODO(), nil)
+	return GetDatabaseConnection().Ping()
 }

@@ -3,6 +3,8 @@ package core
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Response struct {
@@ -10,7 +12,7 @@ type Response struct {
 	Body  interface{} `json:"body"`
 }
 
-func EncodeJsonResponse(w http.ResponseWriter, statusCode int, body interface{}) {
+func EncodeJsonResponse(w gin.ResponseWriter, statusCode int, body interface{}, err error) {
 	w.Header().Add("Content-type", "application/json")
 	w.WriteHeader(statusCode)
 	var response *Response = &Response{}

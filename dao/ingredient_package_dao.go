@@ -2,18 +2,17 @@ package dao
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"time"
 
 	"github.com/lucasbravi2019/pasteleria/dto"
 	"github.com/lucasbravi2019/pasteleria/models"
-	"github.com/lucasbravi2019/pasteleria/queries"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type IngredientPackageDao struct {
-	IngredientCollection *mongo.Collection
+	DB *sql.DB
 }
 
 type IngredientPackageDaoInterface interface {
@@ -24,11 +23,10 @@ type IngredientPackageDaoInterface interface {
 var IngredientPackageDaoInstance *IngredientPackageDao
 
 func (d *IngredientPackageDao) AddPackageToIngredient(ingredientOid *primitive.ObjectID, packageOid *primitive.ObjectID, envase *models.IngredientPackage) error {
-	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
+	_, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
 	defer cancel()
 
-	_, err := d.IngredientCollection.UpdateOne(ctx, queries.GetIngredientWithoutExistingPackage(*ingredientOid, *packageOid),
-		queries.PushPackageIntoIngredient(*envase))
+	_, err := d.DB.Query("")
 
 	if err != nil {
 		log.Println(err.Error())
@@ -38,10 +36,10 @@ func (d *IngredientPackageDao) AddPackageToIngredient(ingredientOid *primitive.O
 }
 
 func (d *IngredientPackageDao) RemovePackageFromIngredients(dto dto.IngredientPackageDTO) error {
-	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
+	_, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
 	defer cancel()
 
-	_, err := d.IngredientCollection.UpdateMany(ctx, queries.GetIngredientByPackageId(dto.PackageOid), queries.PullPackageFromIngredients(dto))
+	_, err := d.DB.Query("")
 
 	if err != nil {
 		log.Println(err.Error())

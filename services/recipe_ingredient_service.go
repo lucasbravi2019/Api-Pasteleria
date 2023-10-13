@@ -9,7 +9,6 @@ import (
 	"github.com/lucasbravi2019/pasteleria/dao"
 	"github.com/lucasbravi2019/pasteleria/dto"
 	"github.com/lucasbravi2019/pasteleria/models"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type RecipeIngredientService struct {
@@ -61,11 +60,11 @@ func (s *RecipeIngredientService) AddIngredientToRecipe(r *http.Request) int {
 	envase := getIngredientPackage(ingredientDetails.Metric, ingredientDTO.Packages)
 
 	recipeIngredient := &models.RecipeIngredient{
-		ID:       primitive.NewObjectID(),
-		Quantity: ingredientDetails.Quantity,
-		Name:     ingredientDTO.Name,
+		// ID:       primitive.NewObjectID(),
+		// Quantity: ingredientDetails.Quantity,
+		Name: ingredientDTO.Name,
 		Package: models.RecipeIngredientPackage{
-			ID:       envase.ID,
+			// ID:       envase.ID,
 			Metric:   envase.Metric,
 			Quantity: envase.Quantity,
 			Price:    envase.Price,

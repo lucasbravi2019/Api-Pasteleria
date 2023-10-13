@@ -1,0 +1,47 @@
+<tables>
+    <table id="database">
+        use pasteleria
+    </table>
+    <table id="package">
+        create table package (
+            id bigint not null identity,
+            metric varchar(10) not null,
+            primary key (id)
+        )
+    </table>
+    <table id="ingredient">
+        create table ingredient (
+            id bigint not null identity, 
+            name varchar(255) not null,
+            primary key (id)
+        )
+    </table>
+    <table id="ingredient_package">
+        create table ingredient_package (
+            id bigint not null identity,
+            package_id bigint not null foreign key references package(id),
+            ingredient_id bigint not null foreign key references ingredient(id),
+            quantity decimal not null,
+            price decimal,
+            primary key (id)
+        )
+    </table>
+    <table id="recipe">
+        create table recipe (
+            id bigint not null identity,
+            name varchar(255) not null,
+            price decimal not null default 0,
+            primary key (id)
+        )
+    </table>
+    <table id="recipe_ingredient">
+        create table recipe_ingredient (
+            id bigint not null identity,
+            recipe_id bigint not null foreign key references recipe(id),    
+            ingredient_id bigint not null foreign key references ingredient_package(id),
+            quantity decimal not null,
+            price decimal not null,
+            primary key (id)
+        )
+    </table>
+</tables>

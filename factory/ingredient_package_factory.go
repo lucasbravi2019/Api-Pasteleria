@@ -29,7 +29,7 @@ func GetIngredientPackageServiceInstance() *services.IngredientPackageService {
 func GetIngredientPackageDaoInstance() *dao.IngredientPackageDao {
 	if dao.IngredientPackageDaoInstance == nil {
 		dao.IngredientPackageDaoInstance = &dao.IngredientPackageDao{
-			IngredientCollection: core.GetDatabaseConnection().Collection("ingredients"),
+			DB: core.GetDatabaseConnection(),
 		}
 	}
 	return dao.IngredientPackageDaoInstance

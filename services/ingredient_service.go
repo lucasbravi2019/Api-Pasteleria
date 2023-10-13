@@ -11,7 +11,6 @@ import (
 	"github.com/lucasbravi2019/pasteleria/dao"
 	"github.com/lucasbravi2019/pasteleria/dto"
 	"github.com/lucasbravi2019/pasteleria/models"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type IngredientService struct {
@@ -21,28 +20,28 @@ type IngredientService struct {
 }
 
 type IngredientServiceInterface interface {
-	GetAllIngredients() (int, []dto.IngredientDTO)
-	CreateIngredient(r *http.Request) (int, *dto.IngredientDTO)
-	UpdateIngredient(r *http.Request) (int, *dto.IngredientDTO)
-	DeleteIngredient(r *http.Request) (int, *primitive.ObjectID)
-	ChangeIngredientPrice(r *http.Request) (int, *dto.IngredientDTO)
+	GetAllIngredients() (int, *[]dto.IngredientDTO)
+	CreateIngredient(r *http.Request) int
+	UpdateIngredient(r *http.Request) int
+	DeleteIngredient(r *http.Request) int
+	ChangeIngredientPrice(r *http.Request) int
 }
 
 var IngredientServiceInstance *IngredientService
 
-func (s *IngredientService) GetAllIngredients() (int, []dto.IngredientDTO) {
+func (s *IngredientService) GetAllIngredients() (int, *[]dto.IngredientDTO) {
 	ingredients := s.IngredientDao.GetAllIngredients()
 
 	return http.StatusOK, ingredients
 }
 
-func (s *IngredientService) CreateIngredient(r *http.Request) (int, *dto.IngredientDTO) {
+func (s *IngredientService) CreateIngredient(r *http.Request) int {
 	ingredientDto := &dto.IngredientNameDTO{}
 
 	invalidBody := core.DecodeBody(r, ingredientDto)
 
 	if invalidBody {
-		return http.StatusBadRequest, nil
+		return http.StatusBadRequest
 	}
 
 	ingredientEntity := &models.Ingredient{
@@ -50,26 +49,16 @@ func (s *IngredientService) CreateIngredient(r *http.Request) (int, *dto.Ingredi
 		Packages: []models.IngredientPackage{},
 	}
 
-	ingredientCreatedId := s.IngredientDao.CreateIngredient(ingredientEntity)
+	s.IngredientDao.CreateIngredient(ingredientEntity)
 
-	if ingredientCreatedId == nil {
-		return http.StatusInternalServerError, nil
-	}
-
-	ingredientCreated := s.IngredientDao.FindIngredientByOID(ingredientCreatedId)
-
-	if ingredientCreated == nil {
-		return http.StatusNotFound, nil
-	}
-
-	return http.StatusCreated, ingredientCreated
+	return http.StatusCreated
 }
 
-func (s *IngredientService) UpdateIngredient(r *http.Request) (int, *dto.IngredientDTO) {
+func (s *IngredientService) UpdateIngredient(r *http.Request) int {
 	oid := core.ConvertHexToObjectId(mux.Vars(r)["id"])
 
 	if oid == nil {
-		return http.StatusBadRequest, nil
+		return http.StatusBadRequest
 	}
 
 	ingredient := &dto.IngredientNameDTO{}
@@ -77,46 +66,46 @@ func (s *IngredientService) UpdateIngredient(r *http.Request) (int, *dto.Ingredi
 	invalidBody := core.DecodeBody(r, ingredient)
 
 	if invalidBody {
-		return http.StatusBadRequest, nil
+		return http.StatusBadRequest
 	}
 
 	err := s.IngredientDao.UpdateIngredient(oid, ingredient)
 
 	if err != nil {
-		return http.StatusInternalServerError, nil
+		return http.StatusInternalServerError
 	}
 
 	ingredientUpdated := s.IngredientDao.FindIngredientByOID(oid)
 
 	if ingredientUpdated == nil {
-		return http.StatusNotFound, nil
+		return http.StatusNotFound
 	}
 
-	return http.StatusOK, ingredientUpdated
+	return http.StatusOK
 }
 
-func (s *IngredientService) DeleteIngredient(r *http.Request) (int, *primitive.ObjectID) {
+func (s *IngredientService) DeleteIngredient(r *http.Request) int {
 	oid := core.ConvertHexToObjectId(mux.Vars(r)["id"])
 
 	if oid == nil {
-		return http.StatusBadRequest, nil
+		return http.StatusBadRequest
 	}
 
 	err := s.IngredientDao.DeleteIngredient(oid)
 
 	if err != nil {
-		return http.StatusInternalServerError, nil
+		return http.StatusInternalServerError
 	}
 
-	return http.StatusOK, oid
+	return http.StatusOK
 }
 
-func (s *IngredientService) ChangeIngredientPrice(r *http.Request) (int, *dto.IngredientDTO) {
+func (s *IngredientService) ChangeIngredientPrice(r *http.Request) int {
 	ingredientPackageId := mux.Vars(r)["id"]
 	ingredientPackageOid := core.ConvertHexToObjectId(ingredientPackageId)
 
 	if ingredientPackageOid == nil {
-		return http.StatusBadRequest, nil
+		return http.StatusBadRequest
 	}
 
 	ingredientPackagePrice := &dto.IngredientPackagePriceDTO{}
@@ -124,31 +113,31 @@ func (s *IngredientService) ChangeIngredientPrice(r *http.Request) (int, *dto.In
 	invalidBody := core.DecodeBody(r, ingredientPackagePrice)
 
 	if invalidBody {
-		return http.StatusBadRequest, nil
+		return http.StatusBadRequest
 	}
 
 	err := s.IngredientDao.ChangeIngredientPrice(ingredientPackageOid, ingredientPackagePrice)
 
 	if err != nil {
-		return http.StatusInternalServerError, nil
+		return http.StatusInternalServerError
 	}
 
 	ingredientUpdated := s.IngredientDao.FindIngredientByPackageId(ingredientPackageOid)
 
 	if ingredientUpdated == nil {
-		return http.StatusInternalServerError, nil
+		return http.StatusInternalServerError
 	}
 
 	recipes := s.RecipeDao.FindRecipesByPackageId(ingredientPackageOid)
 
 	if len(recipes) == 0 {
-		return http.StatusOK, ingredientUpdated
+		return http.StatusOK
 	}
 
 	err = s.RecipeIngredientDao.UpdateIngredientPackagePrice(ingredientPackageOid, ingredientPackagePrice.Price)
 
 	if err != nil {
-		return http.StatusInternalServerError, nil
+		return http.StatusInternalServerError
 	}
 
 	for i := 0; i < len(recipes); i++ {
@@ -166,7 +155,7 @@ func (s *IngredientService) ChangeIngredientPrice(r *http.Request) (int, *dto.In
 		}
 	}
 
-	return http.StatusOK, ingredientUpdated
+	return http.StatusOK
 }
 
 func validate(ingredient *dto.IngredientDTO, ingredientDetails *dto.IngredientDetailsDTO) error {

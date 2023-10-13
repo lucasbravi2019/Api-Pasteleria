@@ -1,10 +1,12 @@
 package core
 
-import "net/http"
+import (
+	"github.com/gin-gonic/gin"
+)
 
 type Route struct {
 	Path        string
-	HandlerFunc func(w http.ResponseWriter, r *http.Request)
+	HandlerFunc gin.HandlerFunc
 	Method      string
 }
 

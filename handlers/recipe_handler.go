@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/lucasbravi2019/pasteleria/core"
 	"github.com/lucasbravi2019/pasteleria/services"
 )
@@ -12,65 +13,66 @@ type RecipeHandler struct {
 }
 
 type RecipeHandlerInterface interface {
-	GetAllRecipes(w http.ResponseWriter, r *http.Request)
-	GetRecipe(w http.ResponseWriter, r *http.Request)
-	CreateRecipe(w http.ResponseWriter, r *http.Request)
-	UpdateRecipeName(w http.ResponseWriter, r *http.Request)
-	DeleteRecipe(w http.ResponseWriter, r *http.Request)
+	GetAllRecipes(ctx *gin.Context)
+	GetRecipe(ctx *gin.Context)
+	CreateRecipe(ctx *gin.Context)
+	UpdateRecipeName(ctx *gin.Context)
+	DeleteRecipe(ctx *gin.Context)
 	GetRecipeRoutes() core.Routes
 }
 
 var RecipeHandlerInstance *RecipeHandler
 
-func (h *RecipeHandler) GetAllRecipes(w http.ResponseWriter, r *http.Request) {
+func (h *RecipeHandler) GetAllRecipes(ctx *gin.Context) {
 	statusCode, body := h.Service.GetAllRecipes()
-	core.EncodeJsonResponse(w, statusCode, body)
+	core.EncodeJsonResponse(ctx.Writer, statusCode, body, nil)
 }
 
-func (h *RecipeHandler) GetRecipe(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.Service.GetRecipe(r)
-	core.EncodeJsonResponse(w, statusCode, body)
+func (h *RecipeHandler) GetRecipe(ctx *gin.Context) {
+	statusCode, body := h.Service.GetRecipe(ctx.Request)
+	core.EncodeJsonResponse(ctx.Writer, statusCode, body, nil)
 }
 
-func (h *RecipeHandler) CreateRecipe(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.Service.CreateRecipe(r)
-	core.EncodeJsonResponse(w, statusCode, body)
+func (h *RecipeHandler) CreateRecipe(ctx *gin.Context) {
+	err := h.Service.CreateRecipe(ctx.Request)
+	statusCode := http.StatusCreated
+	core.EncodeJsonResponse(ctx.Writer, statusCode, nil, err)
 }
 
-func (h *RecipeHandler) UpdateRecipeName(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.Service.UpdateRecipeName(r)
-	core.EncodeJsonResponse(w, statusCode, body)
+func (h *RecipeHandler) UpdateRecipeName(ctx *gin.Context) {
+	statusCode := h.Service.UpdateRecipeName(ctx.Request)
+	core.EncodeJsonResponse(ctx.Writer, statusCode, nil, nil)
 }
 
-func (h *RecipeHandler) DeleteRecipe(w http.ResponseWriter, r *http.Request) {
-	statusCode, body := h.Service.DeleteRecipe(r)
-	core.EncodeJsonResponse(w, statusCode, body)
+func (h *RecipeHandler) DeleteRecipe(ctx *gin.Context) {
+	statusCode := h.Service.DeleteRecipe(ctx.Request)
+	core.EncodeJsonResponse(ctx.Writer, statusCode, nil, nil)
 }
 
 func (h *RecipeHandler) GetRecipeRoutes() core.Routes {
 	return core.Routes{
 		core.Route{
-			Path:        "/recipes",
+			Path:        "recipes",
 			HandlerFunc: h.GetAllRecipes,
 			Method:      "GET",
 		},
 		core.Route{
-			Path:        "/recipes",
+			Path:        "recipes",
 			HandlerFunc: h.CreateRecipe,
 			Method:      "POST",
 		},
 		core.Route{
-			Path:        "/recipes/{id}",
+			Path:        "recipes/{id}",
 			HandlerFunc: h.UpdateRecipeName,
 			Method:      "PUT",
 		},
 		core.Route{
-			Path:        "/recipes/{id}",
+			Path:        "recipes/{id}",
 			HandlerFunc: h.GetRecipe,
 			Method:      "GET",
 		},
 		core.Route{
-			Path:        "/recipes/{id}",
+			Path:        "recipes/{id}",
 			HandlerFunc: h.DeleteRecipe,
 			Method:      "DELETE",
 		},

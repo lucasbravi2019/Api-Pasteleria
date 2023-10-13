@@ -1,8 +1,7 @@
 package handlers
 
 import (
-	"net/http"
-
+	"github.com/gin-gonic/gin"
 	"github.com/lucasbravi2019/pasteleria/core"
 	"github.com/lucasbravi2019/pasteleria/services"
 )
@@ -12,15 +11,15 @@ type RecipeIngredientHandler struct {
 }
 
 type RecipeIngredientHandlerInterface interface {
-	AddIngredientToRecipe(w http.ResponseWriter, r *http.Request)
+	AddIngredientToRecipe(ctx *gin.Context)
 	GetRecipeIngredientRoutes() core.Routes
 }
 
 var RecipeIngredientHandlerInstance *RecipeIngredientHandler
 
-func (h *RecipeIngredientHandler) AddIngredientToRecipe(w http.ResponseWriter, r *http.Request) {
-	statusCode := h.Service.AddIngredientToRecipe(r)
-	core.EncodeJsonResponse(w, statusCode, nil)
+func (h *RecipeIngredientHandler) AddIngredientToRecipe(ctx *gin.Context) {
+	statusCode := h.Service.AddIngredientToRecipe(ctx.Request)
+	core.EncodeJsonResponse(ctx.Writer, statusCode, nil, nil)
 }
 
 func (h *RecipeIngredientHandler) GetRecipeIngredientRoutes() core.Routes {
