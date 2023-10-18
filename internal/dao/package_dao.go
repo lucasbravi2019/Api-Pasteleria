@@ -7,6 +7,7 @@ import (
 	"github.com/lucasbravi2019/pasteleria/internal/dto"
 	"github.com/lucasbravi2019/pasteleria/internal/mapper"
 	"github.com/lucasbravi2019/pasteleria/internal/models"
+	"github.com/lucasbravi2019/pasteleria/pkg"
 )
 
 type PackageDao struct {
@@ -25,13 +26,13 @@ var PackageDaoInstance *PackageDao
 func (d *PackageDao) GetPackages() (*[]models.Package, error) {
 	query, err := db.GetQueryByName(db.Package_FindAll)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return nil, err
 	}
 
 	rows, err := d.DB.Query(query)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return nil, err
 	}
 
@@ -41,7 +42,7 @@ func (d *PackageDao) GetPackages() (*[]models.Package, error) {
 func (d *PackageDao) CreatePackage(body *dto.PackageDTO) error {
 	query, err := db.GetQueryByName(db.Package_Create)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return err
 	}
 	_, err = d.DB.Exec(query, body.Metric, body.Quantity)
@@ -52,7 +53,7 @@ func (d *PackageDao) CreatePackage(body *dto.PackageDTO) error {
 func (d *PackageDao) UpdatePackage(id *int64, body *dto.PackageDTO) error {
 	query, err := db.GetQueryByName(db.Package_UpdateById)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return err
 	}
 
@@ -64,7 +65,7 @@ func (d *PackageDao) UpdatePackage(id *int64, body *dto.PackageDTO) error {
 func (d *PackageDao) DeletePackage(id *int64) error {
 	query, err := db.GetQueryByName(db.Package_DeleteById)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return err
 	}
 

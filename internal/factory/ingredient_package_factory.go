@@ -20,7 +20,6 @@ func GetIngredientPackageServiceInstance() *services.IngredientPackageService {
 	if services.IngredientPackageServiceInstance == nil {
 		services.IngredientPackageServiceInstance = &services.IngredientPackageService{
 			IngredientPackageDao: *GetIngredientPackageDaoInstance(),
-			PackageDao:           *GetPackageDaoInstance(),
 		}
 	}
 	return services.IngredientPackageServiceInstance

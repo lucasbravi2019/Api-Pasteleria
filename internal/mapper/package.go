@@ -5,6 +5,7 @@ import (
 
 	"github.com/lucasbravi2019/pasteleria/internal/dto"
 	"github.com/lucasbravi2019/pasteleria/internal/models"
+	"github.com/lucasbravi2019/pasteleria/pkg"
 	"github.com/lucasbravi2019/pasteleria/pkg/util"
 )
 
@@ -18,7 +19,7 @@ func ToPackageList(rows *sql.Rows) (*[]models.Package, error) {
 
 		err := rows.Scan(&id, &metric, &quantity)
 
-		if err != nil {
+		if pkg.HasError(err) {
 			return nil, err
 		}
 

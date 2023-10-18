@@ -51,7 +51,7 @@ type XMLQuery struct {
 func GetQueryByName(queryName string) (string, error) {
 	query, err := findQueryByName(queryName)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return pkg.STRING_EMPTY, err
 	}
 
@@ -77,7 +77,7 @@ func findQueryByName(queryName string) (string, error) {
 func processXmlFile(filePath string) error {
 	file, err := os.Open(filePath)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return err
 	}
 
@@ -99,7 +99,7 @@ func processXmlFile(filePath string) error {
 func processXmlFileInDirectory(directoryPath string) error {
 	files, err := os.ReadDir(directoryPath)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return err
 	}
 

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -29,7 +30,7 @@ var RecipeServiceInstance *RecipeService
 func (s *RecipeService) GetAllRecipes() (int, *[]dto.RecipeDTO, error) {
 	recipes, err := s.RecipeDao.FindAllRecipes()
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return http.StatusInternalServerError, nil, err
 	}
 
@@ -41,18 +42,23 @@ func (s *RecipeService) GetAllRecipes() (int, *[]dto.RecipeDTO, error) {
 func (s *RecipeService) GetRecipe(ctx *gin.Context) (int, *dto.RecipeDTO, error) {
 	id, err := pkg.GetUrlVars(ctx, "id")
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return http.StatusBadRequest, nil, err
 	}
 	recipeId, err := util.ToLong(id)
-	if err != nil {
+
+	if pkg.HasError(err) {
 		return http.StatusInternalServerError, nil, err
 	}
 
 	recipe, err := s.RecipeDao.FindRecipeById(recipeId)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return http.StatusNotFound, nil, err
+	}
+
+	if recipe == nil {
+		return http.StatusNotFound, nil, fmt.Errorf("recipe not found for id: %d", recipeId)
 	}
 
 	dto := mapper.ToRecipeDTO(*recipe)
@@ -65,14 +71,14 @@ func (s *RecipeService) CreateRecipe(ctx *gin.Context) (int, interface{}, error)
 
 	err := pkg.DecodeBody(ctx, &recipeName)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		log.Println(err)
 		return http.StatusBadRequest, nil, err
 	}
 
 	err = s.RecipeDao.CreateRecipe(&recipeName)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return http.StatusInternalServerError, nil, err
 	}
 
@@ -82,13 +88,13 @@ func (s *RecipeService) CreateRecipe(ctx *gin.Context) (int, interface{}, error)
 func (s *RecipeService) UpdateRecipeName(ctx *gin.Context) (int, interface{}, error) {
 	id, err := pkg.GetUrlVars(ctx, "id")
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return http.StatusBadRequest, nil, err
 	}
 
 	recipeId, err := util.ToLong(id)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return http.StatusBadRequest, nil, err
 	}
 
@@ -96,13 +102,13 @@ func (s *RecipeService) UpdateRecipeName(ctx *gin.Context) (int, interface{}, er
 
 	err = pkg.DecodeBody(ctx, &recipeName)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return http.StatusInternalServerError, nil, err
 	}
 
 	err = s.RecipeDao.UpdateRecipeName(&recipeId, &recipeName)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return http.StatusInternalServerError, nil, err
 	}
 
@@ -112,19 +118,19 @@ func (s *RecipeService) UpdateRecipeName(ctx *gin.Context) (int, interface{}, er
 func (s *RecipeService) DeleteRecipe(ctx *gin.Context) (int, interface{}, error) {
 	id, err := pkg.GetUrlVars(ctx, "id")
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return http.StatusBadRequest, nil, err
 	}
 
 	recipeId, err := util.ToLong(id)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return http.StatusInternalServerError, nil, err
 	}
 
 	err = s.RecipeDao.DeleteRecipe(&recipeId)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return http.StatusInternalServerError, nil, err
 	}
 

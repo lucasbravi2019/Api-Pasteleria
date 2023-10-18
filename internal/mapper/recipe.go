@@ -6,6 +6,7 @@ import (
 
 	"github.com/lucasbravi2019/pasteleria/internal/dto"
 	"github.com/lucasbravi2019/pasteleria/internal/models"
+	"github.com/lucasbravi2019/pasteleria/pkg"
 	"github.com/lucasbravi2019/pasteleria/pkg/util"
 )
 
@@ -18,7 +19,7 @@ func ToRecipeList(rows *sql.Rows) *[]models.Recipe {
 
 		err := rows.Scan(&id, &name, &price)
 
-		if err != nil {
+		if pkg.HasError(err) {
 			log.Println(err)
 			return nil
 		}
@@ -42,7 +43,7 @@ func ToRecipe(row *sql.Row) *models.Recipe {
 
 	err := row.Scan(&id, &name, &price)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		log.Println(err)
 		return nil
 	}

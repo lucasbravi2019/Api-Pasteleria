@@ -2,7 +2,6 @@ package dto
 
 import (
 	"github.com/lucasbravi2019/pasteleria/pkg/util"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type IngredientNameDTO struct {
@@ -15,21 +14,12 @@ type IngredientDTO struct {
 	Packages []PackageDTO `json:"packages,omitempty"`
 }
 
-type IngredientPackagePriceDTO struct {
-	Price float64 `json:"price" validate:"required"`
-}
-
 type RecipeIngredientDTO struct {
-	ID       primitive.ObjectID
+	Id       int64
 	Name     string
 	Price    float64
 	Package  PackageDTO
 	Quantity float64
-}
-
-type IngredientDetailsDTO struct {
-	Metric   string  `json:"metric,omitempty"`
-	Quantity float32 `json:"quantity,omitempty"`
 }
 
 func NewIngredientDTO(id int64, name string) *IngredientDTO {
@@ -44,4 +34,24 @@ func (i *IngredientDTO) AddPackage(pkg *PackageDTO) {
 	if pkg != nil {
 		util.Add(&i.Packages, *pkg)
 	}
+}
+
+func (r *RecipeIngredientDTO) NewRecipeIngredientDTO(id int64, name string, quantity float64, pkg PackageDTO) *RecipeIngredientDTO {
+	recipeIngredient := &RecipeIngredientDTO{
+		Id:       id,
+		Name:     name,
+		Quantity: quantity,
+		Package:  pkg,
+	}
+
+	recipeIngredient.UpdatePrice()
+	return recipeIngredient
+}
+
+func (r *RecipeIngredientDTO) UpdatePrice() {
+	packageQuantity := r.Package.Quantity
+	price := r.Package.Price
+	recipeQuantity := r.Quantity
+
+	r.Price = recipeQuantity / packageQuantity * price
 }

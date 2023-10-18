@@ -19,9 +19,7 @@ func GetIngredientHandlerInstance() *api.IngredientHandler {
 func GetIngredientServiceInstance() *services.IngredientService {
 	if services.IngredientServiceInstance == nil {
 		services.IngredientServiceInstance = &services.IngredientService{
-			IngredientDao:       *GetIngredientDaoInstance(),
-			RecipeDao:           *GetRecipeDaoInstance(),
-			RecipeIngredientDao: *GetRecipeIngredientDaoInstance(),
+			IngredientDao: *GetIngredientDaoInstance(),
 		}
 	}
 	return services.IngredientServiceInstance

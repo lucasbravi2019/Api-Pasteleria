@@ -7,6 +7,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/lucasbravi2019/pasteleria/db"
+	"github.com/lucasbravi2019/pasteleria/pkg"
 )
 
 type XMLTables struct {
@@ -25,7 +26,7 @@ const PATH = "cmd/migration/tables.xml"
 func MigrationLoader() {
 	err := godotenv.Load()
 
-	if err != nil {
+	if pkg.HasError(err) {
 		log.Fatal(err)
 	}
 
@@ -37,7 +38,7 @@ func MigrationLoader() {
 func processXmlFile(filePath string) error {
 	file, err := os.Open(filePath)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return err
 	}
 
@@ -52,7 +53,7 @@ func processXmlFile(filePath string) error {
 	db := db.GetDatabaseConnection()
 	for _, table := range xmlTables.List {
 		_, err := db.Exec(table.SQL)
-		if err != nil {
+		if pkg.HasError(err) {
 			log.Fatal(err)
 		}
 	}

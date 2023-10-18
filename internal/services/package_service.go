@@ -12,10 +12,7 @@ import (
 )
 
 type PackageService struct {
-	PackageDao           dao.PackageDao
-	IngredientPackageDao dao.IngredientPackageDao
-	RecipeDao            dao.RecipeDao
-	RecipeIngredientDao  dao.RecipeIngredientDao
+	PackageDao dao.PackageDao
 }
 
 type PackageServiceInterface interface {
@@ -30,7 +27,7 @@ var PackageServiceInstance *PackageService
 func (s *PackageService) GetPackages() (int, *[]dto.PackageDTO, error) {
 	packages, err := s.PackageDao.GetPackages()
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return http.StatusInternalServerError, nil, err
 	}
 
@@ -44,13 +41,13 @@ func (s *PackageService) CreatePackage(ctx *gin.Context) (int, interface{}, erro
 
 	err := pkg.DecodeBody(ctx, &body)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return http.StatusBadRequest, nil, err
 	}
 
 	err = s.PackageDao.CreatePackage(&body)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return http.StatusInternalServerError, nil, err
 	}
 
@@ -60,13 +57,13 @@ func (s *PackageService) CreatePackage(ctx *gin.Context) (int, interface{}, erro
 func (s *PackageService) UpdatePackage(ctx *gin.Context) (int, interface{}, error) {
 	id, err := pkg.GetUrlVars(ctx, "id")
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return http.StatusBadRequest, nil, err
 	}
 
 	packageId, err := util.ToLong(id)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return http.StatusBadRequest, nil, err
 	}
 
@@ -74,13 +71,13 @@ func (s *PackageService) UpdatePackage(ctx *gin.Context) (int, interface{}, erro
 
 	err = pkg.DecodeBody(ctx, &body)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return http.StatusBadRequest, nil, err
 	}
 
 	err = s.PackageDao.UpdatePackage(&packageId, &body)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return http.StatusInternalServerError, nil, err
 	}
 
@@ -90,19 +87,19 @@ func (s *PackageService) UpdatePackage(ctx *gin.Context) (int, interface{}, erro
 func (s *PackageService) DeletePackage(ctx *gin.Context) (int, interface{}, error) {
 	id, err := pkg.GetUrlVars(ctx, "id")
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return http.StatusBadRequest, nil, err
 	}
 
 	packageId, err := util.ToLong(id)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return http.StatusBadRequest, nil, err
 	}
 
 	err = s.PackageDao.DeletePackage(&packageId)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return http.StatusInternalServerError, nil, err
 	}
 

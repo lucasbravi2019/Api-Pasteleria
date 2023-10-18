@@ -12,7 +12,7 @@ type Response struct {
 func EncodeJsonResponse(c *gin.Context, statusCode int, body interface{}, err error) {
 	response := &Response{}
 
-	if err != nil {
+	if HasError(err) {
 		response.Error = err.Error()
 		c.JSON(statusCode, response)
 		return

@@ -15,7 +15,6 @@ type IngredientHandlerInterface interface {
 	CreateIngredient(ctx *gin.Context)
 	UpdateIngredient(ctx *gin.Context)
 	DeleteIngredient(ctx *gin.Context)
-	ChangeIngredientPrice(ctx *gin.Context)
 	GetIngredientRoutes() pkg.Routes
 }
 
@@ -41,11 +40,6 @@ func (h *IngredientHandler) DeleteIngredient(ctx *gin.Context) {
 	pkg.EncodeJsonResponse(ctx, statusCode, body, err)
 }
 
-func (h *IngredientHandler) ChangeIngredientPrice(ctx *gin.Context) {
-	statusCode, body, err := h.Service.ChangeIngredientPrice(ctx)
-	pkg.EncodeJsonResponse(ctx, statusCode, body, err)
-}
-
 func (h *IngredientHandler) GetIngredientRoutes() pkg.Routes {
 	return pkg.Routes{
 		pkg.Route{
@@ -61,11 +55,6 @@ func (h *IngredientHandler) GetIngredientRoutes() pkg.Routes {
 		pkg.Route{
 			Path:        "/ingredients/:id",
 			HandlerFunc: h.UpdateIngredient,
-			Method:      "PUT",
-		},
-		pkg.Route{
-			Path:        "/ingredients/:id/price",
-			HandlerFunc: h.ChangeIngredientPrice,
 			Method:      "PUT",
 		},
 		pkg.Route{

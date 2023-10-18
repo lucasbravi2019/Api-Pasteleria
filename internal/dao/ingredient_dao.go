@@ -1,15 +1,13 @@
 package dao
 
 import (
-	"context"
 	"database/sql"
 	"log"
-	"time"
 
 	"github.com/lucasbravi2019/pasteleria/db"
 	"github.com/lucasbravi2019/pasteleria/internal/dto"
 	"github.com/lucasbravi2019/pasteleria/internal/mapper"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"github.com/lucasbravi2019/pasteleria/pkg"
 )
 
 type IngredientDao struct {
@@ -22,7 +20,6 @@ type IngredientDaoInterface interface {
 	CreateIngredient(ingredientName *dto.IngredientNameDTO) error
 	UpdateIngredient(id *int64, dto *dto.IngredientNameDTO) error
 	DeleteIngredient(id *int64) error
-	ChangeIngredientPrice(packageId *int64, priceDTO *dto.IngredientPackagePriceDTO) error
 }
 
 var IngredientDaoInstance *IngredientDao
@@ -30,25 +27,25 @@ var IngredientDaoInstance *IngredientDao
 func (d *IngredientDao) GetAllIngredients() (*[]dto.IngredientDTO, error) {
 	query, err := db.GetQueryByName(db.Ingredient_FindAll)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return nil, err
 	}
 
 	rows, err := d.DB.Query(query)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		log.Println(err.Error())
 	}
 
 	ingredients, err := mapper.ToIngredientList(rows)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return nil, err
 	}
 
 	dtos, err := mapper.ToIngredientDTOList(*ingredients)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return nil, err
 	}
 
@@ -58,7 +55,7 @@ func (d *IngredientDao) GetAllIngredients() (*[]dto.IngredientDTO, error) {
 func (d *IngredientDao) CreateIngredient(ingredientName *dto.IngredientNameDTO) error {
 	query, err := db.GetQueryByName(db.Ingredient_Create)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return err
 	}
 	_, err = d.DB.Exec(query, ingredientName.Name)
@@ -69,7 +66,7 @@ func (d *IngredientDao) CreateIngredient(ingredientName *dto.IngredientNameDTO) 
 func (d *IngredientDao) UpdateIngredient(id int64, dto *dto.IngredientNameDTO) error {
 	query, err := db.GetQueryByName(db.Ingredient_UpdateById)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return err
 	}
 
@@ -81,26 +78,11 @@ func (d *IngredientDao) UpdateIngredient(id int64, dto *dto.IngredientNameDTO) e
 func (d *IngredientDao) DeleteIngredient(id *int64) error {
 	query, err := db.GetQueryByName(db.Ingredient_DeleteById)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return err
 	}
 
 	_, err = d.DB.Exec(query, id)
 
 	return err
-}
-
-func (d *IngredientDao) ChangeIngredientPrice(packageOid *primitive.ObjectID, priceDTO *dto.IngredientPackagePriceDTO) error {
-
-	_, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
-	defer cancel()
-
-	_, err := d.DB.Query("")
-
-	if err != nil {
-		log.Println(err.Error())
-		return err
-	}
-
-	return nil
 }

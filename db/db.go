@@ -7,6 +7,7 @@ import (
 	"database/sql"
 
 	_ "github.com/denisenkom/go-mssqldb"
+	"github.com/lucasbravi2019/pasteleria/pkg"
 )
 
 var databaseConnection *sql.DB
@@ -20,7 +21,7 @@ func GetDatabaseConnection() *sql.DB {
 
 	db, err := sql.Open("sqlserver", connString)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		log.Fatal(err)
 	}
 

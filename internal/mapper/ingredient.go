@@ -5,6 +5,7 @@ import (
 
 	"github.com/lucasbravi2019/pasteleria/internal/dto"
 	"github.com/lucasbravi2019/pasteleria/internal/models"
+	"github.com/lucasbravi2019/pasteleria/pkg"
 	"github.com/lucasbravi2019/pasteleria/pkg/util"
 )
 
@@ -17,7 +18,7 @@ func ToIngredientList(rows *sql.Rows) (*[]models.Ingredient, error) {
 
 		err := rows.Scan(&id, &name)
 
-		if err != nil {
+		if pkg.HasError(err) {
 			return nil, err
 		}
 
@@ -54,7 +55,7 @@ func ToIngredientPackageDTOList(rows *sql.Rows) (*[]dto.IngredientDTO, error) {
 
 		err := rows.Scan(&id, &name, &packageId, &price, &metric, &quantity)
 
-		if err != nil {
+		if pkg.HasError(err) {
 			return nil, err
 		}
 

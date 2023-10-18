@@ -7,6 +7,7 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
+	"github.com/lucasbravi2019/pasteleria/pkg"
 )
 
 func RequestLoggerMiddleware() gin.HandlerFunc {
@@ -14,13 +15,13 @@ func RequestLoggerMiddleware() gin.HandlerFunc {
 		var jsonRequest *json.RawMessage = &json.RawMessage{}
 
 		err := json.NewDecoder(c.Request.Body).Decode(jsonRequest)
-		if err != nil && err.Error() != "EOF" {
+		if pkg.HasError(err) && err.Error() != "EOF" {
 			log.Println(err.Error())
 		}
 		c.Request.Body.Close()
 
 		body, err := jsonRequest.MarshalJSON()
-		if err != nil {
+		if pkg.HasError(err) {
 			log.Println(err)
 		}
 

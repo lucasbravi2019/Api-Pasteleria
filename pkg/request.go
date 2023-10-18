@@ -10,7 +10,7 @@ import (
 
 func DecodeBody(c *gin.Context, storeVar any) error {
 	err := json.NewDecoder(c.Request.Body).Decode(&storeVar)
-	if err != nil {
+	if HasError(err) {
 		log.Println(err.Error())
 		return err
 	}

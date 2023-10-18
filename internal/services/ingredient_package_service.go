@@ -10,44 +10,31 @@ import (
 )
 
 type IngredientPackageService struct {
-	PackageDao           dao.PackageDao
 	IngredientPackageDao dao.IngredientPackageDao
 }
 
 type IngredientPackageServiceInterface interface {
-	AddPackageToIngredient(ctx *gin.Context) (int, interface{}, error)
-	RemovePackageFromIngredients(ctx *gin.Context) (int, interface{}, error)
 	FindAllIngredientPackages(ctx *gin.Context) (int, interface{}, error)
 }
 
 var IngredientPackageServiceInstance *IngredientPackageService
 
-func (s *IngredientPackageService) AddPackageToIngredient(ctx *gin.Context) (int, interface{}, error) {
-
-	return http.StatusOK, nil, nil
-}
-
-func (s *IngredientPackageService) RemovePackageFromIngredients(ctx *gin.Context) (int, interface{}, error) {
-
-	return http.StatusOK, nil, nil
-}
-
 func (s *IngredientPackageService) FindAllIngredientPackages(ctx *gin.Context) (int, interface{}, error) {
 	id, err := pkg.GetUrlVars(ctx, "id")
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return http.StatusBadRequest, nil, err
 	}
 
 	ingredientId, err := util.ToLong(id)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return http.StatusBadRequest, nil, err
 	}
 
 	ingredientPackages, err := s.IngredientPackageDao.FindAllIngredientPackages(ingredientId)
 
-	if err != nil {
+	if pkg.HasError(err) {
 		return http.StatusInternalServerError, nil, err
 	}
 
