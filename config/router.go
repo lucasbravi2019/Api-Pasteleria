@@ -34,7 +34,7 @@ func StartApi() {
 	RegisterRoutes(factory.GetIngredientHandlerInstance().GetIngredientRoutes())
 	RegisterRoutes(factory.GetPackageHandlerInstance().GetPackageRoutes())
 	RegisterRoutes(factory.GetIngredientPackageHandlerInstance().GetIngredientPackageRoutes())
-	RegisterRoutes(factory.GetRecipeIngredientHandlerInstance().GetRecipeIngredientRoutes())
+	// RegisterRoutes(factory.GetRecipeIngredientHandlerInstance().GetRecipeIngredientRoutes())
 
 	r := GetRouter()
 	r.Use(cors.New(cors.Config{

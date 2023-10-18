@@ -8,7 +8,6 @@ import (
 
 	"github.com/lucasbravi2019/pasteleria/internal/dto"
 	"github.com/lucasbravi2019/pasteleria/internal/models"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type RecipeIngredientDao struct {
@@ -16,16 +15,16 @@ type RecipeIngredientDao struct {
 }
 
 type RecipeIngredientDaoInterface interface {
-	AddIngredientToRecipe(oid *primitive.ObjectID, recipe *models.RecipeIngredient) error
-	RemoveIngredientFromRecipe(oid *primitive.ObjectID, recipe *models.Recipe) error
-	RemoveIngredientByPackageId(packageId *primitive.ObjectID) error
-	UpdateIngredientPackagePrice(packageId *primitive.ObjectID, price float64) error
-	UpdateIngredientsPrice(packageId *primitive.ObjectID, recipe dto.RecipeDTO) error
+	AddIngredientToRecipe(oid *int64, recipe *models.RecipeIngredient) error
+	RemoveIngredientFromRecipe(oid *int64, recipe *models.Recipe) error
+	RemoveIngredientByPackageId(packageId *int64) error
+	UpdateIngredientPackagePrice(packageId *int64, price float64) error
+	UpdateIngredientsPrice(packageId *int64, recipe dto.RecipeDTO) error
 }
 
 var RecipeIngredientDaoInstance *RecipeIngredientDao
 
-func (d *RecipeIngredientDao) AddIngredientToRecipe(oid *primitive.ObjectID, recipe *models.RecipeIngredient) error {
+func (d *RecipeIngredientDao) AddIngredientToRecipe(oid *int64, recipe *models.RecipeIngredient) error {
 	_, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -38,7 +37,7 @@ func (d *RecipeIngredientDao) AddIngredientToRecipe(oid *primitive.ObjectID, rec
 	return err
 }
 
-func (d *RecipeIngredientDao) RemoveIngredientFromRecipe(oid *primitive.ObjectID, recipe *models.RecipeIngredient) error {
+func (d *RecipeIngredientDao) RemoveIngredientFromRecipe(oid *int64, recipe *models.RecipeIngredient) error {
 	_, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -51,7 +50,7 @@ func (d *RecipeIngredientDao) RemoveIngredientFromRecipe(oid *primitive.ObjectID
 	return err
 }
 
-func (d *RecipeIngredientDao) RemoveIngredientByPackageId(packageId *primitive.ObjectID) error {
+func (d *RecipeIngredientDao) RemoveIngredientByPackageId(packageId *int64) error {
 	_, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
 	defer cancel()
 
@@ -64,7 +63,7 @@ func (d *RecipeIngredientDao) RemoveIngredientByPackageId(packageId *primitive.O
 	return err
 }
 
-func (d *RecipeIngredientDao) UpdateIngredientPackagePrice(packageId *primitive.ObjectID, price float64) error {
+func (d *RecipeIngredientDao) UpdateIngredientPackagePrice(packageId *int64, price float64) error {
 	_, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -77,7 +76,7 @@ func (d *RecipeIngredientDao) UpdateIngredientPackagePrice(packageId *primitive.
 	return err
 }
 
-func (d *RecipeIngredientDao) UpdateIngredientsPrice(packageId *primitive.ObjectID, recipe dto.RecipeDTO) error {
+func (d *RecipeIngredientDao) UpdateIngredientsPrice(packageId *int64, recipe dto.RecipeDTO) error {
 	_, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 

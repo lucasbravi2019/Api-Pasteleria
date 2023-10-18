@@ -15,17 +15,6 @@ type IngredientsDTO struct {
 	Quantity float64    `json:"quantity"`
 }
 
-type PackageDTO struct {
-	ID       int     `json:"id,omitempty"`
-	Metric   string  `json:"metric,omitempty"`
-	Quantity float64 `json:"quantity,omitempty"`
-	Price    float64 `json:"price,omitempty"`
-}
-
 type RecipeNameDTO struct {
 	Name string `json:"name" validate:"required"`
-}
-
-type RecipeIdDTO struct {
-	ID string `json:"id" validate:"required"`
 }

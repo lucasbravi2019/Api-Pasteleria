@@ -9,6 +9,5 @@ migrate:
 	.\bin\migrate
 
 drop:
-	go build -o bin/drop cmd/drop/main.go
-	copy cmd\drop\tables_drop.xml bin\tables_drop.xml
-	./bin/drop
+	go build -o bin/drop.exe cmd/drop/main.go
+	.\bin\drop

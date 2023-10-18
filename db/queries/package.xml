@@ -1,0 +1,17 @@
+<queries>
+    <query id="package.findAll">
+        select * from package
+    </query>
+    <query id="package.findById">
+        select * from package where id = @p1
+    </query>
+    <query id="package.create">
+        insert into package (metric, quantity) values (@p1, @p2) 
+    </query>
+    <query id="package.updateById">
+        update package set metric = @p1, quantity = @p2 where id = @p3
+    </query>
+    <query id="package.deleteById">
+        delete from package where id = @p1
+    </query>
+</queries>

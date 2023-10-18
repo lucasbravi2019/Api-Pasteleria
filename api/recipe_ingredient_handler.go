@@ -25,7 +25,7 @@ func (h *RecipeIngredientHandler) AddIngredientToRecipe(ctx *gin.Context) {
 func (h *RecipeIngredientHandler) GetRecipeIngredientRoutes() pkg.Routes {
 	return pkg.Routes{
 		pkg.Route{
-			Path:        "/ingredients/:ingredientId/recipes/:recipeId",
+			Path:        "/ingredients/:id/recipes/:recipeId",
 			HandlerFunc: h.AddIngredientToRecipe,
 			Method:      "PUT",
 		},

@@ -12,11 +12,25 @@ import (
 )
 
 var (
-	Recipe_FindAll    = "recipe.findAll"
-	Recipe_FindById   = "recipe.findById"
-	Recipe_Create     = "recipe.create"
-	Recipe_UpdateName = "recipe.updateName"
-	Recipe_DeleteById = "recipe.deleteById"
+	Recipe_FindAll                       = "recipe.findAll"
+	Recipe_FindById                      = "recipe.findById"
+	Recipe_Create                        = "recipe.create"
+	Recipe_UpdateName                    = "recipe.updateName"
+	Recipe_DeleteById                    = "recipe.deleteById"
+	Ingredient_FindAll                   = "ingredient.findAll"
+	Ingredient_FindById                  = "ingredient.findById"
+	Ingredient_Create                    = "ingredient.create"
+	Ingredient_UpdateById                = "ingredient.updateById"
+	Ingredient_DeleteById                = "ingredient.deleteById"
+	Ingredient_AddPackage                = "ingredient.addPackage"
+	Ingredient_UpdatePackage             = "ingredient.updatePackage"
+	Ingredient_DeletePackage             = "ingredient.deletePackage"
+	Ingredient_FindAllIngredientPackages = "ingredient.findAllIngredientPackages"
+	Package_FindAll                      = "package.findAll"
+	Package_FindById                     = "package.findById"
+	Package_Create                       = "package.create"
+	Package_UpdateById                   = "package.updateById"
+	Package_DeleteById                   = "package.deleteById"
 )
 
 const QUERIES_PATH = "db/queries"
@@ -34,14 +48,14 @@ type XMLQuery struct {
 	SQL     string   `xml:",chardata"`
 }
 
-func GetQueryByName(queryName string) string {
+func GetQueryByName(queryName string) (string, error) {
 	query, err := findQueryByName(queryName)
 
 	if err != nil {
-		return pkg.STRING_EMPTY
+		return pkg.STRING_EMPTY, err
 	}
 
-	return strings.TrimSpace(query)
+	return strings.TrimSpace(query), nil
 }
 
 func QueryLoader() {
@@ -57,7 +71,7 @@ func findQueryByName(queryName string) (string, error) {
 		return pkg.STRING_EMPTY, errors.New("query not found")
 	}
 
-	return queries[queryName], nil
+	return query, nil
 }
 
 func processXmlFile(filePath string) error {

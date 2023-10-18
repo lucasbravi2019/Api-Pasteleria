@@ -1,14 +1,12 @@
 package dao
 
 import (
-	"context"
 	"database/sql"
-	"log"
-	"time"
 
+	"github.com/lucasbravi2019/pasteleria/db"
+	"github.com/lucasbravi2019/pasteleria/internal/dto"
 	"github.com/lucasbravi2019/pasteleria/internal/mapper"
 	"github.com/lucasbravi2019/pasteleria/internal/models"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type PackageDao struct {
@@ -17,78 +15,60 @@ type PackageDao struct {
 
 type PackageDaoInterface interface {
 	GetPackages() (*[]models.Package, error)
-	GetPackageById(oid *primitive.ObjectID) (*models.Package, error)
-	CreatePackage(body *models.Package) (*primitive.ObjectID, error)
-	UpdatePackage(oid *primitive.ObjectID, body *models.Package) error
-	DeletePackage(oid *primitive.ObjectID) error
+	CreatePackage(body *dto.PackageDTO) (*int64, error)
+	UpdatePackage(id *int64, body *models.Package) error
+	DeletePackage(id *int64) error
 }
 
 var PackageDaoInstance *PackageDao
 
-func (d *PackageDao) GetPackages() *[]models.Package {
-	_, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
-
-	defer cancel()
-
-	rows, err := d.DB.Query("")
+func (d *PackageDao) GetPackages() (*[]models.Package, error) {
+	query, err := db.GetQueryByName(db.Package_FindAll)
 
 	if err != nil {
-		log.Println(err.Error())
-		return nil
+		return nil, err
+	}
+
+	rows, err := d.DB.Query(query)
+
+	if err != nil {
+		return nil, err
 	}
 
 	return mapper.ToPackageList(rows)
 }
 
-func (d *PackageDao) CreatePackage(body *models.Package) {
-	_, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
-
-	defer cancel()
-
-	_, err := d.DB.Query("")
+func (d *PackageDao) CreatePackage(body *dto.PackageDTO) error {
+	query, err := db.GetQueryByName(db.Package_Create)
 
 	if err != nil {
-		log.Println(err.Error())
+		return err
 	}
-}
-
-func (d *PackageDao) UpdatePackage(oid *primitive.ObjectID, body *models.Package) error {
-	_, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
-
-	defer cancel()
-
-	_, err := d.DB.Query("")
-
-	if err != nil {
-		log.Println(err.Error())
-	}
+	_, err = d.DB.Exec(query, body.Metric, body.Quantity)
 
 	return err
 }
 
-func (d *PackageDao) DeletePackage(oid *primitive.ObjectID) error {
-	_, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
-
-	defer cancel()
-
-	_, err := d.DB.Query("")
+func (d *PackageDao) UpdatePackage(id *int64, body *dto.PackageDTO) error {
+	query, err := db.GetQueryByName(db.Package_UpdateById)
 
 	if err != nil {
-		log.Println(err.Error())
+		return err
 	}
+
+	_, err = d.DB.Exec(query, body.Metric, body.Quantity, id)
 
 	return err
 }
 
-func (d *PackageDao) GetPackageById(oid *primitive.ObjectID) *models.Package {
-	_, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
-	defer cancel()
+func (d *PackageDao) DeletePackage(id *int64) error {
+	query, err := db.GetQueryByName(db.Package_DeleteById)
 
-	rows, err := d.DB.Query("")
 	if err != nil {
-		log.Println(err.Error())
-		return nil
+		return err
 	}
 
-	return mapper.ToPackage(rows)
+	_, err = d.DB.Exec(query, id)
+
+	return err
 }

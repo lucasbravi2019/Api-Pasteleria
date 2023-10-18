@@ -6,6 +6,7 @@
         create table package (
             id bigint not null identity,
             metric varchar(10) not null,
+            quantity decimal not null,
             primary key (id)
         )
     </table>
@@ -21,7 +22,6 @@
             id bigint not null identity,
             package_id bigint not null foreign key references package(id),
             ingredient_id bigint not null foreign key references ingredient(id),
-            quantity decimal not null,
             price decimal,
             primary key (id)
         )
@@ -39,7 +39,7 @@
             id bigint not null identity,
             recipe_id bigint not null foreign key references recipe(id),    
             ingredient_id bigint not null foreign key references ingredient_package(id),
-            quantity decimal not null,
+            quantity_used decimal not null,
             price decimal not null,
             primary key (id)
         )

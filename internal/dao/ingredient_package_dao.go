@@ -6,9 +6,10 @@ import (
 	"log"
 	"time"
 
+	"github.com/lucasbravi2019/pasteleria/db"
 	"github.com/lucasbravi2019/pasteleria/internal/dto"
+	"github.com/lucasbravi2019/pasteleria/internal/mapper"
 	"github.com/lucasbravi2019/pasteleria/internal/models"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type IngredientPackageDao struct {
@@ -16,13 +17,14 @@ type IngredientPackageDao struct {
 }
 
 type IngredientPackageDaoInterface interface {
-	UpdateIngredientPackagePrice(packageId *primitive.ObjectID, price float64) error
-	AddPackageToIngredient(ingredientOid *primitive.ObjectID, packageOid *primitive.ObjectID, envase *models.IngredientPackage) error
+	UpdateIngredientPackagePrice(packageId *int64, price float64) error
+	AddPackageToIngredient(ingredientId *int64, packageId *int64, envase *models.IngredientPackage) error
+	FindAllIngredientPackages() (*[]dto.IngredientDTO, error)
 }
 
 var IngredientPackageDaoInstance *IngredientPackageDao
 
-func (d *IngredientPackageDao) AddPackageToIngredient(ingredientOid *primitive.ObjectID, packageOid *primitive.ObjectID, envase *models.IngredientPackage) error {
+func (d *IngredientPackageDao) AddPackageToIngredient(ingredientId *int64, packageId *int64, envase *models.IngredientPackage) error {
 	_, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
 	defer cancel()
 
@@ -35,7 +37,7 @@ func (d *IngredientPackageDao) AddPackageToIngredient(ingredientOid *primitive.O
 	return err
 }
 
-func (d *IngredientPackageDao) RemovePackageFromIngredients(dto dto.IngredientPackageDTO) error {
+func (d *IngredientPackageDao) RemovePackageFromIngredients(dto dto.IngredientDTO) error {
 	_, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
 	defer cancel()
 
@@ -46,4 +48,26 @@ func (d *IngredientPackageDao) RemovePackageFromIngredients(dto dto.IngredientPa
 	}
 
 	return err
+}
+
+func (d *IngredientPackageDao) FindAllIngredientPackages(id int64) (*[]dto.IngredientDTO, error) {
+	query, err := db.GetQueryByName(db.Ingredient_FindAllIngredientPackages)
+
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := d.DB.Query(query, id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	dtos, err := mapper.ToIngredientPackageDTOList(rows)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return dtos, nil
 }

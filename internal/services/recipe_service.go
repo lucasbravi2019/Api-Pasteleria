@@ -27,7 +27,11 @@ type RecipeServiceInterface interface {
 var RecipeServiceInstance *RecipeService
 
 func (s *RecipeService) GetAllRecipes() (int, *[]dto.RecipeDTO, error) {
-	recipes := s.RecipeDao.FindAllRecipes()
+	recipes, err := s.RecipeDao.FindAllRecipes()
+
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	}
 
 	dtos := mapper.ToRecipeDTOList(recipes)
 
@@ -45,7 +49,11 @@ func (s *RecipeService) GetRecipe(ctx *gin.Context) (int, *dto.RecipeDTO, error)
 		return http.StatusInternalServerError, nil, err
 	}
 
-	recipe := s.RecipeDao.FindRecipeById(recipeId)
+	recipe, err := s.RecipeDao.FindRecipeById(recipeId)
+
+	if err != nil {
+		return http.StatusNotFound, nil, err
+	}
 
 	dto := mapper.ToRecipeDTO(*recipe)
 

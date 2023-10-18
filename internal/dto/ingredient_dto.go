@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"github.com/lucasbravi2019/pasteleria/pkg/util"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -9,15 +10,9 @@ type IngredientNameDTO struct {
 }
 
 type IngredientDTO struct {
-	ID       primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
-	Name     string             `bson:"name,omitempty" json:"name,omitempty" validate:"required"`
-	Packages []PackageDTO       `bson:"packages,omitempty" json:"packages,omitempty"`
-}
-
-type IngredientPackageDTO struct {
-	IngredientOid primitive.ObjectID
-	PackageOid    primitive.ObjectID
-	Price         float64
+	Id       int64        `json:"id,omitempty"`
+	Name     string       `json:"name,omitempty" validate:"required"`
+	Packages []PackageDTO `json:"packages,omitempty"`
 }
 
 type IngredientPackagePriceDTO struct {
@@ -25,14 +20,28 @@ type IngredientPackagePriceDTO struct {
 }
 
 type RecipeIngredientDTO struct {
-	ID       primitive.ObjectID `bson:"_id" json:"id"`
-	Name     string             `json:"name"`
-	Price    float64            `json:"price"`
-	Package  PackageDTO         `json:"package"`
-	Quantity float64            `json:"quantity"`
+	ID       primitive.ObjectID
+	Name     string
+	Price    float64
+	Package  PackageDTO
+	Quantity float64
 }
 
 type IngredientDetailsDTO struct {
 	Metric   string  `json:"metric,omitempty"`
 	Quantity float32 `json:"quantity,omitempty"`
+}
+
+func NewIngredientDTO(id int64, name string) *IngredientDTO {
+	return &IngredientDTO{
+		Id:       id,
+		Name:     name,
+		Packages: util.NewList[PackageDTO](),
+	}
+}
+
+func (i *IngredientDTO) AddPackage(pkg *PackageDTO) {
+	if pkg != nil {
+		util.Add(&i.Packages, *pkg)
+	}
 }

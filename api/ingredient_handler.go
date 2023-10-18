@@ -59,17 +59,17 @@ func (h *IngredientHandler) GetIngredientRoutes() pkg.Routes {
 			Method:      "POST",
 		},
 		pkg.Route{
-			Path:        "/ingredients/:ingredientId",
+			Path:        "/ingredients/:id",
 			HandlerFunc: h.UpdateIngredient,
 			Method:      "PUT",
 		},
 		pkg.Route{
-			Path:        "/ingredients/:ingredientId/price",
+			Path:        "/ingredients/:id/price",
 			HandlerFunc: h.ChangeIngredientPrice,
 			Method:      "PUT",
 		},
 		pkg.Route{
-			Path:        "/ingredients/:ingredientId",
+			Path:        "/ingredients/:id",
 			HandlerFunc: h.DeleteIngredient,
 			Method:      "DELETE",
 		},
