@@ -53,7 +53,7 @@ func (h *IngredientHandler) GetIngredientRoutes() pkg.Routes {
 			Method:      "POST",
 		},
 		pkg.Route{
-			Path:        "/ingredients/:id",
+			Path:        "/ingredients",
 			HandlerFunc: h.UpdateIngredient,
 			Method:      "PUT",
 		},

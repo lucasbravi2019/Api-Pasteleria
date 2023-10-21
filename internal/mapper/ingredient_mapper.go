@@ -59,7 +59,7 @@ func ToIngredientPackageDTOList(rows *sql.Rows) (*[]dto.IngredientDTO, error) {
 			return nil, err
 		}
 
-		pkg := dto.NewPackageDTO(packageId, metric, quantity).SetPrice(price)
+		pkg := dto.NewPackageDTO(packageId, metric, quantity, price)
 
 		ingredientExisting := util.GetValue(ingredientsById, id)
 

@@ -32,14 +32,14 @@ func ToPackageList(rows *sql.Rows) (*[]models.Package, error) {
 }
 
 func ToPackageDTO(pkg *models.Package) *dto.PackageDTO {
-	return dto.NewPackageDTO(pkg.Id, pkg.Metric, pkg.Quantity)
+	return dto.NewPackageDTO(pkg.Id, pkg.Metric, pkg.Quantity, 0)
 }
 
 func ToPackageDTOList(pkgs *[]models.Package) *[]dto.PackageDTO {
 	dtos := util.NewList[dto.PackageDTO]()
 
 	for _, pkg := range *pkgs {
-		dto := dto.NewPackageDTO(pkg.Id, pkg.Metric, pkg.Quantity)
+		dto := dto.NewPackageDTO(pkg.Id, pkg.Metric, pkg.Quantity, 0)
 
 		util.Add(&dtos, *dto)
 	}

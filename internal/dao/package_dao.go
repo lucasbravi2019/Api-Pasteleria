@@ -17,7 +17,7 @@ type PackageDao struct {
 type PackageDaoInterface interface {
 	GetPackages() (*[]models.Package, error)
 	CreatePackage(body *dto.PackageDTO) (*int64, error)
-	UpdatePackage(id *int64, body *models.Package) error
+	UpdatePackage(body *models.Package) error
 	DeletePackage(id *int64) error
 }
 
@@ -50,14 +50,14 @@ func (d *PackageDao) CreatePackage(body *dto.PackageDTO) error {
 	return err
 }
 
-func (d *PackageDao) UpdatePackage(id *int64, body *dto.PackageDTO) error {
+func (d *PackageDao) UpdatePackage(body *dto.PackageDTO) error {
 	query, err := db.GetQueryByName(db.Package_UpdateById)
 
 	if pkg.HasError(err) {
 		return err
 	}
 
-	_, err = d.DB.Exec(query, body.Metric, body.Quantity, id)
+	_, err = d.DB.Exec(query, body.Metric, body.Quantity, body.Id)
 
 	return err
 }

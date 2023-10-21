@@ -22,13 +22,8 @@ type RecipeHandlerInterface interface {
 var RecipeHandlerInstance *RecipeHandler
 
 func (h *RecipeHandler) GetAllRecipes(ctx *gin.Context) {
-	statusCode, body, err := h.Service.GetAllRecipes()
+	statusCode, body, err := h.Service.GetAllRecipes(ctx)
 	pkg.EncodeJsonResponse(ctx, statusCode, *body, err)
-}
-
-func (h *RecipeHandler) GetRecipe(ctx *gin.Context) {
-	statusCode, body, err := h.Service.GetRecipe(ctx)
-	pkg.EncodeJsonResponse(ctx, statusCode, body, err)
 }
 
 func (h *RecipeHandler) CreateRecipe(ctx *gin.Context) {
@@ -59,14 +54,9 @@ func (h *RecipeHandler) GetRecipeRoutes() pkg.Routes {
 			Method:      "POST",
 		},
 		pkg.Route{
-			Path:        "recipes/:id",
+			Path:        "recipes",
 			HandlerFunc: h.UpdateRecipeName,
 			Method:      "PUT",
-		},
-		pkg.Route{
-			Path:        "recipes/:id",
-			HandlerFunc: h.GetRecipe,
-			Method:      "GET",
 		},
 		pkg.Route{
 			Path:        "recipes/:id",

@@ -11,6 +11,10 @@ func Add[T any](list *[]T, values ...T) {
 	*list = append(*list, values...)
 }
 
+func AddAll[T any](list *[]T, values []T) {
+	*list = append(*list, values...)
+}
+
 func NewList[T any]() []T {
 	return make([]T, 0)
 }

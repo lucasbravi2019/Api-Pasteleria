@@ -15,13 +15,13 @@
         delete from ingredient where id = @p1
     </query>
     <query id="ingredient.addPackage">
-        insert into ingredient_package (package_id, ingredient_id, price) values (@p1, @p2, @p3)
+        insert into ingredient_package (ingredient_id, package_id, price) values (@p1, @p2, @p3)
     </query>
     <query id="ingredient.updatePackage">
         update ingredient_package set price = @p1 where package_id = @p2 and ingredient_id = @p3
     </query>
     <query id="ingredient.deletePackage">
-        delete from ingredient_package where package_id = @p1 and ingredient_id = @p2
+        delete from ingredient_package where ingredient_id = @p1
     </query>
     <query id="ingredient.findAllIngredientPackages">
         select i.id, i.name, p.id, ip.price, p.metric, p.quantity from ingredient i 

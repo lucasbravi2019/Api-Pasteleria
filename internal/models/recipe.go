@@ -1,23 +1,51 @@
 package models
 
 type Recipe struct {
-	ID          int
+	Id          int64
 	Name        string
 	Ingredients []RecipeIngredient
 	Price       float64
 }
 
 type RecipeIngredient struct {
-	ID       int
-	Name     string
-	Package  RecipeIngredientPackage
-	Quantity float64
-	Price    float64
+	IngredientId      int64
+	IngredientName    string
+	IngredientPackage RecipeIngredientPackage
+	Quantity          float64
+	Price             float64
 }
 
 type RecipeIngredientPackage struct {
-	ID       int
-	Metric   string
-	Quantity float64
-	Price    float64
+	PackageId int64
+	Metric    string
+	Quantity  float64
+	Price     float64
+}
+
+func NewRecipe(recipeId int64, recipeName string, recipeIngredients []RecipeIngredient, recipePrice float64) *Recipe {
+	return &Recipe{
+		Id:          recipeId,
+		Name:        recipeName,
+		Ingredients: recipeIngredients,
+		Price:       recipePrice,
+	}
+}
+
+func NewRecipeIngredientPackage(packageId int64, metric string, quantity float64, price float64) *RecipeIngredientPackage {
+	return &RecipeIngredientPackage{
+		PackageId: packageId,
+		Metric:    metric,
+		Quantity:  quantity,
+		Price:     price,
+	}
+}
+
+func NewRecipeIngredient(ingredientId int64, ingredientName string, pkg RecipeIngredientPackage, quantity float64, price float64) *RecipeIngredient {
+	return &RecipeIngredient{
+		IngredientId:      ingredientId,
+		IngredientName:    ingredientName,
+		IngredientPackage: pkg,
+		Quantity:          quantity,
+		Price:             price,
+	}
 }

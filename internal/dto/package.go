@@ -7,11 +7,12 @@ type PackageDTO struct {
 	Price    float64 `json:"price,omitempty"`
 }
 
-func NewPackageDTO(id int64, metric string, quantity float64) *PackageDTO {
+func NewPackageDTO(id int64, metric string, quantity float64, price float64) *PackageDTO {
 	return &PackageDTO{
 		Id:       id,
 		Metric:   metric,
 		Quantity: quantity,
+		Price:    price,
 	}
 }
 

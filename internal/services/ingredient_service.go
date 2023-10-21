@@ -52,27 +52,15 @@ func (s *IngredientService) CreateIngredient(ctx *gin.Context) (int, interface{}
 }
 
 func (s *IngredientService) UpdateIngredient(ctx *gin.Context) (int, interface{}, error) {
-	id, err := pkg.GetUrlVars(ctx, "id")
-
-	if pkg.HasError(err) {
-		return http.StatusBadRequest, nil, err
-	}
-
-	ingredientId, err := util.ToLong(id)
-
-	if pkg.HasError(err) {
-		return http.StatusInternalServerError, nil, err
-	}
-
 	var ingredientName dto.IngredientNameDTO
 
-	err = pkg.DecodeBody(ctx, &ingredientName)
+	err := pkg.DecodeBody(ctx, &ingredientName)
 
 	if pkg.HasError(err) {
 		return http.StatusBadRequest, nil, err
 	}
 
-	err = s.IngredientDao.UpdateIngredient(ingredientId, &ingredientName)
+	err = s.IngredientDao.UpdateIngredient(&ingredientName)
 
 	if pkg.HasError(err) {
 		return http.StatusInternalServerError, nil, err

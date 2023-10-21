@@ -18,7 +18,7 @@ type IngredientDaoInterface interface {
 	GetAllIngredients() (*[]dto.IngredientDTO, error)
 	ValidateExistingIngredient(ingredientName *dto.IngredientNameDTO) error
 	CreateIngredient(ingredientName *dto.IngredientNameDTO) error
-	UpdateIngredient(id *int64, dto *dto.IngredientNameDTO) error
+	UpdateIngredient(dto *dto.IngredientNameDTO) error
 	DeleteIngredient(id *int64) error
 }
 
@@ -63,14 +63,14 @@ func (d *IngredientDao) CreateIngredient(ingredientName *dto.IngredientNameDTO) 
 	return err
 }
 
-func (d *IngredientDao) UpdateIngredient(id int64, dto *dto.IngredientNameDTO) error {
+func (d *IngredientDao) UpdateIngredient(dto *dto.IngredientNameDTO) error {
 	query, err := db.GetQueryByName(db.Ingredient_UpdateById)
 
 	if pkg.HasError(err) {
 		return err
 	}
 
-	_, err = d.DB.Exec(query, dto.Name, id)
+	_, err = d.DB.Exec(query, dto.Name, dto.Id)
 
 	return err
 }

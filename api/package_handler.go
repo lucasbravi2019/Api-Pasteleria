@@ -53,7 +53,7 @@ func (h *PackageHandler) GetPackageRoutes() pkg.Routes {
 			Method:      "POST",
 		},
 		pkg.Route{
-			Path:        "/packages/:id",
+			Path:        "/packages",
 			HandlerFunc: h.UpdatePackage,
 			Method:      "PUT",
 		},

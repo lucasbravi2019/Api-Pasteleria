@@ -17,6 +17,7 @@ var (
 	Recipe_Create                        = "recipe.create"
 	Recipe_UpdateName                    = "recipe.updateName"
 	Recipe_DeleteById                    = "recipe.deleteById"
+	Recipe_FindRecipeIngredients         = "recipe.findRecipeIngredients"
 	Ingredient_FindAll                   = "ingredient.findAll"
 	Ingredient_FindById                  = "ingredient.findById"
 	Ingredient_Create                    = "ingredient.create"

@@ -55,27 +55,15 @@ func (s *PackageService) CreatePackage(ctx *gin.Context) (int, interface{}, erro
 }
 
 func (s *PackageService) UpdatePackage(ctx *gin.Context) (int, interface{}, error) {
-	id, err := pkg.GetUrlVars(ctx, "id")
-
-	if pkg.HasError(err) {
-		return http.StatusBadRequest, nil, err
-	}
-
-	packageId, err := util.ToLong(id)
-
-	if pkg.HasError(err) {
-		return http.StatusBadRequest, nil, err
-	}
-
 	var body dto.PackageDTO
 
-	err = pkg.DecodeBody(ctx, &body)
+	err := pkg.DecodeBody(ctx, &body)
 
 	if pkg.HasError(err) {
 		return http.StatusBadRequest, nil, err
 	}
 
-	err = s.PackageDao.UpdatePackage(&packageId, &body)
+	err = s.PackageDao.UpdatePackage(&body)
 
 	if pkg.HasError(err) {
 		return http.StatusInternalServerError, nil, err

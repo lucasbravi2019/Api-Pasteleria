@@ -23,7 +23,8 @@
             package_id bigint not null foreign key references package(id),
             ingredient_id bigint not null foreign key references ingredient(id),
             price decimal,
-            primary key (id)
+            primary key (id),
+            constraint UC_IP UNIQUE (ingredient_id, package_id)
         )
     </table>
     <table id="recipe">

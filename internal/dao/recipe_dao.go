@@ -10,7 +10,6 @@ import (
 	"github.com/lucasbravi2019/pasteleria/internal/mapper"
 	"github.com/lucasbravi2019/pasteleria/internal/models"
 	"github.com/lucasbravi2019/pasteleria/pkg"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type RecipeDao struct {
@@ -19,9 +18,9 @@ type RecipeDao struct {
 
 type RecipeDaoInterface interface {
 	FindAllRecipes() *[]dto.RecipeDTO
-	FindRecipeById(id int64) (*models.Recipe, error)
+	FindRecipeById(id int64) (*[]models.Recipe, error)
 	CreateRecipe(recipe *dto.RecipeNameDTO) error
-	UpdateRecipeName(oid *primitive.ObjectID, recipeName *dto.RecipeNameDTO) error
+	UpdateRecipeName(recipeName *dto.RecipeNameDTO) error
 	DeleteRecipe(id *int64) error
 }
 
@@ -44,16 +43,20 @@ func (d *RecipeDao) FindAllRecipes() (*[]models.Recipe, error) {
 	return mapper.ToRecipeList(rows), nil
 }
 
-func (d *RecipeDao) FindRecipeById(id int64) (*models.Recipe, error) {
+func (d *RecipeDao) FindRecipeById(id int64) (*[]models.Recipe, error) {
 	query, err := db.GetQueryByName(db.Recipe_FindById)
 
 	if pkg.HasError(err) {
 		return nil, err
 	}
 
-	row := d.DB.QueryRow(query, id)
+	rows, err := d.DB.Query(query, id)
 
-	return mapper.ToRecipe(row), nil
+	if pkg.HasError(err) {
+		return nil, err
+	}
+
+	return mapper.ToRecipeList(rows), nil
 }
 
 func (d *RecipeDao) CreateRecipe(recipe *dto.RecipeNameDTO) error {
@@ -67,14 +70,14 @@ func (d *RecipeDao) CreateRecipe(recipe *dto.RecipeNameDTO) error {
 	return err
 }
 
-func (d *RecipeDao) UpdateRecipeName(id *int64, recipe *dto.RecipeNameDTO) error {
+func (d *RecipeDao) UpdateRecipeName(recipe *dto.RecipeNameDTO) error {
 	query, err := db.GetQueryByName(db.Recipe_UpdateName)
 
 	if pkg.HasError(err) {
 		return err
 	}
 
-	_, err = d.DB.Exec(query, recipe.Name, id)
+	_, err = d.DB.Exec(query, recipe.Name, recipe.Id)
 
 	return err
 }

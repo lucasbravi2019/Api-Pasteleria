@@ -1,9 +1,20 @@
 <queries>
     <query id="recipe.findAll">
-        select * from recipe
+        select r.id, r.name, r.price, ri.ingredient_id, i.name, ri.quantity_used, ri.price, ip.package_id, p.metric, p.quantity, ip.price
+        from recipe r
+        inner join recipe_ingredient ri on ri.recipe_id = r.id
+        inner join ingredient_package ip on ip.id = ri.ingredient_id
+        inner join ingredient i on i.id = ip.ingredient_id
+        inner join package p on p.id = ip.package_id
     </query>
     <query id="recipe.findById">
-        select * from recipe where id = @p1
+        select r.id, r.name, r.price, ri.ingredient_id, i.name, ri.quantity_used, ri.price, ip.package_id, p.metric, p.quantity, ip.price
+        from recipe r
+        inner join recipe_ingredient ri on ri.recipe_id = r.id
+        inner join ingredient_package ip on ip.id = ri.ingredient_id
+        inner join ingredient i on i.id = ip.ingredient_id
+        inner join package p on p.id = ip.package_id
+        where r.id = @p1
     </query>
     <query id="recipe.create">
         insert into recipe (name) values (@p1)
@@ -13,5 +24,13 @@
     </query>
     <query id="recipe.deleteById">
         delete from recipe where id = @p1
+    </query>
+    <query id="recipe.findRecipeIngredients">
+        select r.id, r.name, r.price, ri.ingredient_id, ri.quantity_used, ri.price, ip.price, ip.package_id, p.metric, p.quantity from recipe r
+        inner join recipe_ingredient ri on ri.recipe_id = r.id
+        inner join ingredient_package ip on ip.id = ri.ingredient_id
+        inner join ingredient i on i.id = ip.ingredient_id
+        inner join package p on p.id = ip.package_id
+        where r.id = @p1
     </query>
 </queries>

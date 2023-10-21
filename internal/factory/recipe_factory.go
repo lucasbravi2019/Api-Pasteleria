@@ -1,8 +1,6 @@
 package factory
 
 import (
-	"log"
-
 	"github.com/lucasbravi2019/pasteleria/api"
 	"github.com/lucasbravi2019/pasteleria/db"
 	"github.com/lucasbravi2019/pasteleria/internal/dao"
@@ -10,7 +8,6 @@ import (
 )
 
 func GetRecipeHandlerInstance() *api.RecipeHandler {
-	log.Println("Recipe handler")
 	if api.RecipeHandlerInstance == nil {
 		api.RecipeHandlerInstance = &api.RecipeHandler{
 			Service: *GetRecipeServiceInstance(),
