@@ -2,7 +2,6 @@ package dao
 
 import (
 	"database/sql"
-	"log"
 
 	"github.com/lucasbravi2019/pasteleria/db"
 	"github.com/lucasbravi2019/pasteleria/internal/dto"
@@ -34,7 +33,7 @@ func (d *IngredientDao) GetAllIngredients() (*[]dto.IngredientDTO, error) {
 	rows, err := d.DB.Query(query)
 
 	if pkg.HasError(err) {
-		log.Println(err.Error())
+		return nil, err
 	}
 
 	ingredients, err := mapper.ToIngredientList(rows)

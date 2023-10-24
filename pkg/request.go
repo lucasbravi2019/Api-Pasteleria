@@ -3,7 +3,6 @@ package pkg
 import (
 	"encoding/json"
 	"errors"
-	"log"
 
 	"github.com/gin-gonic/gin"
 )
@@ -11,7 +10,6 @@ import (
 func DecodeBody(c *gin.Context, storeVar any) error {
 	err := json.NewDecoder(c.Request.Body).Decode(&storeVar)
 	if HasError(err) {
-		log.Println(err.Error())
 		return err
 	}
 

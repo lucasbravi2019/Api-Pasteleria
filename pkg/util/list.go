@@ -8,7 +8,9 @@ func ToList[T any](values ...T) []T {
 }
 
 func Add[T any](list *[]T, values ...T) {
-	*list = append(*list, values...)
+	if values != nil {
+		*list = append(*list, values...)
+	}
 }
 
 func AddAll[T any](list *[]T, values []T) {

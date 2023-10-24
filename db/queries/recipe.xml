@@ -2,18 +2,18 @@
     <query id="recipe.findAll">
         select r.id, r.name, r.price, ri.ingredient_id, i.name, ri.quantity_used, ri.price, ip.package_id, p.metric, p.quantity, ip.price
         from recipe r
-        inner join recipe_ingredient ri on ri.recipe_id = r.id
-        inner join ingredient_package ip on ip.id = ri.ingredient_id
-        inner join ingredient i on i.id = ip.ingredient_id
-        inner join package p on p.id = ip.package_id
+        left join recipe_ingredient ri on ri.recipe_id = r.id
+        left join ingredient_package ip on ip.id = ri.ingredient_id
+        left join ingredient i on i.id = ip.ingredient_id
+        left join package p on p.id = ip.package_id
     </query>
     <query id="recipe.findById">
         select r.id, r.name, r.price, ri.ingredient_id, i.name, ri.quantity_used, ri.price, ip.package_id, p.metric, p.quantity, ip.price
         from recipe r
-        inner join recipe_ingredient ri on ri.recipe_id = r.id
-        inner join ingredient_package ip on ip.id = ri.ingredient_id
-        inner join ingredient i on i.id = ip.ingredient_id
-        inner join package p on p.id = ip.package_id
+        left join recipe_ingredient ri on ri.recipe_id = r.id
+        left join ingredient_package ip on ip.id = ri.ingredient_id
+        left join ingredient i on i.id = ip.ingredient_id
+        left join package p on p.id = ip.package_id
         where r.id = @p1
     </query>
     <query id="recipe.create">
@@ -25,12 +25,19 @@
     <query id="recipe.deleteById">
         delete from recipe where id = @p1
     </query>
-    <query id="recipe.findRecipeIngredients">
-        select r.id, r.name, r.price, ri.ingredient_id, ri.quantity_used, ri.price, ip.price, ip.package_id, p.metric, p.quantity from recipe r
-        inner join recipe_ingredient ri on ri.recipe_id = r.id
+    <query id="recipe.deleteIngredientsByRecipeId">
+        delete from recipe_ingredient where recipe_id = @p1
+    </query>
+    <query id="recipe.addIngredientsToRecipe">
+        insert into recipe_ingredient (recipe_id, ingredient_id, quantity_used, price) values (@p1, @p2, @p3, 0)
+    </query>
+    <query id="recipe.findRecipeIngredientById">
+        select ri.id, ri.quantity_used, ip.price, p.metric, p.quantity from recipe_ingredient ri
         inner join ingredient_package ip on ip.id = ri.ingredient_id
-        inner join ingredient i on i.id = ip.ingredient_id
         inner join package p on p.id = ip.package_id
-        where r.id = @p1
+        where ri.id = @p1
+    </query>
+    <query id="recipe.updateRecipeIngredientPriceById">
+        update recipe_ingredient set price = @p1 where id = @p2
     </query>
 </queries>

@@ -3,7 +3,6 @@ package dao
 import (
 	"database/sql"
 	"fmt"
-	"log"
 
 	"github.com/lucasbravi2019/pasteleria/db"
 	"github.com/lucasbravi2019/pasteleria/internal/dto"
@@ -32,7 +31,7 @@ func (d *RecipeDao) FindAllRecipes() (*[]models.Recipe, error) {
 	if pkg.HasError(err) {
 		return nil, err
 	}
-	log.Println(query)
+
 	rows, err := d.DB.Query(query)
 	defer rows.Close()
 

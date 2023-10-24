@@ -1,7 +1,6 @@
 package services
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -71,7 +70,6 @@ func (s *RecipeService) CreateRecipe(ctx *gin.Context) (int, interface{}, error)
 	err := pkg.DecodeBody(ctx, &recipeName)
 
 	if pkg.HasError(err) {
-		log.Println(err)
 		return http.StatusBadRequest, nil, err
 	}
 

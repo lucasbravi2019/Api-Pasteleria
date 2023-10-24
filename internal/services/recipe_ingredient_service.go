@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/lucasbravi2019/pasteleria/internal/dao"
+	"github.com/lucasbravi2019/pasteleria/internal/dto"
 	"github.com/lucasbravi2019/pasteleria/pkg"
 	"github.com/lucasbravi2019/pasteleria/pkg/util"
 )
@@ -43,6 +44,19 @@ func (s *RecipeIngredientService) GetAllRecipeIngredients(ctx *gin.Context) (int
 }
 
 func (s *RecipeIngredientService) UpdateRecipeIngredients(ctx *gin.Context) (int, interface{}, error) {
+	var ingredients dto.RecipeIngredientIdDTO
+
+	err := pkg.DecodeBody(ctx, &ingredients)
+
+	if pkg.HasError(err) {
+		return http.StatusBadRequest, nil, err
+	}
+
+	err = s.RecipeIngredientDao.UpdateRecipeIngredients(ingredients)
+
+	if pkg.HasError(err) {
+		return http.StatusInternalServerError, nil, err
+	}
 
 	return http.StatusOK, nil, nil
 }

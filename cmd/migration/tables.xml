@@ -6,7 +6,7 @@
         create table package (
             id bigint not null identity,
             metric varchar(10) not null,
-            quantity decimal not null,
+            quantity decimal(18, 2) not null,
             primary key (id)
         )
     </table>
@@ -22,7 +22,7 @@
             id bigint not null identity,
             package_id bigint not null foreign key references package(id),
             ingredient_id bigint not null foreign key references ingredient(id),
-            price decimal,
+            price decimal(18, 2),
             primary key (id),
             constraint UC_IP UNIQUE (ingredient_id, package_id)
         )
@@ -31,7 +31,7 @@
         create table recipe (
             id bigint not null identity,
             name varchar(255) not null,
-            price decimal not null default 0,
+            price decimal(18, 2) not null default 0,
             primary key (id)
         )
     </table>
@@ -40,8 +40,8 @@
             id bigint not null identity,
             recipe_id bigint not null foreign key references recipe(id),    
             ingredient_id bigint not null foreign key references ingredient_package(id),
-            quantity_used decimal not null,
-            price decimal not null,
+            quantity_used decimal(18, 2) not null,
+            price decimal(18, 2) not null,
             primary key (id)
         )
     </table>

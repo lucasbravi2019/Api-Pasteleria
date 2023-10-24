@@ -8,7 +8,7 @@ type RecipeDTO struct {
 }
 
 type RecipeNameDTO struct {
-	Id   int64  `json:"id" validate:"required"`
+	Id   int64  `json:"id"`
 	Name string `json:"name" validate:"required"`
 }
 

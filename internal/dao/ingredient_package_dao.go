@@ -15,7 +15,6 @@ type IngredientPackageDao struct {
 
 type IngredientPackageDaoInterface interface {
 	FindAllIngredientPackages() (*[]dto.IngredientDTO, error)
-	UpdateIngredientPackages(ingredient *dto.IngredientPackagePrices) error
 }
 
 var IngredientPackageDaoInstance *IngredientPackageDao

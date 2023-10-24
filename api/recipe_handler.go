@@ -23,7 +23,7 @@ var RecipeHandlerInstance *RecipeHandler
 
 func (h *RecipeHandler) GetAllRecipes(ctx *gin.Context) {
 	statusCode, body, err := h.Service.GetAllRecipes(ctx)
-	pkg.EncodeJsonResponse(ctx, statusCode, *body, err)
+	pkg.EncodeJsonResponse(ctx, statusCode, body, err)
 }
 
 func (h *RecipeHandler) CreateRecipe(ctx *gin.Context) {

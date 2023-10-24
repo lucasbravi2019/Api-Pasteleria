@@ -1,8 +1,6 @@
 package config
 
 import (
-	"time"
-
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/lucasbravi2019/pasteleria/api/middleware"
@@ -21,13 +19,22 @@ func GetRouter() *gin.Engine {
 }
 
 func RegisterRoutes(routes pkg.Routes) {
-	router := GetRouter()
+	r := GetRouter()
 	for _, route := range routes {
-		router.Handle(route.Method, route.Path, route.HandlerFunc)
+		r.Handle(route.Method, route.Path, route.HandlerFunc)
 	}
 }
 
 func StartApi() {
+	r := GetRouter()
+	config := cors.DefaultConfig()
+	config.AllowAllOrigins = true
+
+	r.Use(cors.New(config))
+	r.Use(middleware.CORSMiddleware())
+	r.Use(middleware.RequestLoggerMiddleware())
+	r.Use(middleware.DatabaseCheckMiddleware())
+
 	LoadEnv()
 	db.QueryLoader()
 	RegisterRoutes(factory.GetRecipeHandlerInstance().GetRecipeRoutes())
@@ -36,15 +43,5 @@ func StartApi() {
 	RegisterRoutes(factory.GetIngredientPackageHandlerInstance().GetIngredientPackageRoutes())
 	RegisterRoutes(factory.GetRecipeIngredientHandlerInstance().GetAllRecipeIngredientRoutes())
 
-	r := GetRouter()
-	r.Use(cors.New(cors.Config{
-		AllowCredentials: true,
-		AllowAllOrigins:  true,
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
-		MaxAge:           1 * time.Hour,
-	}))
-
-	r.Use(middleware.RequestLoggerMiddleware())
-	r.Use(middleware.DatabaseCheckMiddleware())
 	r.Run(":8080")
 }
