@@ -31,7 +31,6 @@ func StartApi() {
 	config.AllowAllOrigins = true
 
 	r.Use(cors.New(config))
-	r.Use(middleware.CORSMiddleware())
 	r.Use(middleware.RequestLoggerMiddleware())
 	r.Use(middleware.DatabaseCheckMiddleware())
 
