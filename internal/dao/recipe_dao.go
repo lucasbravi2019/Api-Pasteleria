@@ -2,7 +2,6 @@ package dao
 
 import (
 	"database/sql"
-	"fmt"
 
 	"github.com/lucasbravi2019/pasteleria/db"
 	"github.com/lucasbravi2019/pasteleria/internal/dto"
@@ -82,22 +81,28 @@ func (d *RecipeDao) UpdateRecipeName(recipe *dto.RecipeNameDTO) error {
 }
 
 func (d *RecipeDao) DeleteRecipe(id *int64) error {
-	query, err := db.GetQueryByName(db.Recipe_DeleteById)
+	query, err := db.GetQueryByName(db.Recipe_DeleteIngredientsByRecipeId)
 
 	if pkg.HasError(err) {
 		return err
 	}
 
-	res, _ := d.DB.Exec(query, id)
-
-	rowsAffected, err := res.RowsAffected()
+	_, err = d.DB.Exec(query, *id)
 
 	if pkg.HasError(err) {
 		return err
 	}
 
-	if rowsAffected == 0 {
-		return fmt.Errorf("rows affected: %d", rowsAffected)
+	query, err = db.GetQueryByName(db.Recipe_DeleteById)
+
+	if pkg.HasError(err) {
+		return err
+	}
+
+	_, err = d.DB.Exec(query, *id)
+
+	if pkg.HasError(err) {
+		return err
 	}
 
 	return nil

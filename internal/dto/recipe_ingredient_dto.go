@@ -11,11 +11,11 @@ type IngredientIdQuantityDTO struct {
 }
 
 type RecipeIngredientDTO struct {
-	Id       int64
-	Name     string
-	Price    float64
-	Package  PackageDTO
-	Quantity float64
+	Id       int64      `json:"id"`
+	Name     string     `json:"name"`
+	Price    float64    `json:"price"`
+	Package  PackageDTO `json:"package"`
+	Quantity float64    `json:"quantity"`
 }
 
 func NewRecipeIngredientIdDTO(recipeId int64, ingredients []IngredientIdQuantityDTO) *RecipeIngredientIdDTO {
