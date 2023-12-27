@@ -17,7 +17,7 @@ type RecipeDao struct {
 
 type RecipeDaoInterface interface {
 	FindAllRecipes() *[]dto.RecipeDTO
-	FindRecipeById(id int64) (*[]models.Recipe, error)
+	FindRecipeById(id int64) (*models.Recipe, error)
 	CreateRecipe(recipe *dto.RecipeNameDTO) error
 	UpdateRecipeName(recipeName *dto.RecipeNameDTO) error
 	DeleteRecipe(id *int64) error
@@ -42,7 +42,7 @@ func (d *RecipeDao) FindAllRecipes() (*[]models.Recipe, error) {
 	return d.RecipeMapper.ToRecipeList(rows), nil
 }
 
-func (d *RecipeDao) FindRecipeById(id int64) (*[]models.Recipe, error) {
+func (d *RecipeDao) FindRecipeById(id int64) (*models.Recipe, error) {
 	query, err := db.GetQueryByName(db.Recipe_FindById)
 
 	if pkg.HasError(err) {
@@ -55,7 +55,7 @@ func (d *RecipeDao) FindRecipeById(id int64) (*[]models.Recipe, error) {
 		return nil, err
 	}
 
-	return d.RecipeMapper.ToRecipeList(rows), nil
+	return d.RecipeMapper.ToRecipeRow(rows), nil
 }
 
 func (d *RecipeDao) CreateRecipe(recipe *dto.RecipeNameDTO) error {
