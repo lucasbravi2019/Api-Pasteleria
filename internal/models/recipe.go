@@ -1,17 +1,20 @@
 package models
 
+import "github.com/lucasbravi2019/pasteleria/pkg/util"
+
 type Recipe struct {
 	Id          int64
 	Name        string
 	Ingredients []RecipeIngredient
-	Price       *float64
+	Price       float64
 }
 
 type RecipeIngredient struct {
-	IngredientId int64
-	Name         string
+	IngredientId *int64
+	Name         *string
+	RecipeId     *int64
 	Package      *RecipeIngredientPackage
-	Quantity     float64
+	Quantity     *float64
 	Price        *float64
 }
 
@@ -22,12 +25,12 @@ type RecipeIngredientPackage struct {
 	Price     float64
 }
 
-func NewRecipe(recipeId int64, recipeName string, recipeIngredients []RecipeIngredient, recipePrice *float64) *Recipe {
+func NewRecipe(recipeId int64, recipeName string, recipePrice float64) *Recipe {
 	return &Recipe{
 		Id:          recipeId,
 		Name:        recipeName,
-		Ingredients: recipeIngredients,
 		Price:       recipePrice,
+		Ingredients: util.NewList[RecipeIngredient](),
 	}
 }
 
@@ -43,12 +46,12 @@ func NewRecipeIngredientPackage(packageId *int64, metric *string, quantity *floa
 	}
 }
 
-func NewRecipeIngredient(ingredientId int64, ingredientName string, pkg *RecipeIngredientPackage, quantity float64, price *float64) *RecipeIngredient {
+func NewRecipeIngredient(ingredientId *int64, ingredientName *string, quantity *float64, price *float64, recipeId *int64) *RecipeIngredient {
 	return &RecipeIngredient{
 		IngredientId: ingredientId,
 		Name:         ingredientName,
-		Package:      pkg,
 		Quantity:     quantity,
 		Price:        price,
+		RecipeId:     recipeId,
 	}
 }

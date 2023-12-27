@@ -11,7 +11,8 @@ import (
 )
 
 type RecipeIngredientDao struct {
-	DB *sql.DB
+	DB                     *sql.DB
+	RecipeIngredientMapper *mapper.RecipeIngredientMapper
 }
 
 type RecipeIngredientDaoInterface interface {
@@ -34,7 +35,7 @@ func (d *RecipeIngredientDao) GetAllRecipeIngredients(recipeId int64) (*[]models
 		return nil, err
 	}
 
-	recipes, err := mapper.ToRecipeIngredientList(rows)
+	recipes, err := d.RecipeIngredientMapper.ToRecipeIngredientList(rows)
 
 	if pkg.HasError(err) {
 		return nil, err

@@ -13,7 +13,8 @@ import (
 )
 
 type RecipeService struct {
-	RecipeDao dao.RecipeDao
+	RecipeDao    *dao.RecipeDao
+	RecipeMapper *mapper.RecipeMapper
 }
 
 type RecipeServiceInterface interface {
@@ -59,7 +60,7 @@ func (s *RecipeService) GetAllRecipes(ctx *gin.Context) (int, *[]dto.RecipeDTO, 
 		return http.StatusInternalServerError, nil, err
 	}
 
-	dtos := mapper.ToRecipeDTOList(&recipes)
+	dtos := s.RecipeMapper.ToRecipeDTOList(&recipes)
 
 	return http.StatusOK, dtos, nil
 }

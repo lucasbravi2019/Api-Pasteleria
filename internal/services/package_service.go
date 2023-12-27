@@ -12,7 +12,8 @@ import (
 )
 
 type PackageService struct {
-	PackageDao dao.PackageDao
+	PackageDao    *dao.PackageDao
+	PackageMapper *mapper.PackageMapper
 }
 
 type PackageServiceInterface interface {
@@ -31,7 +32,7 @@ func (s *PackageService) GetPackages() (int, *[]dto.PackageDTO, error) {
 		return http.StatusInternalServerError, nil, err
 	}
 
-	dtos := mapper.ToPackageDTOList(packages)
+	dtos := s.PackageMapper.ToPackageDTOList(packages)
 
 	return http.StatusOK, dtos, nil
 }

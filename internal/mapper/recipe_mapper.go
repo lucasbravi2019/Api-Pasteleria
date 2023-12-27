@@ -3,14 +3,26 @@ package mapper
 import (
 	"database/sql"
 
-	"github.com/lucasbravi2019/pasteleria/db"
 	"github.com/lucasbravi2019/pasteleria/internal/dto"
 	"github.com/lucasbravi2019/pasteleria/internal/models"
 	"github.com/lucasbravi2019/pasteleria/pkg"
 	"github.com/lucasbravi2019/pasteleria/pkg/util"
 )
 
-func ToRecipeList(rows *sql.Rows) *[]models.Recipe {
+type RecipeMapper struct {
+	RecipeIngredientMapper RecipeIngredientMapper
+	PackageMapper          PackageMapper
+}
+
+var RecipeMapperInstance *RecipeMapper
+
+type RecipeMapperInterface interface {
+	ToRecipeList(rows *sql.Rows) *[]models.Recipe
+	ToRecipeDTOList(recipes *[]models.Recipe) *[]dto.RecipeDTO
+	ToRecipe(recipeId int64, recipeName string, recipePrice float64) *models.Recipe
+}
+
+func (m *RecipeMapper) ToRecipeList(rows *sql.Rows) *[]models.Recipe {
 	recipesGrouper := util.NewMap[int64, models.Recipe]()
 
 	for rows.Next() {
@@ -33,23 +45,28 @@ func ToRecipeList(rows *sql.Rows) *[]models.Recipe {
 			return nil
 		}
 
+		ingredientRecipeId := sql.NullInt64{
+			Int64: recipeId,
+			Valid: true,
+		}
+
 		var ingredientPackage *models.RecipeIngredientPackage
 		var recipeIngredient *models.RecipeIngredient
 
 		if packageId.Valid {
-			ingredientPackage = models.NewRecipeIngredientPackage(db.GetLong(packageId), db.GetString(metric), db.GetFloat(quantity),
-				db.GetFloat(packagePrice))
+			ingredientPackage = m.PackageMapper.ToRecipeIngredientPackage(packageId, metric, quantity, packagePrice)
 		}
 
 		if ingredientId.Valid {
-			recipeIngredient = models.NewRecipeIngredient(ingredientId.Int64, ingredientName.String, ingredientPackage,
-				ingredientQuantity.Float64, db.GetFloat(ingredientPrice))
+			recipeIngredient = m.RecipeIngredientMapper.ToRecipeIngredient(ingredientId, ingredientName, ingredientQuantity,
+				ingredientPrice, ingredientRecipeId)
+
+			m.RecipeIngredientMapper.SetPackageToRecipeIngredientDTO(recipeIngredient, ingredientPackage)
 		}
 
 		recipe := util.GetValue(recipesGrouper, recipeId)
 		if recipe == nil {
-			ingredients := util.NewList[models.RecipeIngredient]()
-			recipe = models.NewRecipe(recipeId, recipeName, ingredients, &recipePrice)
+			recipe = m.ToRecipe(recipeId, recipeName, recipePrice)
 		}
 
 		if recipeIngredient != nil {
@@ -67,19 +84,23 @@ func ToRecipeList(rows *sql.Rows) *[]models.Recipe {
 	return &recipes
 }
 
-func ToRecipeDTOList(recipes *[]models.Recipe) *[]dto.RecipeDTO {
+func (m *RecipeMapper) ToRecipeDTOList(recipes *[]models.Recipe) *[]dto.RecipeDTO {
 	dtos := util.NewList[dto.RecipeDTO]()
 
 	for _, recipe := range *recipes {
 		dto := dto.RecipeDTO{
 			Id:          recipe.Id,
 			Name:        recipe.Name,
-			Price:       *recipe.Price,
-			Ingredients: *ToRecipeIngredientDTOList(&recipe.Ingredients),
+			Price:       recipe.Price,
+			Ingredients: *m.RecipeIngredientMapper.ToRecipeIngredientDTOList(&recipe.Ingredients),
 		}
 
 		util.Add(&dtos, dto)
 	}
 
 	return &dtos
+}
+
+func (m *RecipeMapper) ToRecipe(recipeId int64, recipeName string, recipePrice float64) *models.Recipe {
+	return models.NewRecipe(recipeId, recipeName, recipePrice)
 }

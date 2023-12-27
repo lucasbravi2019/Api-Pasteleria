@@ -11,7 +11,8 @@ import (
 )
 
 type PackageDao struct {
-	DB *sql.DB
+	DB            *sql.DB
+	PackageMapper *mapper.PackageMapper
 }
 
 type PackageDaoInterface interface {
@@ -36,7 +37,7 @@ func (d *PackageDao) GetPackages() (*[]models.Package, error) {
 		return nil, err
 	}
 
-	return mapper.ToPackageList(rows)
+	return d.PackageMapper.ToPackageList(rows)
 }
 
 func (d *PackageDao) CreatePackage(body *dto.PackageDTO) error {

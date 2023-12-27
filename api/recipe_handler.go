@@ -7,7 +7,7 @@ import (
 )
 
 type RecipeHandler struct {
-	Service services.RecipeService
+	Service *services.RecipeService
 }
 
 type RecipeHandlerInterface interface {

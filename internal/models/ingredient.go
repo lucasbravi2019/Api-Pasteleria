@@ -25,6 +25,6 @@ func NewIngredient(id int64, name string) *Ingredient {
 
 func (i *Ingredient) AddPackage(p *IngredientPackage) {
 	if p != nil {
-		util.Add[IngredientPackage](&i.Packages, *p)
+		util.Add(&i.Packages, *p)
 	}
 }

@@ -11,7 +11,8 @@ import (
 )
 
 type RecipeDao struct {
-	DB *sql.DB
+	DB           *sql.DB
+	RecipeMapper *mapper.RecipeMapper
 }
 
 type RecipeDaoInterface interface {
@@ -32,13 +33,13 @@ func (d *RecipeDao) FindAllRecipes() (*[]models.Recipe, error) {
 	}
 
 	rows, err := d.DB.Query(query)
-	defer rows.Close()
 
 	if pkg.HasError(err) {
 		return nil, err
 	}
+	defer rows.Close()
 
-	return mapper.ToRecipeList(rows), nil
+	return d.RecipeMapper.ToRecipeList(rows), nil
 }
 
 func (d *RecipeDao) FindRecipeById(id int64) (*[]models.Recipe, error) {
@@ -54,7 +55,7 @@ func (d *RecipeDao) FindRecipeById(id int64) (*[]models.Recipe, error) {
 		return nil, err
 	}
 
-	return mapper.ToRecipeList(rows), nil
+	return d.RecipeMapper.ToRecipeList(rows), nil
 }
 
 func (d *RecipeDao) CreateRecipe(recipe *dto.RecipeNameDTO) error {
