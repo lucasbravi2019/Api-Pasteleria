@@ -69,8 +69,11 @@ func (m *RecipeIngredientMapper) ToRecipeIngredientDTOList(ingredients *[]models
 	return &recipeIngredients
 }
 
-func (m *RecipeIngredientMapper) ToRecipeIngredient(ingredientId sql.NullInt64, ingredientName sql.NullString,
-	ingredientQuantity sql.NullFloat64, ingredientPrice sql.NullFloat64,
+func (m *RecipeIngredientMapper) ToRecipeIngredient(
+	ingredientId sql.NullInt64,
+	ingredientName sql.NullString,
+	ingredientQuantity sql.NullFloat64,
+	ingredientPrice sql.NullFloat64,
 	recipeId sql.NullInt64) *models.RecipeIngredient {
 	return models.NewRecipeIngredient(
 		db.GetLong(ingredientId),

@@ -26,6 +26,11 @@ func (h *RecipeHandler) GetAllRecipes(ctx *gin.Context) {
 	pkg.EncodeJsonResponse(ctx, statusCode, body, err)
 }
 
+func (h *RecipeHandler) GetRecipe(ctx *gin.Context) {
+	statusCode, body, err := h.Service.GetRecipe(ctx)
+	pkg.EncodeJsonResponse(ctx, statusCode, body, err)
+}
+
 func (h *RecipeHandler) CreateRecipe(ctx *gin.Context) {
 	statusCode, body, err := h.Service.CreateRecipe(ctx)
 	pkg.EncodeJsonResponse(ctx, statusCode, body, err)
@@ -46,6 +51,11 @@ func (h *RecipeHandler) GetRecipeRoutes() pkg.Routes {
 		pkg.Route{
 			Path:        "recipes",
 			HandlerFunc: h.GetAllRecipes,
+			Method:      "GET",
+		},
+		pkg.Route{
+			Path:        "recipes/find-one/:id",
+			HandlerFunc: h.GetRecipe,
 			Method:      "GET",
 		},
 		pkg.Route{

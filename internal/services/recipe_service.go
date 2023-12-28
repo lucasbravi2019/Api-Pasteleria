@@ -19,6 +19,7 @@ type RecipeService struct {
 
 type RecipeServiceInterface interface {
 	GetAllRecipes(ctx *gin.Context) (int, *[]dto.RecipeDTO, error)
+	GetRecipe(ctx *gin.Context) (int, *dto.RecipeDTO, error)
 	CreateRecipe(ctx *gin.Context) (int, interface{}, error)
 	UpdateRecipeName(ctx *gin.Context) (int, interface{}, error)
 	DeleteRecipe(ctx *gin.Context) (int, interface{}, error)
@@ -27,42 +28,38 @@ type RecipeServiceInterface interface {
 var RecipeServiceInstance *RecipeService
 
 func (s *RecipeService) GetAllRecipes(ctx *gin.Context) (int, *[]dto.RecipeDTO, error) {
-	id, _ := pkg.GetUrlParams(ctx, "id")
-
 	recipes := util.NewList[models.Recipe]()
-	var err error
-
-	if pkg.STRING_EMPTY != id {
-		recipeId, err := util.ToLong(id)
-
-		if pkg.HasError(err) {
-			return http.StatusBadRequest, nil, err
-		}
-
-		recipe, err := s.RecipeDao.FindRecipeById(recipeId)
-
-		if pkg.HasError(err) {
-			return http.StatusInternalServerError, nil, err
-		}
-
-		util.AddAll(&recipes, *recipe)
-	} else {
-		recipesFound, err := s.RecipeDao.FindAllRecipes()
-
-		if pkg.HasError(err) {
-			return http.StatusInternalServerError, nil, err
-		}
-
-		util.AddAll(&recipes, *recipesFound)
-	}
+	recipesFound, err := s.RecipeDao.FindAllRecipes()
 
 	if pkg.HasError(err) {
 		return http.StatusInternalServerError, nil, err
 	}
 
+	util.AddAll(&recipes, *recipesFound)
+
 	dtos := s.RecipeMapper.ToRecipeDTOList(&recipes)
 
 	return http.StatusOK, dtos, nil
+}
+
+func (s *RecipeService) GetRecipe(ctx *gin.Context) (int, *dto.RecipeDTO, error) {
+	id, _ := pkg.GetUrlVars(ctx, "id")
+
+	recipeId, err := util.ToLong(id)
+
+	if pkg.HasError(err) {
+		return http.StatusBadRequest, nil, err
+	}
+
+	recipe, err := s.RecipeDao.FindRecipeById(recipeId)
+
+	if pkg.HasError(err) {
+		return http.StatusInternalServerError, nil, err
+	}
+
+	recipeDto := s.RecipeMapper.ToRecipeDTO(recipe)
+
+	return http.StatusOK, recipeDto, nil
 }
 
 func (s *RecipeService) CreateRecipe(ctx *gin.Context) (int, interface{}, error) {

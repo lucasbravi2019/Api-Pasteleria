@@ -21,6 +21,7 @@ type RecipeMapperInterface interface {
 	ToRecipeRow(rows *sql.Rows) *models.Recipe
 	ToRecipeDTOList(recipes *[]models.Recipe) *[]dto.RecipeDTO
 	ToRecipe(recipeId int64, recipeName string, recipePrice float64) *models.Recipe
+	ToRecipeDTO(recipe *models.Recipe) *dto.RecipeDTO
 }
 
 func (m *RecipeMapper) ToRecipeList(rows *sql.Rows) *[]models.Recipe {
@@ -100,6 +101,16 @@ func (m *RecipeMapper) ToRecipeDTOList(recipes *[]models.Recipe) *[]dto.RecipeDT
 	}
 
 	return &dtos
+}
+
+func (m *RecipeMapper) ToRecipeDTO(recipe *models.Recipe) *dto.RecipeDTO {
+	ingredients := m.RecipeIngredientMapper.ToRecipeIngredientDTOList(&recipe.Ingredients)
+	return &dto.RecipeDTO{
+		Id:          recipe.Id,
+		Name:        recipe.Name,
+		Price:       recipe.Price,
+		Ingredients: *ingredients,
+	}
 }
 
 func (m *RecipeMapper) ToRecipe(recipeId int64, recipeName string, recipePrice float64) *models.Recipe {
