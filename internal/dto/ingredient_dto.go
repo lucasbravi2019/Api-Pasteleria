@@ -4,9 +4,27 @@ import (
 	"github.com/lucasbravi2019/pasteleria/pkg/util"
 )
 
-type IngredientNameDTO struct {
-	Id   int64  `json:"id"`
-	Name string `json:"name" validate:"required"`
+type IngredientCreationDTO struct {
+	Name     string                      `json:"name" validate:"required"`
+	Packages []IngredientPackagePriceDTO `json:"packages"`
+}
+
+type IngredientUpdateDTO struct {
+	Id       int64                       `json:"id"`
+	Name     string                      `json:"name" validate:"required"`
+	Packages []IngredientPackagePriceDTO `json:"packages"`
+}
+
+type IngredientPackagePriceDTO struct {
+	Id    int64   `json:"id"`
+	Price float64 `json:"price"`
+}
+
+type IngredientPackageDTO struct {
+	Id       *int64   `json:"id"`
+	Metric   *string  `json:"metric"`
+	Quantity *float64 `json:"quantity"`
+	Price    *float64 `json:"price"`
 }
 
 type IngredientDTO struct {

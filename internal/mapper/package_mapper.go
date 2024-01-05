@@ -5,7 +5,6 @@ import (
 
 	"github.com/lucasbravi2019/pasteleria/db"
 	"github.com/lucasbravi2019/pasteleria/internal/dto"
-	"github.com/lucasbravi2019/pasteleria/internal/models"
 	"github.com/lucasbravi2019/pasteleria/pkg"
 	"github.com/lucasbravi2019/pasteleria/pkg/util"
 )
@@ -16,18 +15,13 @@ type PackageMapper struct {
 var PackageMapperInstance *PackageMapper
 
 type PackageMapperInterface interface {
-	ToPackageList(rows *sql.Rows) (*[]models.Package, error)
-
-	ToPackageDTO(pkg *models.Package) *dto.PackageDTO
-
-	ToPackageDTOList(pkgs *[]models.Package) *[]dto.PackageDTO
-
-	ToRecipeIngredientPackage(packageId sql.NullInt64, metric sql.NullString, quantity sql.NullFloat64,
-		packagePrice sql.NullFloat64) *models.RecipeIngredientPackage
+	ToPackageList(rows *sql.Rows) (*[]dto.PackageDTO, error)
+	ToIngredientPackage(packageId sql.NullInt64, metric sql.NullString, quantity sql.NullFloat64,
+		packagePrice sql.NullFloat64) *dto.IngredientPackageDTO
 }
 
-func (m *PackageMapper) ToPackageList(rows *sql.Rows) (*[]models.Package, error) {
-	packages := util.NewList[models.Package]()
+func (m *PackageMapper) ToPackageList(rows *sql.Rows) (*[]dto.PackageDTO, error) {
+	packages := util.NewList[dto.PackageDTO]()
 
 	for rows.Next() {
 		var id int64
@@ -40,31 +34,31 @@ func (m *PackageMapper) ToPackageList(rows *sql.Rows) (*[]models.Package, error)
 			return nil, err
 		}
 
-		pkg := models.NewPackage(id, metric, quantity)
-
-		util.Add(&packages, *pkg)
+		pkg := m.toPackage(id, metric, quantity)
+		util.Add(&packages, pkg)
 	}
 
 	return &packages, nil
 }
 
-func (m *PackageMapper) ToPackageDTO(pkg *models.Package) *dto.PackageDTO {
-	return dto.NewPackageDTO(pkg.Id, pkg.Metric, pkg.Quantity, 0)
-}
-
-func (m *PackageMapper) ToPackageDTOList(pkgs *[]models.Package) *[]dto.PackageDTO {
-	dtos := util.NewList[dto.PackageDTO]()
-
-	for _, pkg := range *pkgs {
-		dto := dto.NewPackageDTO(pkg.Id, pkg.Metric, pkg.Quantity, 0)
-
-		util.Add(&dtos, *dto)
+func (m *PackageMapper) ToIngredientPackage(packageId sql.NullInt64, metric sql.NullString, quantity sql.NullFloat64,
+	packagePrice sql.NullFloat64) *dto.IngredientPackageDTO {
+	if !packageId.Valid {
+		return nil
 	}
 
-	return &dtos
+	return &dto.IngredientPackageDTO{
+		Id:       db.GetLong(packageId),
+		Metric:   db.GetString(metric),
+		Quantity: db.GetFloat(quantity),
+		Price:    db.GetFloat(packagePrice),
+	}
 }
 
-func (m *PackageMapper) ToRecipeIngredientPackage(packageId sql.NullInt64, metric sql.NullString,
-	quantity sql.NullFloat64, packagePrice sql.NullFloat64) *models.RecipeIngredientPackage {
-	return models.NewRecipeIngredientPackage(db.GetLong(packageId), db.GetString(metric), db.GetFloat(quantity), db.GetFloat(packagePrice))
+func (m *PackageMapper) toPackage(id int64, metric string, quantity float64) dto.PackageDTO {
+	return dto.PackageDTO{
+		Id:       &id,
+		Metric:   &metric,
+		Quantity: &quantity,
+	}
 }

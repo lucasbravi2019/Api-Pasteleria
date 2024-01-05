@@ -39,8 +39,6 @@ func StartApi() {
 	RegisterRoutes(factory.GetRecipeHandlerInstance().GetRecipeRoutes())
 	RegisterRoutes(factory.GetIngredientHandlerInstance().GetIngredientRoutes())
 	RegisterRoutes(factory.GetPackageHandlerInstance().GetPackageRoutes())
-	RegisterRoutes(factory.GetIngredientPackageHandlerInstance().GetIngredientPackageRoutes())
-	RegisterRoutes(factory.GetRecipeIngredientHandlerInstance().GetAllRecipeIngredientRoutes())
 
 	r.Run(":8080")
 }

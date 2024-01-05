@@ -14,7 +14,7 @@ type RecipeHandlerInterface interface {
 	GetAllRecipes(ctx *gin.Context)
 	GetRecipe(ctx *gin.Context)
 	CreateRecipe(ctx *gin.Context)
-	UpdateRecipeName(ctx *gin.Context)
+	UpdateRecipe(ctx *gin.Context)
 	DeleteRecipe(ctx *gin.Context)
 	GetRecipeRoutes() pkg.Routes
 }
@@ -37,7 +37,7 @@ func (h *RecipeHandler) CreateRecipe(ctx *gin.Context) {
 }
 
 func (h *RecipeHandler) UpdateRecipeName(ctx *gin.Context) {
-	statusCode, body, err := h.Service.UpdateRecipeName(ctx)
+	statusCode, body, err := h.Service.UpdateRecipe(ctx)
 	pkg.EncodeJsonResponse(ctx, statusCode, body, err)
 }
 

@@ -7,7 +7,6 @@ import (
 	"github.com/lucasbravi2019/pasteleria/internal/dao"
 	"github.com/lucasbravi2019/pasteleria/internal/dto"
 	"github.com/lucasbravi2019/pasteleria/internal/mapper"
-	"github.com/lucasbravi2019/pasteleria/internal/models"
 	"github.com/lucasbravi2019/pasteleria/pkg"
 	"github.com/lucasbravi2019/pasteleria/pkg/util"
 )
@@ -21,25 +20,20 @@ type RecipeServiceInterface interface {
 	GetAllRecipes(ctx *gin.Context) (int, *[]dto.RecipeDTO, error)
 	GetRecipe(ctx *gin.Context) (int, *dto.RecipeDTO, error)
 	CreateRecipe(ctx *gin.Context) (int, interface{}, error)
-	UpdateRecipeName(ctx *gin.Context) (int, interface{}, error)
+	UpdateRecipe(ctx *gin.Context) (int, interface{}, error)
 	DeleteRecipe(ctx *gin.Context) (int, interface{}, error)
 }
 
 var RecipeServiceInstance *RecipeService
 
 func (s *RecipeService) GetAllRecipes(ctx *gin.Context) (int, *[]dto.RecipeDTO, error) {
-	recipes := util.NewList[models.Recipe]()
 	recipesFound, err := s.RecipeDao.FindAllRecipes()
 
 	if pkg.HasError(err) {
 		return http.StatusInternalServerError, nil, err
 	}
 
-	util.AddAll(&recipes, *recipesFound)
-
-	dtos := s.RecipeMapper.ToRecipeDTOList(&recipes)
-
-	return http.StatusOK, dtos, nil
+	return http.StatusOK, recipesFound, nil
 }
 
 func (s *RecipeService) GetRecipe(ctx *gin.Context) (int, *dto.RecipeDTO, error) {
@@ -57,21 +51,19 @@ func (s *RecipeService) GetRecipe(ctx *gin.Context) (int, *dto.RecipeDTO, error)
 		return http.StatusInternalServerError, nil, err
 	}
 
-	recipeDto := s.RecipeMapper.ToRecipeDTO(recipe)
-
-	return http.StatusOK, recipeDto, nil
+	return http.StatusOK, recipe, nil
 }
 
 func (s *RecipeService) CreateRecipe(ctx *gin.Context) (int, interface{}, error) {
-	var recipeName dto.RecipeNameDTO
+	var recipe dto.RecipeCreationDTO
 
-	err := pkg.DecodeBody(ctx, &recipeName)
+	err := pkg.DecodeBody(ctx, &recipe)
 
 	if pkg.HasError(err) {
 		return http.StatusBadRequest, nil, err
 	}
 
-	err = s.RecipeDao.CreateRecipe(&recipeName)
+	err = s.RecipeDao.CreateRecipe(&recipe)
 
 	if pkg.HasError(err) {
 		return http.StatusInternalServerError, nil, err
@@ -80,16 +72,16 @@ func (s *RecipeService) CreateRecipe(ctx *gin.Context) (int, interface{}, error)
 	return http.StatusCreated, nil, nil
 }
 
-func (s *RecipeService) UpdateRecipeName(ctx *gin.Context) (int, interface{}, error) {
-	var recipeName dto.RecipeNameDTO
+func (s *RecipeService) UpdateRecipe(ctx *gin.Context) (int, interface{}, error) {
+	var recipe dto.RecipeUpdateDTO
 
-	err := pkg.DecodeBody(ctx, &recipeName)
+	err := pkg.DecodeBody(ctx, &recipe)
 
 	if pkg.HasError(err) {
 		return http.StatusInternalServerError, nil, err
 	}
 
-	err = s.RecipeDao.UpdateRecipeName(&recipeName)
+	err = s.RecipeDao.UpdateRecipe(&recipe)
 
 	if pkg.HasError(err) {
 		return http.StatusInternalServerError, nil, err

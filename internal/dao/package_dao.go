@@ -6,7 +6,6 @@ import (
 	"github.com/lucasbravi2019/pasteleria/db"
 	"github.com/lucasbravi2019/pasteleria/internal/dto"
 	"github.com/lucasbravi2019/pasteleria/internal/mapper"
-	"github.com/lucasbravi2019/pasteleria/internal/models"
 	"github.com/lucasbravi2019/pasteleria/pkg"
 )
 
@@ -16,15 +15,15 @@ type PackageDao struct {
 }
 
 type PackageDaoInterface interface {
-	GetPackages() (*[]models.Package, error)
+	GetPackages() (*[]dto.PackageDTO, error)
 	CreatePackage(body *dto.PackageDTO) (*int64, error)
-	UpdatePackage(body *models.Package) error
+	UpdatePackage(body *dto.PackageDTO) error
 	DeletePackage(id *int64) error
 }
 
 var PackageDaoInstance *PackageDao
 
-func (d *PackageDao) GetPackages() (*[]models.Package, error) {
+func (d *PackageDao) GetPackages() (*[]dto.PackageDTO, error) {
 	query, err := db.GetQueryByName(db.Package_FindAll)
 
 	if pkg.HasError(err) {

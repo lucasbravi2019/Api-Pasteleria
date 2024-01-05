@@ -4,13 +4,12 @@ import (
 	"database/sql"
 
 	"github.com/lucasbravi2019/pasteleria/internal/dto"
-	"github.com/lucasbravi2019/pasteleria/internal/models"
 	"github.com/lucasbravi2019/pasteleria/pkg"
 	"github.com/lucasbravi2019/pasteleria/pkg/util"
 )
 
-func ToIngredientList(rows *sql.Rows) (*[]models.Ingredient, error) {
-	ingredients := util.NewList[models.Ingredient]()
+func ToIngredientList(rows *sql.Rows) (*[]dto.IngredientDTO, error) {
+	ingredients := util.NewList[dto.IngredientDTO]()
 
 	for rows.Next() {
 		var id int64
@@ -22,23 +21,14 @@ func ToIngredientList(rows *sql.Rows) (*[]models.Ingredient, error) {
 			return nil, err
 		}
 
-		ingredient := models.NewIngredient(id, name)
+		ingredient := &dto.IngredientDTO{
+			Id:   id,
+			Name: name,
+		}
 
 		util.Add(&ingredients, *ingredient)
 	}
 	return &ingredients, nil
-}
-
-func ToIngredientDTOList(ingredients []models.Ingredient) (*[]dto.IngredientDTO, error) {
-	dtos := util.NewList[dto.IngredientDTO]()
-
-	for _, ingredient := range ingredients {
-		dto := dto.NewIngredientDTO(ingredient.Id, ingredient.Name)
-
-		util.Add(&dtos, *dto)
-	}
-
-	return &dtos, nil
 }
 
 func ToIngredientPackageDTOList(rows *sql.Rows) (*[]dto.IngredientDTO, error) {
@@ -59,7 +49,12 @@ func ToIngredientPackageDTOList(rows *sql.Rows) (*[]dto.IngredientDTO, error) {
 			return nil, err
 		}
 
-		pkg := dto.NewPackageDTO(packageId, metric, quantity, price)
+		pkg := &dto.PackageDTO{
+			Id:       &packageId,
+			Metric:   &metric,
+			Quantity: &quantity,
+			Price:    &price,
+		}
 
 		ingredientExisting := util.GetValue(ingredientsById, id)
 

@@ -34,7 +34,7 @@ func (s *IngredientService) GetAllIngredients() (int, *[]dto.IngredientDTO, erro
 }
 
 func (s *IngredientService) CreateIngredient(ctx *gin.Context) (int, interface{}, error) {
-	var ingredient dto.IngredientNameDTO
+	var ingredient dto.IngredientCreationDTO
 
 	err := pkg.DecodeBody(ctx, &ingredient)
 
@@ -52,15 +52,15 @@ func (s *IngredientService) CreateIngredient(ctx *gin.Context) (int, interface{}
 }
 
 func (s *IngredientService) UpdateIngredient(ctx *gin.Context) (int, interface{}, error) {
-	var ingredientName dto.IngredientNameDTO
+	var ingredient dto.IngredientUpdateDTO
 
-	err := pkg.DecodeBody(ctx, &ingredientName)
+	err := pkg.DecodeBody(ctx, &ingredient)
 
 	if pkg.HasError(err) {
 		return http.StatusBadRequest, nil, err
 	}
 
-	err = s.IngredientDao.UpdateIngredient(&ingredientName)
+	err = s.IngredientDao.UpdateIngredient(&ingredient)
 
 	if pkg.HasError(err) {
 		return http.StatusInternalServerError, nil, err

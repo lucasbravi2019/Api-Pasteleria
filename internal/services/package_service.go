@@ -32,9 +32,7 @@ func (s *PackageService) GetPackages() (int, *[]dto.PackageDTO, error) {
 		return http.StatusInternalServerError, nil, err
 	}
 
-	dtos := s.PackageMapper.ToPackageDTOList(packages)
-
-	return http.StatusOK, dtos, nil
+	return http.StatusOK, packages, nil
 }
 
 func (s *PackageService) CreatePackage(ctx *gin.Context) (int, interface{}, error) {

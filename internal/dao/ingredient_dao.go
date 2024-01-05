@@ -15,9 +15,8 @@ type IngredientDao struct {
 
 type IngredientDaoInterface interface {
 	GetAllIngredients() (*[]dto.IngredientDTO, error)
-	ValidateExistingIngredient(ingredientName *dto.IngredientNameDTO) error
-	CreateIngredient(ingredientName *dto.IngredientNameDTO) error
-	UpdateIngredient(dto *dto.IngredientNameDTO) error
+	CreateIngredient(ingredientName *dto.IngredientCreationDTO) error
+	UpdateIngredient(dto *dto.IngredientUpdateDTO) error
 	DeleteIngredient(id *int64) error
 }
 
@@ -42,16 +41,10 @@ func (d *IngredientDao) GetAllIngredients() (*[]dto.IngredientDTO, error) {
 		return nil, err
 	}
 
-	dtos, err := mapper.ToIngredientDTOList(*ingredients)
-
-	if pkg.HasError(err) {
-		return nil, err
-	}
-
-	return dtos, nil
+	return ingredients, nil
 }
 
-func (d *IngredientDao) CreateIngredient(ingredientName *dto.IngredientNameDTO) error {
+func (d *IngredientDao) CreateIngredient(ingredientName *dto.IngredientCreationDTO) error {
 	query, err := db.GetQueryByName(db.Ingredient_Create)
 
 	if pkg.HasError(err) {
@@ -62,7 +55,7 @@ func (d *IngredientDao) CreateIngredient(ingredientName *dto.IngredientNameDTO) 
 	return err
 }
 
-func (d *IngredientDao) UpdateIngredient(dto *dto.IngredientNameDTO) error {
+func (d *IngredientDao) UpdateIngredient(dto *dto.IngredientUpdateDTO) error {
 	query, err := db.GetQueryByName(db.Ingredient_UpdateById)
 
 	if pkg.HasError(err) {

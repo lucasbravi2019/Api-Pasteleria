@@ -6,7 +6,6 @@ import (
 	"github.com/lucasbravi2019/pasteleria/db"
 	"github.com/lucasbravi2019/pasteleria/internal/dto"
 	"github.com/lucasbravi2019/pasteleria/internal/mapper"
-	"github.com/lucasbravi2019/pasteleria/internal/models"
 	"github.com/lucasbravi2019/pasteleria/pkg"
 )
 
@@ -17,15 +16,15 @@ type RecipeDao struct {
 
 type RecipeDaoInterface interface {
 	FindAllRecipes() *[]dto.RecipeDTO
-	FindRecipeById(id int64) (*models.Recipe, error)
-	CreateRecipe(recipe *dto.RecipeNameDTO) error
-	UpdateRecipeName(recipeName *dto.RecipeNameDTO) error
+	FindRecipeById(id int64) (*dto.RecipeDTO, error)
+	CreateRecipe(recipe *dto.RecipeCreationDTO) error
+	UpdateRecipe(recipeName *dto.RecipeUpdateDTO) error
 	DeleteRecipe(id *int64) error
 }
 
 var RecipeDaoInstance *RecipeDao
 
-func (d *RecipeDao) FindAllRecipes() (*[]models.Recipe, error) {
+func (d *RecipeDao) FindAllRecipes() (*[]dto.RecipeDTO, error) {
 	query, err := db.GetQueryByName(db.Recipe_FindAll)
 
 	if pkg.HasError(err) {
@@ -39,10 +38,10 @@ func (d *RecipeDao) FindAllRecipes() (*[]models.Recipe, error) {
 	}
 	defer rows.Close()
 
-	return d.RecipeMapper.ToRecipeList(rows), nil
+	return d.RecipeMapper.ToRecipeList(rows)
 }
 
-func (d *RecipeDao) FindRecipeById(id int64) (*models.Recipe, error) {
+func (d *RecipeDao) FindRecipeById(id int64) (*dto.RecipeDTO, error) {
 	query, err := db.GetQueryByName(db.Recipe_FindById)
 
 	if pkg.HasError(err) {
@@ -55,10 +54,10 @@ func (d *RecipeDao) FindRecipeById(id int64) (*models.Recipe, error) {
 		return nil, err
 	}
 
-	return d.RecipeMapper.ToRecipeRow(rows), nil
+	return d.RecipeMapper.ToRecipeRow(rows)
 }
 
-func (d *RecipeDao) CreateRecipe(recipe *dto.RecipeNameDTO) error {
+func (d *RecipeDao) CreateRecipe(recipe *dto.RecipeCreationDTO) error {
 	query, err := db.GetQueryByName(db.Recipe_Create)
 
 	if pkg.HasError(err) {
@@ -69,7 +68,7 @@ func (d *RecipeDao) CreateRecipe(recipe *dto.RecipeNameDTO) error {
 	return err
 }
 
-func (d *RecipeDao) UpdateRecipeName(recipe *dto.RecipeNameDTO) error {
+func (d *RecipeDao) UpdateRecipe(recipe *dto.RecipeUpdateDTO) error {
 	query, err := db.GetQueryByName(db.Recipe_UpdateName)
 
 	if pkg.HasError(err) {

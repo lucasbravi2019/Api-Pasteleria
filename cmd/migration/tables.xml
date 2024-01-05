@@ -20,8 +20,8 @@
     <table id="ingredient_package">
         create table ingredient_package (
             id bigint not null identity,
-            package_id bigint not null foreign key references package(id),
-            ingredient_id bigint not null foreign key references ingredient(id),
+            package_id bigint not null foreign key references package(id) ON DELETE CASCADE,
+            ingredient_id bigint not null foreign key references ingredient(id) ON DELETE CASCADE,
             price decimal(18, 2),
             primary key (id),
             constraint UC_IP UNIQUE (ingredient_id, package_id)
@@ -38,8 +38,8 @@
     <table id="recipe_ingredient">
         create table recipe_ingredient (
             id bigint not null identity,
-            recipe_id bigint not null foreign key references recipe(id),    
-            ingredient_id bigint not null foreign key references ingredient_package(id),
+            recipe_id bigint not null foreign key references recipe(id) ON DELETE CASCADE,    
+            ingredient_id bigint not null foreign key references ingredient_package(id) ON DELETE CASCADE,
             quantity_used decimal(18, 2) not null,
             price decimal(18, 2) not null,
             primary key (id)
