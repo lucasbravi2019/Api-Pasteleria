@@ -27,7 +27,7 @@ func (h *RecipeHandler) CreateRecipe(ctx *gin.Context) {
 	pkg.EncodeJsonResponse(ctx, statusCode, body, err)
 }
 
-func (h *RecipeHandler) UpdateRecipeName(ctx *gin.Context) {
+func (h *RecipeHandler) UpdateRecipe(ctx *gin.Context) {
 	statusCode, body, err := h.Service.UpdateRecipe(ctx)
 	pkg.EncodeJsonResponse(ctx, statusCode, body, err)
 }
@@ -56,7 +56,7 @@ func (h *RecipeHandler) GetRecipeRoutes() pkg.Routes {
 		},
 		pkg.Route{
 			Path:        "recipes",
-			HandlerFunc: h.UpdateRecipeName,
+			HandlerFunc: h.UpdateRecipe,
 			Method:      "PUT",
 		},
 		pkg.Route{

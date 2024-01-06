@@ -22,6 +22,8 @@ var (
 	Recipe_AddIngredientsToRecipe          = "recipe.addIngredientsToRecipe"
 	Recipe_FindRecipeIngredientById        = "recipe.findRecipeIngredientById"
 	Recipe_UpdateRecipeIngredientPriceById = "recipe.updateRecipeIngredientPriceById"
+	Recipe_UpdateRecipePriceByRecipeId     = "recipe.updateRecipePriceByRecipeId"
+	Recipe_FindRecipeIdByName              = "recipe.findRecipeIdByName"
 	Ingredient_FindAll                     = "ingredient.findAll"
 	Ingredient_Create                      = "ingredient.create"
 	Ingredient_UpdateById                  = "ingredient.updateById"
