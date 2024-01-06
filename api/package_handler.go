@@ -7,15 +7,7 @@ import (
 )
 
 type PackageHandler struct {
-	Service services.PackageServiceInterface
-}
-
-type PackageHandlerInterface interface {
-	GetPackages(ctx *gin.Context)
-	CreatePackage(ctx *gin.Context)
-	UpdatePackage(ctx *gin.Context)
-	DeletePackage(ctx *gin.Context)
-	GetPackageRoutes() []pkg.Route
+	Service *services.PackageService
 }
 
 var PackageHandlerInstance *PackageHandler

@@ -1,6 +1,6 @@
 <queries>
     <query id="recipe.findAll">
-        select r.id, r.name, r.price, ri.ingredient_id, i.name, ri.quantity_used, ri.price, ip.package_id, p.metric, p.quantity, ip.price
+        select r.id, r.name, r.price, ri.id, ri.price, ri.quantity_used, ip.id, ip.price, i.id, i.name, p.id, p.metric, p.quantity
         from recipe r
         left join recipe_ingredient ri on ri.recipe_id = r.id
         left join ingredient_package ip on ip.id = ri.ingredient_id
@@ -8,7 +8,7 @@
         left join package p on p.id = ip.package_id
     </query>
     <query id="recipe.findById">
-        select r.id, r.name, r.price, ri.ingredient_id, i.name, ri.quantity_used, ri.price, ip.package_id, p.metric, p.quantity, ip.price
+        select r.id, r.name, r.price, ri.id, ri.price, ri.quantity_used, ip.id, ip.price, i.id, i.name, p.id, p.metric, p.quantity
         from recipe r
         left join recipe_ingredient ri on ri.recipe_id = r.id
         left join ingredient_package ip on ip.id = ri.ingredient_id

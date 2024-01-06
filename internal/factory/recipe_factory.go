@@ -39,7 +39,10 @@ func GetRecipeDaoInstance() *dao.RecipeDao {
 
 func GetRecipeMapperInstance() *mapper.RecipeMapper {
 	if mapper.RecipeMapperInstance == nil {
-		mapper.RecipeMapperInstance = &mapper.RecipeMapper{}
+		mapper.RecipeMapperInstance = &mapper.RecipeMapper{
+			PackageMapper:    GetPackageMapperInstance(),
+			IngredientMapper: GetIngredientMapperInstance(),
+		}
 	}
 	return mapper.RecipeMapperInstance
 }

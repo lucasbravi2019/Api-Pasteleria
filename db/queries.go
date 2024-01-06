@@ -29,6 +29,7 @@ var (
 	Ingredient_AddPackage                  = "ingredient.addPackage"
 	Ingredient_DeletePackage               = "ingredient.deletePackage"
 	Ingredient_FindAllIngredientPackages   = "ingredient.findAllIngredientPackages"
+	Ingredient_FindIngredientIdByName      = "ingredient.findIngredientIdByName"
 	Package_FindAll                        = "package.findAll"
 	Package_Create                         = "package.create"
 	Package_UpdateById                     = "package.updateById"

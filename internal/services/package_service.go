@@ -16,16 +16,9 @@ type PackageService struct {
 	PackageMapper *mapper.PackageMapper
 }
 
-type PackageServiceInterface interface {
-	GetPackages() (int, *[]dto.PackageDTO, error)
-	CreatePackage(ctx *gin.Context) (int, interface{}, error)
-	UpdatePackage(ctx *gin.Context) (int, interface{}, error)
-	DeletePackage(ctx *gin.Context) (int, interface{}, error)
-}
-
 var PackageServiceInstance *PackageService
 
-func (s *PackageService) GetPackages() (int, *[]dto.PackageDTO, error) {
+func (s *PackageService) GetPackages() (int, *[]dto.Package, error) {
 	packages, err := s.PackageDao.GetPackages()
 
 	if pkg.HasError(err) {
@@ -36,7 +29,7 @@ func (s *PackageService) GetPackages() (int, *[]dto.PackageDTO, error) {
 }
 
 func (s *PackageService) CreatePackage(ctx *gin.Context) (int, interface{}, error) {
-	var body dto.PackageDTO
+	var body dto.Package
 
 	err := pkg.DecodeBody(ctx, &body)
 
@@ -54,7 +47,7 @@ func (s *PackageService) CreatePackage(ctx *gin.Context) (int, interface{}, erro
 }
 
 func (s *PackageService) UpdatePackage(ctx *gin.Context) (int, interface{}, error) {
-	var body dto.PackageDTO
+	var body dto.Package
 
 	err := pkg.DecodeBody(ctx, &body)
 

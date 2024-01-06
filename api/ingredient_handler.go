@@ -7,15 +7,7 @@ import (
 )
 
 type IngredientHandler struct {
-	Service services.IngredientServiceInterface
-}
-
-type IngredientHandlerInterface interface {
-	GetAllIngredients(ctx *gin.Context)
-	CreateIngredient(ctx *gin.Context)
-	UpdateIngredient(ctx *gin.Context)
-	DeleteIngredient(ctx *gin.Context)
-	GetIngredientRoutes() pkg.Routes
+	Service *services.IngredientService
 }
 
 var IngredientHandlerInstance *IngredientHandler

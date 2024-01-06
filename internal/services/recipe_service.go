@@ -16,17 +16,9 @@ type RecipeService struct {
 	RecipeMapper *mapper.RecipeMapper
 }
 
-type RecipeServiceInterface interface {
-	GetAllRecipes(ctx *gin.Context) (int, *[]dto.RecipeDTO, error)
-	GetRecipe(ctx *gin.Context) (int, *dto.RecipeDTO, error)
-	CreateRecipe(ctx *gin.Context) (int, interface{}, error)
-	UpdateRecipe(ctx *gin.Context) (int, interface{}, error)
-	DeleteRecipe(ctx *gin.Context) (int, interface{}, error)
-}
-
 var RecipeServiceInstance *RecipeService
 
-func (s *RecipeService) GetAllRecipes(ctx *gin.Context) (int, *[]dto.RecipeDTO, error) {
+func (s *RecipeService) GetAllRecipes(ctx *gin.Context) (int, *[]dto.Recipe, error) {
 	recipesFound, err := s.RecipeDao.FindAllRecipes()
 
 	if pkg.HasError(err) {
@@ -36,7 +28,7 @@ func (s *RecipeService) GetAllRecipes(ctx *gin.Context) (int, *[]dto.RecipeDTO, 
 	return http.StatusOK, recipesFound, nil
 }
 
-func (s *RecipeService) GetRecipe(ctx *gin.Context) (int, *dto.RecipeDTO, error) {
+func (s *RecipeService) GetRecipe(ctx *gin.Context) (int, *dto.Recipe, error) {
 	id, _ := pkg.GetUrlVars(ctx, "id")
 
 	recipeId, err := util.ToLong(id)
@@ -55,7 +47,7 @@ func (s *RecipeService) GetRecipe(ctx *gin.Context) (int, *dto.RecipeDTO, error)
 }
 
 func (s *RecipeService) CreateRecipe(ctx *gin.Context) (int, interface{}, error) {
-	var recipe dto.RecipeCreationDTO
+	var recipe dto.RecipeRequest
 
 	err := pkg.DecodeBody(ctx, &recipe)
 
@@ -73,7 +65,7 @@ func (s *RecipeService) CreateRecipe(ctx *gin.Context) (int, interface{}, error)
 }
 
 func (s *RecipeService) UpdateRecipe(ctx *gin.Context) (int, interface{}, error) {
-	var recipe dto.RecipeUpdateDTO
+	var recipe dto.RecipeRequest
 
 	err := pkg.DecodeBody(ctx, &recipe)
 

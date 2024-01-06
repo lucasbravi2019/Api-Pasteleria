@@ -10,15 +10,6 @@ type RecipeHandler struct {
 	Service *services.RecipeService
 }
 
-type RecipeHandlerInterface interface {
-	GetAllRecipes(ctx *gin.Context)
-	GetRecipe(ctx *gin.Context)
-	CreateRecipe(ctx *gin.Context)
-	UpdateRecipe(ctx *gin.Context)
-	DeleteRecipe(ctx *gin.Context)
-	GetRecipeRoutes() pkg.Routes
-}
-
 var RecipeHandlerInstance *RecipeHandler
 
 func (h *RecipeHandler) GetAllRecipes(ctx *gin.Context) {

@@ -1,9 +1,14 @@
 <queries>
     <query id="ingredient.findAll">
-        select * from ingredient
+        select i.id, i.name, ip.id, ip.price, p.id, p.metric, p.quantity from ingredient i
+        left join ingredient_package ip on ip.ingredient_id = i.id
+        left join package p on p.id = ip.package_id
     </query>
     <query id="ingredient.findById">
-        select * from ingredient where id = @p1
+        select i.id, i.name, ip.id, ip.price, p.id, p.metric, p.quantity from ingredient i
+        left join ingredient_package ip on ip.ingredient_id = i.id
+        left join package p on p.id = ip.package_id 
+        where i.id = @p1
     </query>
     <query id="ingredient.create">
         insert into ingredient (name) values (@p1)
@@ -28,5 +33,8 @@
         inner join ingredient_package ip on ip.ingredient_id = i.id
         inner join package p on p.id = ip.package_id
         where i.id = @p1
+    </query>
+    <query id="ingredient.findIngredientIdByName">
+        select id from ingredient where name = @p1
     </query>
 </queries>

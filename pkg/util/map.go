@@ -16,6 +16,8 @@ func GetValue[K comparable, V any](mapa map[K]V, key K) *V {
 	return &value
 }
 
-func PutValue[K comparable, V any](mapa *map[K]V, key K, value V) {
-	(*mapa)[key] = value
+func PutValue[K comparable, V any](mapa *map[K]V, key *K, value *V) {
+	if key != nil && value != nil {
+		(*mapa)[*key] = *value
+	}
 }

@@ -14,17 +14,9 @@ type RecipeDao struct {
 	RecipeMapper *mapper.RecipeMapper
 }
 
-type RecipeDaoInterface interface {
-	FindAllRecipes() *[]dto.RecipeDTO
-	FindRecipeById(id int64) (*dto.RecipeDTO, error)
-	CreateRecipe(recipe *dto.RecipeCreationDTO) error
-	UpdateRecipe(recipeName *dto.RecipeUpdateDTO) error
-	DeleteRecipe(id *int64) error
-}
-
 var RecipeDaoInstance *RecipeDao
 
-func (d *RecipeDao) FindAllRecipes() (*[]dto.RecipeDTO, error) {
+func (d *RecipeDao) FindAllRecipes() (*[]dto.Recipe, error) {
 	query, err := db.GetQueryByName(db.Recipe_FindAll)
 
 	if pkg.HasError(err) {
@@ -41,7 +33,7 @@ func (d *RecipeDao) FindAllRecipes() (*[]dto.RecipeDTO, error) {
 	return d.RecipeMapper.ToRecipeList(rows)
 }
 
-func (d *RecipeDao) FindRecipeById(id int64) (*dto.RecipeDTO, error) {
+func (d *RecipeDao) FindRecipeById(id int64) (*dto.Recipe, error) {
 	query, err := db.GetQueryByName(db.Recipe_FindById)
 
 	if pkg.HasError(err) {
@@ -57,7 +49,7 @@ func (d *RecipeDao) FindRecipeById(id int64) (*dto.RecipeDTO, error) {
 	return d.RecipeMapper.ToRecipeRow(rows)
 }
 
-func (d *RecipeDao) CreateRecipe(recipe *dto.RecipeCreationDTO) error {
+func (d *RecipeDao) CreateRecipe(recipe *dto.RecipeRequest) error {
 	query, err := db.GetQueryByName(db.Recipe_Create)
 
 	if pkg.HasError(err) {
@@ -68,7 +60,7 @@ func (d *RecipeDao) CreateRecipe(recipe *dto.RecipeCreationDTO) error {
 	return err
 }
 
-func (d *RecipeDao) UpdateRecipe(recipe *dto.RecipeUpdateDTO) error {
+func (d *RecipeDao) UpdateRecipe(recipe *dto.RecipeRequest) error {
 	query, err := db.GetQueryByName(db.Recipe_UpdateName)
 
 	if pkg.HasError(err) {

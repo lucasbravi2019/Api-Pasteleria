@@ -2,6 +2,7 @@ package mapper
 
 import (
 	"database/sql"
+	"log"
 
 	"github.com/lucasbravi2019/pasteleria/db"
 	"github.com/lucasbravi2019/pasteleria/internal/dto"
@@ -10,47 +11,41 @@ import (
 )
 
 type RecipeMapper struct {
-	RecipeIngredientMapper RecipeIngredientMapper
-	PackageMapper          PackageMapper
+	PackageMapper    *PackageMapper
+	IngredientMapper *IngredientMapper
 }
 
 var RecipeMapperInstance *RecipeMapper
 
-type RecipeMapperInterface interface {
-	ToRecipeList(rows *sql.Rows) (*[]dto.RecipeDTO, error)
-	ToRecipeRow(rows *sql.Rows) (*dto.RecipeDTO, error)
-	toRecipe(recipeId int64, recipeName string, recipePrice float64) *dto.RecipeDTO
-}
-
-func (m *RecipeMapper) ToRecipeList(rows *sql.Rows) (*[]dto.RecipeDTO, error) {
-	recipesGrouper := util.NewMap[int64, dto.RecipeDTO]()
+func (m *RecipeMapper) ToRecipeList(rows *sql.Rows) (*[]dto.Recipe, error) {
+	recipesGrouper := util.NewMap[int64, dto.Recipe]()
 
 	for rows.Next() {
 		var recipeId int64
 		var recipeName string
 		var recipePrice float64
+		var recipeIngredientId sql.NullInt64
+		var recipeIngredientPrice sql.NullFloat64
+		var recipeIngredientQuantity sql.NullFloat64
+		var ingredientPackageId sql.NullInt64
+		var ingredientPackagePrice sql.NullFloat64
 		var ingredientId sql.NullInt64
 		var ingredientName sql.NullString
-		var ingredientQuantity sql.NullFloat64
-		var ingredientPrice sql.NullFloat64
 		var packageId sql.NullInt64
 		var metric sql.NullString
 		var quantity sql.NullFloat64
-		var packagePrice sql.NullFloat64
 
-		err := rows.Scan(&recipeId, &recipeName, &recipePrice, &ingredientId, &ingredientName, &ingredientQuantity, &ingredientPrice, &packageId,
-			&metric, &quantity, &packagePrice)
+		err := rows.Scan(&recipeId, &recipeName, &recipePrice, &recipeIngredientId, &recipeIngredientPrice, &recipeIngredientQuantity,
+			&ingredientPackageId, &ingredientPackagePrice, &ingredientId, &ingredientName, &packageId, &metric, &quantity)
 
 		if pkg.HasError(err) {
 			return nil, err
 		}
 
-		var ingredientPackage *dto.IngredientPackageDTO
-		var recipeIngredient *dto.RecipeIngredientDTO
-
-		ingredientPackage = m.PackageMapper.ToIngredientPackage(packageId, metric, quantity, packagePrice)
-		recipeIngredient = m.RecipeIngredientMapper.ToRecipeIngredientDTO(ingredientId, ingredientName, ingredientQuantity,
-			ingredientPrice, ingredientPackage)
+		pkg := m.PackageMapper.ToPackageNullable(packageId, metric, quantity)
+		ingredient := m.IngredientMapper.ToIngredientNullable(ingredientId, ingredientName)
+		ingredientPackage := m.IngredientMapper.ToIngredientPackageNullable(ingredientPackageId, ingredientPackagePrice, ingredient, pkg)
+		recipeIngredient := m.ToRecipeIngredientNullable(recipeIngredientId, recipeIngredientPrice, recipeIngredientQuantity, ingredientPackage)
 
 		recipe := util.GetValue(recipesGrouper, recipeId)
 		if recipe == nil {
@@ -58,12 +53,14 @@ func (m *RecipeMapper) ToRecipeList(rows *sql.Rows) (*[]dto.RecipeDTO, error) {
 		}
 
 		if recipeIngredient != nil {
-			util.Add(&recipe.Ingredients, *recipeIngredient)
+			util.Add(recipe.Ingredients, *recipeIngredient)
 		}
-		util.PutValue(&recipesGrouper, recipeId, *recipe)
+
+		log.Println(recipe.Ingredients)
+		util.PutValue(&recipesGrouper, &recipeId, recipe)
 	}
 
-	recipes := util.NewList[dto.RecipeDTO]()
+	recipes := util.NewList[dto.Recipe]()
 
 	for _, recipe := range recipesGrouper {
 		util.Add(&recipes, recipe)
@@ -72,78 +69,72 @@ func (m *RecipeMapper) ToRecipeList(rows *sql.Rows) (*[]dto.RecipeDTO, error) {
 	return &recipes, nil
 }
 
-func (m *RecipeMapper) ToRecipeRow(rows *sql.Rows) (*dto.RecipeDTO, error) {
-	var recipe *dto.RecipeDTO
+func (m *RecipeMapper) ToRecipeRow(rows *sql.Rows) (*dto.Recipe, error) {
+	var recipe *dto.Recipe
 
 	for rows.Next() {
-		var id int64
-		var name string
-		var price float64
+		var recipeId int64
+		var recipeName string
+		var recipePrice float64
+		var recipeIngredientId sql.NullInt64
+		var recipeIngredientPrice sql.NullFloat64
+		var recipeIngredientQuantity sql.NullFloat64
+		var ingredientPackageId sql.NullInt64
+		var ingredientPackagePrice sql.NullFloat64
 		var ingredientId sql.NullInt64
 		var ingredientName sql.NullString
-		var ingredientQuantity sql.NullFloat64
-		var ingredientPrice sql.NullFloat64
 		var packageId sql.NullInt64
 		var metric sql.NullString
-		var packageQuantity sql.NullFloat64
-		var packagePrice sql.NullFloat64
+		var quantity sql.NullFloat64
 
-		err := rows.Scan(&id, &name, &price, &ingredientId, &ingredientName, &ingredientQuantity, &ingredientPrice,
-			&packageId, &metric, &packageQuantity, &packagePrice)
+		err := rows.Scan(&recipeId, &recipeName, &recipePrice, &recipeIngredientId, &recipeIngredientPrice, &recipeIngredientQuantity,
+			&ingredientPackageId, &ingredientPackagePrice, &ingredientId, &ingredientName, &packageId, &metric, &quantity)
 
 		if pkg.HasError(err) {
 			return nil, err
 		}
 
+		pkg := m.PackageMapper.ToPackageNullable(packageId, metric, quantity)
+		ingredient := m.IngredientMapper.ToIngredientNullable(ingredientId, ingredientName)
+		ingredientPackage := m.IngredientMapper.ToIngredientPackageNullable(ingredientPackageId, ingredientPackagePrice, ingredient, pkg)
+		recipeIngredient := m.ToRecipeIngredientNullable(recipeIngredientId, recipeIngredientPrice, recipeIngredientQuantity, ingredientPackage)
+
 		if recipe == nil {
-			recipe = m.toRecipe(id, name, price)
+			recipe = m.toRecipe(recipeId, recipeName, recipePrice)
 		}
 
-		pkg := m.toPackage(packageId, metric, packageQuantity, packagePrice)
-		ingredient := m.toIngredient(ingredientId, ingredientName, ingredientQuantity, ingredientPrice, pkg)
-		m.addRecipeIngredient(recipe, ingredient)
+		log.Println(pkg)
+		log.Println(ingredient)
+		log.Println(ingredientPackage)
+		log.Println(recipeIngredient)
+
+		if recipeIngredient != nil {
+			util.Add(recipe.Ingredients, *recipeIngredient)
+		}
 	}
 
 	return recipe, nil
 }
 
-func (m *RecipeMapper) toRecipe(recipeId int64, recipeName string, recipePrice float64) *dto.RecipeDTO {
-	return &dto.RecipeDTO{
-		Id:    recipeId,
-		Name:  recipeName,
-		Price: recipePrice,
+func (m *RecipeMapper) toRecipe(recipeId int64, recipeName string, recipePrice float64) *dto.Recipe {
+	return &dto.Recipe{
+		Id:          &recipeId,
+		Name:        &recipeName,
+		Price:       &recipePrice,
+		Ingredients: &[]dto.RecipeIngredient{},
 	}
 }
 
-func (m *RecipeMapper) toIngredient(id sql.NullInt64, name sql.NullString, quantity sql.NullFloat64,
-	price sql.NullFloat64, pkg *dto.IngredientPackageDTO) *dto.RecipeIngredientDTO {
+func (m *RecipeMapper) ToRecipeIngredientNullable(id sql.NullInt64, price sql.NullFloat64, quantity sql.NullFloat64,
+	ingredientPackage *dto.IngredientPackage) *dto.RecipeIngredient {
 	if !id.Valid {
 		return nil
 	}
 
-	return &dto.RecipeIngredientDTO{
-		Id:       db.GetLong(id),
-		Name:     db.GetString(name),
-		Price:    db.GetFloat(price),
-		Quantity: db.GetFloat(quantity),
-		Package:  pkg,
+	return &dto.RecipeIngredient{
+		Id:         db.GetLong(id),
+		Quantity:   db.GetFloat(quantity),
+		Price:      db.GetFloat(price),
+		Ingredient: ingredientPackage,
 	}
-}
-
-func (m *RecipeMapper) toPackage(id sql.NullInt64, metric sql.NullString, quantity sql.NullFloat64,
-	price sql.NullFloat64) *dto.IngredientPackageDTO {
-	if !id.Valid {
-		return nil
-	}
-
-	return &dto.IngredientPackageDTO{
-		Id:       db.GetLong(id),
-		Metric:   db.GetString(metric),
-		Quantity: db.GetFloat(quantity),
-		Price:    db.GetFloat(price),
-	}
-}
-
-func (m *RecipeMapper) addRecipeIngredient(recipe *dto.RecipeDTO, ingredients *dto.RecipeIngredientDTO) {
-	util.Add(&recipe.Ingredients, *ingredients)
 }

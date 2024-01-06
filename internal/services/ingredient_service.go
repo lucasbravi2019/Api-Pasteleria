@@ -14,16 +14,9 @@ type IngredientService struct {
 	IngredientDao dao.IngredientDao
 }
 
-type IngredientServiceInterface interface {
-	GetAllIngredients() (int, *[]dto.IngredientDTO, error)
-	CreateIngredient(ctx *gin.Context) (int, interface{}, error)
-	UpdateIngredient(ctx *gin.Context) (int, interface{}, error)
-	DeleteIngredient(ctx *gin.Context) (int, interface{}, error)
-}
-
 var IngredientServiceInstance *IngredientService
 
-func (s *IngredientService) GetAllIngredients() (int, *[]dto.IngredientDTO, error) {
+func (s *IngredientService) GetAllIngredients() (int, *[]dto.IngredientResponse, error) {
 	ingredients, err := s.IngredientDao.GetAllIngredients()
 
 	if pkg.HasError(err) {
@@ -34,7 +27,7 @@ func (s *IngredientService) GetAllIngredients() (int, *[]dto.IngredientDTO, erro
 }
 
 func (s *IngredientService) CreateIngredient(ctx *gin.Context) (int, interface{}, error) {
-	var ingredient dto.IngredientCreationDTO
+	var ingredient dto.IngredientRequest
 
 	err := pkg.DecodeBody(ctx, &ingredient)
 
@@ -42,7 +35,19 @@ func (s *IngredientService) CreateIngredient(ctx *gin.Context) (int, interface{}
 		return http.StatusBadRequest, nil, err
 	}
 
-	err = s.IngredientDao.CreateIngredient(&ingredient)
+	err = s.IngredientDao.CreateIngredientName(ingredient.Name)
+
+	if pkg.HasError(err) {
+		return http.StatusInternalServerError, nil, err
+	}
+
+	ingredientId, err := s.IngredientDao.FindIngredientIdByName(ingredient.Name)
+
+	if pkg.HasError(err) {
+		return http.StatusInternalServerError, nil, err
+	}
+
+	err = s.IngredientDao.AddIngredientPackage(ingredientId, ingredient.Packages)
 
 	if pkg.HasError(err) {
 		return http.StatusInternalServerError, nil, err
@@ -52,7 +57,7 @@ func (s *IngredientService) CreateIngredient(ctx *gin.Context) (int, interface{}
 }
 
 func (s *IngredientService) UpdateIngredient(ctx *gin.Context) (int, interface{}, error) {
-	var ingredient dto.IngredientUpdateDTO
+	var ingredient dto.IngredientRequest
 
 	err := pkg.DecodeBody(ctx, &ingredient)
 
@@ -60,7 +65,19 @@ func (s *IngredientService) UpdateIngredient(ctx *gin.Context) (int, interface{}
 		return http.StatusBadRequest, nil, err
 	}
 
-	err = s.IngredientDao.UpdateIngredient(&ingredient)
+	err = s.IngredientDao.UpdateIngredientName(&ingredient)
+
+	if pkg.HasError(err) {
+		return http.StatusInternalServerError, nil, err
+	}
+
+	err = s.IngredientDao.RemoveIngredientPackages(ingredient.Id)
+
+	if pkg.HasError(err) {
+		return http.StatusInternalServerError, nil, err
+	}
+
+	err = s.IngredientDao.AddIngredientPackage(ingredient.Id, ingredient.Packages)
 
 	if pkg.HasError(err) {
 		return http.StatusInternalServerError, nil, err

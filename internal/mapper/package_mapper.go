@@ -14,14 +14,8 @@ type PackageMapper struct {
 
 var PackageMapperInstance *PackageMapper
 
-type PackageMapperInterface interface {
-	ToPackageList(rows *sql.Rows) (*[]dto.PackageDTO, error)
-	ToIngredientPackage(packageId sql.NullInt64, metric sql.NullString, quantity sql.NullFloat64,
-		packagePrice sql.NullFloat64) *dto.IngredientPackageDTO
-}
-
-func (m *PackageMapper) ToPackageList(rows *sql.Rows) (*[]dto.PackageDTO, error) {
-	packages := util.NewList[dto.PackageDTO]()
+func (m *PackageMapper) ToPackageList(rows *sql.Rows) (*[]dto.Package, error) {
+	packages := util.NewList[dto.Package]()
 
 	for rows.Next() {
 		var id int64
@@ -34,31 +28,32 @@ func (m *PackageMapper) ToPackageList(rows *sql.Rows) (*[]dto.PackageDTO, error)
 			return nil, err
 		}
 
-		pkg := m.toPackage(id, metric, quantity)
-		util.Add(&packages, pkg)
+		pkg := m.ToPackage(id, metric, quantity)
+
+		if pkg != nil {
+			util.Add(&packages, *pkg)
+		}
 	}
 
 	return &packages, nil
 }
 
-func (m *PackageMapper) ToIngredientPackage(packageId sql.NullInt64, metric sql.NullString, quantity sql.NullFloat64,
-	packagePrice sql.NullFloat64) *dto.IngredientPackageDTO {
-	if !packageId.Valid {
-		return nil
-	}
-
-	return &dto.IngredientPackageDTO{
-		Id:       db.GetLong(packageId),
-		Metric:   db.GetString(metric),
-		Quantity: db.GetFloat(quantity),
-		Price:    db.GetFloat(packagePrice),
-	}
-}
-
-func (m *PackageMapper) toPackage(id int64, metric string, quantity float64) dto.PackageDTO {
-	return dto.PackageDTO{
+func (m *PackageMapper) ToPackage(id int64, metric string, quantity float64) *dto.Package {
+	return &dto.Package{
 		Id:       &id,
 		Metric:   &metric,
 		Quantity: &quantity,
+	}
+}
+
+func (m *PackageMapper) ToPackageNullable(id sql.NullInt64, metric sql.NullString, quantity sql.NullFloat64) *dto.Package {
+	if !id.Valid {
+		return nil
+	}
+
+	return &dto.Package{
+		Id:       db.GetLong(id),
+		Metric:   db.GetString(metric),
+		Quantity: db.GetFloat(quantity),
 	}
 }

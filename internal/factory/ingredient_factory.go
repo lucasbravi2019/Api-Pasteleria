@@ -4,6 +4,7 @@ import (
 	"github.com/lucasbravi2019/pasteleria/api"
 	"github.com/lucasbravi2019/pasteleria/db"
 	"github.com/lucasbravi2019/pasteleria/internal/dao"
+	"github.com/lucasbravi2019/pasteleria/internal/mapper"
 	"github.com/lucasbravi2019/pasteleria/internal/services"
 )
 
@@ -28,8 +29,18 @@ func GetIngredientServiceInstance() *services.IngredientService {
 func GetIngredientDaoInstance() *dao.IngredientDao {
 	if dao.IngredientDaoInstance == nil {
 		dao.IngredientDaoInstance = &dao.IngredientDao{
-			DB: db.GetDatabaseConnection(),
+			DB:               db.GetDatabaseConnection(),
+			IngredientMapper: GetIngredientMapperInstance(),
 		}
 	}
 	return dao.IngredientDaoInstance
+}
+
+func GetIngredientMapperInstance() *mapper.IngredientMapper {
+	if mapper.IngredientMapperInstance == nil {
+		mapper.IngredientMapperInstance = &mapper.IngredientMapper{
+			PackageMapper: GetPackageMapperInstance(),
+		}
+	}
+	return mapper.IngredientMapperInstance
 }

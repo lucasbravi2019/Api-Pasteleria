@@ -14,16 +14,9 @@ type PackageDao struct {
 	PackageMapper *mapper.PackageMapper
 }
 
-type PackageDaoInterface interface {
-	GetPackages() (*[]dto.PackageDTO, error)
-	CreatePackage(body *dto.PackageDTO) (*int64, error)
-	UpdatePackage(body *dto.PackageDTO) error
-	DeletePackage(id *int64) error
-}
-
 var PackageDaoInstance *PackageDao
 
-func (d *PackageDao) GetPackages() (*[]dto.PackageDTO, error) {
+func (d *PackageDao) GetPackages() (*[]dto.Package, error) {
 	query, err := db.GetQueryByName(db.Package_FindAll)
 
 	if pkg.HasError(err) {
@@ -39,7 +32,7 @@ func (d *PackageDao) GetPackages() (*[]dto.PackageDTO, error) {
 	return d.PackageMapper.ToPackageList(rows)
 }
 
-func (d *PackageDao) CreatePackage(body *dto.PackageDTO) error {
+func (d *PackageDao) CreatePackage(body *dto.Package) error {
 	query, err := db.GetQueryByName(db.Package_Create)
 
 	if pkg.HasError(err) {
@@ -50,7 +43,7 @@ func (d *PackageDao) CreatePackage(body *dto.PackageDTO) error {
 	return err
 }
 
-func (d *PackageDao) UpdatePackage(body *dto.PackageDTO) error {
+func (d *PackageDao) UpdatePackage(body *dto.Package) error {
 	query, err := db.GetQueryByName(db.Package_UpdateById)
 
 	if pkg.HasError(err) {

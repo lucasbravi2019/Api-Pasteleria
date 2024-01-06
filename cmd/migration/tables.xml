@@ -14,7 +14,8 @@
         create table ingredient (
             id bigint not null identity, 
             name varchar(255) not null,
-            primary key (id)
+            primary key (id),
+            constraint UCN_I UNIQUE (name)
         )
     </table>
     <table id="ingredient_package">
@@ -32,7 +33,8 @@
             id bigint not null identity,
             name varchar(255) not null,
             price decimal(18, 2) not null default 0,
-            primary key (id)
+            primary key (id),
+            CONSTRAINT UCN_R UNIQUE (name)
         )
     </table>
     <table id="recipe_ingredient">
