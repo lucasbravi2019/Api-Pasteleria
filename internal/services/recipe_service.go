@@ -67,6 +67,10 @@ func (s *RecipeService) CreateRecipe(ctx *gin.Context) (int, interface{}, error)
 		return http.StatusInternalServerError, nil, err
 	}
 
+	if recipe.Ingredients == nil {
+		return http.StatusCreated, nil, nil
+	}
+
 	err = s.RecipeDao.AddRecipeIngredient(recipeId, recipe.Ingredients)
 
 	if pkg.HasError(err) {
@@ -85,7 +89,7 @@ func (s *RecipeService) CreateRecipe(ctx *gin.Context) (int, interface{}, error)
 		return http.StatusInternalServerError, nil, err
 	}
 
-	return http.StatusCreated, nil, nil
+	return http.StatusOK, nil, err
 }
 
 func (s *RecipeService) UpdateRecipe(ctx *gin.Context) (int, interface{}, error) {
@@ -109,10 +113,12 @@ func (s *RecipeService) UpdateRecipe(ctx *gin.Context) (int, interface{}, error)
 		return http.StatusInternalServerError, nil, err
 	}
 
-	err = s.RecipeDao.AddRecipeIngredient(recipe.Id, recipe.Ingredients)
+	if recipe.Ingredients != nil {
+		err = s.RecipeDao.AddRecipeIngredient(recipe.Id, recipe.Ingredients)
 
-	if pkg.HasError(err) {
-		return http.StatusInternalServerError, nil, err
+		if pkg.HasError(err) {
+			return http.StatusInternalServerError, nil, err
+		}
 	}
 
 	recipeFound, err := s.RecipeDao.FindRecipeById(*recipe.Id)
@@ -153,9 +159,9 @@ func (s *RecipeService) DeleteRecipe(ctx *gin.Context) (int, interface{}, error)
 }
 
 func (s *RecipeService) UpdateRecipePrice(recipe *dto.Recipe) error {
+	price := 0.0
 	if recipe.Ingredients != nil {
 		ingredients := *recipe.Ingredients
-		price := 0.0
 		for _, recipeIngredient := range ingredients {
 			recipeIngredientQuantity := *recipeIngredient.Quantity
 			quantity := *recipeIngredient.Ingredient.Package.Quantity
@@ -171,9 +177,7 @@ func (s *RecipeService) UpdateRecipePrice(recipe *dto.Recipe) error {
 			}
 		}
 
-		recipe.Price = &price
-		return s.RecipeDao.UpdateRecipePriceByRecipeId(recipe.Id, &price)
 	}
-
-	return nil
+	recipe.Price = &price
+	return s.RecipeDao.UpdateRecipePriceByRecipeId(recipe.Id, &price)
 }
