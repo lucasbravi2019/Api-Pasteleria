@@ -18,7 +18,7 @@ type RecipeService struct {
 
 var RecipeServiceInstance *RecipeService
 
-func (s *RecipeService) GetAllRecipes(ctx *gin.Context) (int, *[]dto.Recipe, error) {
+func (s *RecipeService) GetAllRecipes() (int, *[]dto.Recipe, error) {
 	recipesFound, err := s.RecipeDao.FindAllRecipes()
 
 	if pkg.HasError(err) {

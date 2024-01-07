@@ -13,7 +13,7 @@ type RecipeHandler struct {
 var RecipeHandlerInstance *RecipeHandler
 
 func (h *RecipeHandler) GetAllRecipes(ctx *gin.Context) {
-	statusCode, body, err := h.Service.GetAllRecipes(ctx)
+	statusCode, body, err := h.Service.GetAllRecipes()
 	pkg.EncodeJsonResponse(ctx, statusCode, body, err)
 }
 
