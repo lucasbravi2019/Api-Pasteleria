@@ -1,10 +1,10 @@
 run: build
 	.\bin\pasteleria
 
-make prod
+prod: 
 	.\bin\pasteleria
 
-build: 
+build:
 	go build -o bin/pasteleria.exe cmd/api/main.go
 
 migrate: 
