@@ -26,7 +26,7 @@
         update ingredient_package set price = @p1 where package_id = @p2 and ingredient_id = @p3
     </query>
     <query id="ingredient.deletePackage">
-        delete from ingredient_package where ingredient_id = @p1
+        delete from ingredient_package where id = @p1
     </query>
     <query id="ingredient.findAllIngredientPackages">
         select i.id, i.name, p.id, ip.price, p.metric, p.quantity from ingredient i 
@@ -34,7 +34,21 @@
         inner join package p on p.id = ip.package_id
         where i.id = @p1
     </query>
+    <query id="ingredient.updateOrCreateIngredientPackage">
+        if exists (select 1 from ingredient_package where id = @p1)
+            begin
+                update ingredient_package set price = @p4 where id = @p1
+            end
+        else 
+            begin 
+                insert into ingredient_package (package_id, ingredient_id, price) 
+                values (@p2, @p3, @p4)
+            end
+    </query>
     <query id="ingredient.findIngredientIdByName">
         select id from ingredient where name = @p1
+    </query>
+    <query id="ingredient.findPackagesIdByIngredientId">
+        select id from ingredient_package where ingredient_id = @p1
     </query>
 </queries>

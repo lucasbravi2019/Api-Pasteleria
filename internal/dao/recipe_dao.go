@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/lucasbravi2019/pasteleria/db"
@@ -98,4 +99,102 @@ func (d *RecipeDao) DeleteRecipe(id *int64) error {
 	}
 
 	return nil
+}
+
+func (d *RecipeDao) RemoveRecipeIngredientsByRecipeId(recipeId *int64) error {
+	query, err := db.GetQueryByName(db.Recipe_DeleteIngredientsByRecipeId)
+
+	if pkg.HasError(err) {
+		return err
+	}
+
+	tx, err := d.DB.BeginTx(context.TODO(), nil)
+
+	if pkg.HasError(err) {
+		return err
+	}
+
+	defer func() {
+		tx.Commit()
+	}()
+
+	_, err = d.DB.Exec(query, recipeId)
+
+	if pkg.HasError(err) {
+		return err
+	}
+
+	return nil
+}
+
+func (d *RecipeDao) AddRecipeIngredient(recipeId *int64, ingredients *[]dto.RecipeIngredientRequest) error {
+	query, err := db.GetQueryByName(db.Recipe_AddIngredientsToRecipe)
+
+	if pkg.HasError(err) {
+		return err
+	}
+
+	tx, err := d.DB.BeginTx(context.TODO(), nil)
+
+	if pkg.HasError(err) {
+		return err
+	}
+
+	defer func() {
+		tx.Commit()
+	}()
+
+	for _, ingredient := range *ingredients {
+		_, err := d.DB.Exec(query, recipeId, ingredient.Id, ingredient.Quantity)
+
+		if pkg.HasError(err) {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (d *RecipeDao) FindRecipeIdByName(recipeName *string) (*int64, error) {
+	query, err := db.GetQueryByName(db.Recipe_FindRecipeIdByName)
+
+	if pkg.HasError(err) {
+		return nil, err
+	}
+
+	row := d.DB.QueryRow(query, recipeName)
+
+	var recipeId int64
+
+	err = row.Scan(&recipeId)
+
+	if pkg.HasError(err) {
+		return nil, err
+	}
+
+	return &recipeId, nil
+}
+
+func (d *RecipeDao) UpdateRecipePriceByRecipeId(recipeId *int64, price *float64) error {
+	query, err := db.GetQueryByName(db.Recipe_UpdateRecipePriceByRecipeId)
+
+	if pkg.HasError(err) {
+		return err
+	}
+
+	_, err = d.DB.Exec(query, price, recipeId)
+
+	return err
+}
+
+func (d *RecipeDao) UpdateRecipeIngredientPriceById(recipeIngredientId *int64, price *float64) error {
+	query, err := db.GetQueryByName(db.Recipe_UpdateRecipeIngredientPriceById)
+
+	if pkg.HasError(err) {
+		return err
+	}
+
+	_, err = d.DB.Exec(query, price, recipeIngredientId)
+
+	return err
 }

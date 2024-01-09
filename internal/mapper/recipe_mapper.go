@@ -2,7 +2,6 @@ package mapper
 
 import (
 	"database/sql"
-	"log"
 
 	"github.com/lucasbravi2019/pasteleria/db"
 	"github.com/lucasbravi2019/pasteleria/internal/dto"
@@ -56,7 +55,6 @@ func (m *RecipeMapper) ToRecipeList(rows *sql.Rows) (*[]dto.Recipe, error) {
 			util.Add(recipe.Ingredients, *recipeIngredient)
 		}
 
-		log.Println(recipe.Ingredients)
 		util.PutValue(&recipesGrouper, &recipeId, recipe)
 	}
 
@@ -102,11 +100,6 @@ func (m *RecipeMapper) ToRecipeRow(rows *sql.Rows) (*dto.Recipe, error) {
 		if recipe == nil {
 			recipe = m.toRecipe(recipeId, recipeName, recipePrice)
 		}
-
-		log.Println(pkg)
-		log.Println(ingredient)
-		log.Println(ingredientPackage)
-		log.Println(recipeIngredient)
 
 		if recipeIngredient != nil {
 			util.Add(recipe.Ingredients, *recipeIngredient)

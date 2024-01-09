@@ -40,4 +40,10 @@
     <query id="recipe.updateRecipeIngredientPriceById">
         update recipe_ingredient set price = @p1 where id = @p2
     </query>
+    <query id="recipe.updateRecipePriceByRecipeId">
+        update recipe set price = @p1 where id = @p2
+    </query>
+    <query id="recipe.findRecipeIdByName">
+        select id from recipe where name = @p1
+    </query>
 </queries>

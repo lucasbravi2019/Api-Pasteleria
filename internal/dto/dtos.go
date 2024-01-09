@@ -50,8 +50,9 @@ type IngredientRequest struct {
 }
 
 type IngredientPackageRequest struct {
-	Id    *int64   `json:"id"`
-	Price *float64 `json:"price"`
+	Id        *int64   `json:"id"`
+	PackageId *int64   `json:"packageId"`
+	Price     *float64 `json:"price"`
 }
 
 type IngredientResponse struct {
