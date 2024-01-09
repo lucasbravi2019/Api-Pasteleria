@@ -1,6 +1,9 @@
 run: build
 	.\bin\pasteleria
 
+make prod
+	.\bin\pasteleria
+
 build: 
 	go build -o bin/pasteleria.exe cmd/api/main.go
 

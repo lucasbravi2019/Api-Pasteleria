@@ -33,7 +33,7 @@ func (m *IngredientMapper) ToIngredientList(rows *sql.Rows) (*[]dto.IngredientRe
 			return nil, err
 		}
 
-		pkg := m.PackageMapper.ToPackageNullable(packageId, metric, quantity)
+		newPkg := m.PackageMapper.ToPackageNullable(packageId, metric, quantity)
 
 		ingredient := util.GetValue(ingredientsMap, ingredientId)
 
@@ -41,7 +41,7 @@ func (m *IngredientMapper) ToIngredientList(rows *sql.Rows) (*[]dto.IngredientRe
 			ingredient = m.ToIngredientResponse(&ingredientId, &ingredientName)
 		}
 
-		ingredientPackage := m.ToIngredientPackageResponse(ingredientPackageId, ingredientPackagePrice, pkg)
+		ingredientPackage := m.ToIngredientPackageResponse(ingredientPackageId, ingredientPackagePrice, newPkg)
 		if ingredientPackage != nil {
 			util.Add(ingredient.Packages, *ingredientPackage)
 		}
@@ -67,13 +67,6 @@ func (m *IngredientMapper) ToIngredientId(row *sql.Row) (*int64, error) {
 	}
 
 	return db.GetLong(ingredientId), nil
-}
-
-func (m *IngredientMapper) ToIngredient(id *int64, name *string) *dto.Ingredient {
-	return &dto.Ingredient{
-		Id:   id,
-		Name: name,
-	}
 }
 
 func (m *IngredientMapper) ToIngredientNullable(id sql.NullInt64, name sql.NullString) *dto.Ingredient {
