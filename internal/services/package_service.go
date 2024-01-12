@@ -14,6 +14,7 @@ import (
 type PackageService struct {
 	PackageDao    *dao.PackageDao
 	PackageMapper *mapper.PackageMapper
+	RecipeService *RecipeService
 }
 
 var PackageServiceInstance *PackageService
@@ -81,6 +82,20 @@ func (s *PackageService) DeletePackage(ctx *gin.Context) (int, interface{}, erro
 
 	if pkg.HasError(err) {
 		return http.StatusInternalServerError, nil, err
+	}
+
+	_, recipes, err := s.RecipeService.GetAllRecipes()
+
+	if pkg.HasError(err) {
+		return http.StatusInternalServerError, nil, err
+	}
+
+	for _, recipe := range *recipes {
+		err := s.RecipeService.UpdateRecipePrice(&recipe)
+
+		if pkg.HasError(err) {
+			return http.StatusInternalServerError, nil, err
+		}
 	}
 
 	return http.StatusOK, nil, nil

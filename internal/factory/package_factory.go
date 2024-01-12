@@ -22,6 +22,7 @@ func GetPackageServiceInstance() *services.PackageService {
 		services.PackageServiceInstance = &services.PackageService{
 			PackageDao:    GetPackageDaoInstance(),
 			PackageMapper: GetPackageMapperInstance(),
+			RecipeService: GetRecipeServiceInstance(),
 		}
 	}
 	return services.PackageServiceInstance
