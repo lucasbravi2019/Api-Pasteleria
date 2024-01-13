@@ -1,0 +1,49 @@
+<queries>
+    <query id="recipe.findAll">
+        select r.id, r.name, r.price, ri.id, ri.price, ri.quantity_used, ip.id, ip.price, i.id, i.name, p.id, p.metric, p.quantity
+        from recipe r
+        left join recipe_ingredient ri on ri.recipe_id = r.id
+        left join ingredient_package ip on ip.id = ri.ingredient_id
+        left join ingredient i on i.id = ip.ingredient_id
+        left join package p on p.id = ip.package_id
+    </query>
+    <query id="recipe.findById">
+        select r.id, r.name, r.price, ri.id, ri.price, ri.quantity_used, ip.id, ip.price, i.id, i.name, p.id, p.metric, p.quantity
+        from recipe r
+        left join recipe_ingredient ri on ri.recipe_id = r.id
+        left join ingredient_package ip on ip.id = ri.ingredient_id
+        left join ingredient i on i.id = ip.ingredient_id
+        left join package p on p.id = ip.package_id
+        where r.id = @p1
+    </query>
+    <query id="recipe.create">
+        insert into recipe (name) values (@p1)
+    </query>
+    <query id="recipe.updateName">
+        update recipe set name = @p1 where id = @p2
+    </query>
+    <query id="recipe.deleteById">
+        delete from recipe where id = @p1
+    </query>
+    <query id="recipe.deleteIngredientsByRecipeId">
+        delete from recipe_ingredient where recipe_id = @p1
+    </query>
+    <query id="recipe.addIngredientsToRecipe">
+        insert into recipe_ingredient (recipe_id, ingredient_id, quantity_used, price) values (@p1, @p2, @p3, 0)
+    </query>
+    <query id="recipe.findRecipeIngredientById">
+        select ri.id, ri.quantity, ip.price, p.metric, p.quantity from recipe_ingredient ri
+        inner join ingredient_package ip on ip.id = ri.ingredient_id
+        inner join package p on p.id = ip.package_id
+        where ri.id = @p1
+    </query>
+    <query id="recipe.updateRecipeIngredientPriceById">
+        update recipe_ingredient set price = @p1 where id = @p2
+    </query>
+    <query id="recipe.updateRecipePriceByRecipeId">
+        update recipe set price = @p1 where id = @p2
+    </query>
+    <query id="recipe.findRecipeIdByName">
+        select id from recipe where name = @p1
+    </query>
+</queries>
