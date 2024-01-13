@@ -62,6 +62,20 @@ func (s *PackageService) UpdatePackage(ctx *gin.Context) (int, interface{}, erro
 		return http.StatusInternalServerError, nil, err
 	}
 
+	_, recipes, err := s.RecipeService.GetAllRecipes()
+
+	if pkg.HasError(err) {
+		return http.StatusInternalServerError, nil, err
+	}
+
+	for _, recipe := range *recipes {
+		err := s.RecipeService.UpdateRecipePrice(&recipe)
+
+		if pkg.HasError(err) {
+			return http.StatusInternalServerError, nil, err
+		}
+	}
+
 	return http.StatusOK, nil, nil
 }
 
